@@ -1,15 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
-    domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com'],
     unoptimized: true,
   },
   experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
+    // Removed deprecated appDir option
   },
   webpack: (config, { isServer }) => {
+    // Handle Edge Runtime compatibility issues
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -19,15 +23,6 @@ const nextConfig = {
       }
     }
     return config
-  },
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
   },
 }
 
