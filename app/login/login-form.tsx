@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -22,6 +21,17 @@ export default function LoginForm() {
   const { setIsLoggedIn } = useAuth()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirectTo")
+  const message = searchParams.get("message")
+
+  // Show verification message if redirected from signup
+  useEffect(() => {
+    if (message) {
+      toast({
+        title: "Account Created! 📧",
+        description: message,
+      })
+    }
+  }, [message, toast])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

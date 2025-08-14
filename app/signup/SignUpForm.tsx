@@ -55,20 +55,56 @@ export default function SignUpForm() {
       })
 
       if (!result.success) {
-        throw result.error
+        // Handle specific error cases
+        if (result.error?.message) {
+          throw new Error(result.error.message)
+        } else {
+          throw new Error("Failed to create account. Please try again.")
+        }
       }
 
+      // Success! Show success message and redirect
       toast({
-        title: "Sign Up Successful",
-        description: "Please check your email to verify your account.",
+        title: "Account Created Successfully! 🎉",
+        description: "Please check your email to verify your account before logging in.",
       })
-      router.push("/login")
+
+      // Clear the form
+      setEmail("")
+      setPassword("")
+      setFirstName("")
+      setLastName("")
+      setPhoneNumber("")
+      setCompanyName("")
+
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push("/login?message=Please check your email to verify your account")
+      }, 2000)
     } catch (error) {
-      console.error("Error in handleSignUp:", error)
-      setError(error instanceof Error ? error.message : "An unexpected error occurred")
+      console.error("Signup error:", error)
+
+      // Handle specific Supabase errors
+      let errorMessage = "An unexpected error occurred"
+
+      if (error instanceof Error) {
+        if (error.message.includes("User already registered")) {
+          errorMessage = "An account with this email already exists. Please try logging in instead."
+        } else if (error.message.includes("Password")) {
+          errorMessage = "Password must be at least 6 characters long."
+        } else if (error.message.includes("Invalid email")) {
+          errorMessage = "Please enter a valid email address."
+        } else if (error.message.includes("weak password")) {
+          errorMessage = "Password is too weak. Please use a stronger password."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      setError(errorMessage)
       toast({
         title: "Sign Up Failed",
-        description: error instanceof Error ? error.message : "There was an error during sign up. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
