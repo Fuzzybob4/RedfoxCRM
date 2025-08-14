@@ -32,4 +32,3 @@ export function Sidebar({ userId }: { userId: string }) {
     </nav>
   )
 }
-
