@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase, refreshSession } from "@/lib/supabase"
 import type { ReactNode } from "react"
@@ -29,23 +29,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  const handleSignOut = useCallback(() => {
-    setUser(null)
-    setSession(null)
-    setIsLoggedIn(false)
-    router.refresh()
-    router.push("/")
-  }, [router])
-
   useEffect(() => {
     let refreshTimer: NodeJS.Timeout
-    let mounted = true
 
     // Initialize auth state
     const initializeAuth = async () => {
       try {
-        if (typeof window === "undefined") return
-
         // Check for existing auth cookies
         const cookies = document.cookie.split(";")
         const hasAuthCookies = cookies.some(
@@ -68,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return
         }
 
-        if (session && mounted) {
+        if (session) {
           console.debug("Initial session loaded:", {
             userId: session.user.id,
             expiresAt: new Date(session.expires_at! * 1000).toISOString(),
@@ -83,9 +72,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const refreshTime = Math.max(timeUntilExpiry - 5 * 60 * 1000, 0) // Refresh 5 minutes before expiry
 
           refreshTimer = setTimeout(async () => {
-            if (!mounted) return
             const refreshedSession = await refreshSession()
-            if (refreshedSession && mounted) {
+            if (refreshedSession) {
               setSession(refreshedSession)
               setUser(refreshedSession.user)
             }
@@ -94,9 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error("Error initializing auth:", error)
       } finally {
-        if (mounted) {
-          setLoading(false)
-        }
+        setLoading(false)
       }
     }
 
@@ -106,8 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return
-
       console.debug("Auth state change:", {
         event,
         userId: session?.user?.id,
@@ -121,7 +105,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoggedIn(true)
         router.refresh()
       } else if (event === "SIGNED_OUT") {
-        handleSignOut()
+        setUser(null)
+        setSession(null)
+        setIsLoggedIn(false)
+        router.refresh()
+        router.push("/login") // Redirect to login page on sign out
       } else if (event === "TOKEN_REFRESHED") {
         setSession(session)
         if (session?.user) {
@@ -132,13 +120,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Cleanup
     return () => {
-      mounted = false
       subscription.unsubscribe()
       if (refreshTimer) {
         clearTimeout(refreshTimer)
       }
     }
-  }, [router, handleSignOut])
+  }, [router])
 
   return (
     <AuthContext.Provider
@@ -162,3 +149,4 @@ export const useAuth = () => {
   }
   return context
 }
+

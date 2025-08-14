@@ -36,3 +36,4 @@ export function Footer() {
     </footer>
   )
 }
+

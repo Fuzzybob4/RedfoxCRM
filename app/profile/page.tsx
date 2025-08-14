@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
@@ -37,10 +37,10 @@ export default function ProfilePage() {
         }
 
         if (data) {
-          setFullName(data.full_name || "")
-          setUsername(data.username || "")
-          setWebsite(data.website || "")
-          setAvatarUrl(data.avatar_url || "")
+          setFullName(data.full_name)
+          setUsername(data.username)
+          setWebsite(data.website)
+          setAvatarUrl(data.avatar_url)
         }
       }
     } catch (error) {
@@ -83,7 +83,7 @@ export default function ProfilePage() {
     }
   }
 
-  useEffect(() => {
+  useState(() => {
     getProfile()
   }, [])
 
@@ -98,21 +98,21 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <div className="flex justify-center">
               <Avatar className="w-24 h-24">
-                <AvatarImage src={avatarUrl || "/placeholder.svg"} alt="Profile picture" />
+                <AvatarImage src={avatarUrl} alt="Profile picture" />
                 <AvatarFallback>{fullName.charAt(0)}</AvatarFallback>
               </Avatar>
             </div>
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
-              <Input id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              <Input id="fullName" type="text" value={fullName || ""} onChange={(e) => setFullName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <Input id="username" type="text" value={username || ""} onChange={(e) => setUsername(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
-              <Input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} />
+              <Input id="website" type="url" value={website || ""} onChange={(e) => setWebsite(e.target.value)} />
             </div>
           </div>
         </CardContent>
@@ -125,3 +125,4 @@ export default function ProfilePage() {
     </div>
   )
 }
+

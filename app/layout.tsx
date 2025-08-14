@@ -1,15 +1,18 @@
-import type React from "react"
+import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import "./globals.css"
 import { AuthProvider } from "./components/auth-provider"
+import { Header } from "./components/header"
+import { Footer } from "./components/footer"
 import { Toaster } from "@/components/ui/toaster"
+import { Analytics } from "@vercel/analytics/react"
+import type React from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "RedFox CRM",
-  description: "Streamline your business operations with our comprehensive CRM solution",
+  description: "Manage your holiday lighting and landscaping business efficiently",
     generator: 'v0.app'
 }
 
@@ -20,12 +23,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-[#08042B] text-white min-h-screen flex flex-col`}>
         <AuthProvider>
-          {children}
-          <Toaster />
+          <Header />
+          <main className="pt-24 flex-grow">{children}</main>
+          <Footer />
         </AuthProvider>
+        <Toaster />
+        <Analytics />
       </body>
     </html>
   )
 }
+
