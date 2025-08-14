@@ -6,6 +6,7 @@ import { Header } from "./components/header"
 import { Footer } from "./components/footer"
 import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@vercel/analytics/react"
+import { Suspense } from "react"
 import type React from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -24,15 +25,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-[#08042B] text-white min-h-screen flex flex-col`}>
-        <AuthProvider>
-          <Header />
-          <main className="pt-24 flex-grow">{children}</main>
-          <Footer />
-        </AuthProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <AuthProvider>
+            <Header />
+            <main className="pt-24 flex-grow">{children}</main>
+            <Footer />
+          </AuthProvider>
+        </Suspense>
         <Toaster />
         <Analytics />
       </body>
     </html>
   )
 }
-

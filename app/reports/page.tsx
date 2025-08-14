@@ -5,19 +5,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-} from "recharts"
 import {
   LayoutDashboard,
   ScrollText,
@@ -27,21 +14,14 @@ import {
   FileText,
   DollarSign,
   Briefcase,
+  TrendingUp,
+  Activity,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import type { User } from "@supabase/supabase-js"
 
-// Mock data (replace with real data from Supabase later)
-const revenueData = [
-  { month: "Jan", revenue: 4000 },
-  { month: "Feb", revenue: 3000 },
-  { month: "Mar", revenue: 5000 },
-  { month: "Apr", revenue: 4500 },
-  { month: "May", revenue: 6000 },
-  { month: "Jun", revenue: 5500 },
-]
-
+// Mock data
 const outstandingPayments = [
   { id: 1, customer: "John Doe", amount: 1500, dueDate: "2023-07-15" },
   { id: 2, customer: "Jane Smith", amount: 2000, dueDate: "2023-07-20" },
@@ -51,13 +31,6 @@ const outstandingPayments = [
 const refundsAdjustments = [
   { id: 1, customer: "Alice Brown", amount: -500, date: "2023-06-10", reason: "Overpayment" },
   { id: 2, customer: "Charlie Davis", amount: -750, date: "2023-06-15", reason: "Service issue" },
-]
-
-const growthData = [
-  { year: 2020, revenue: 50000, customers: 100 },
-  { year: 2021, revenue: 75000, customers: 150 },
-  { year: 2022, revenue: 100000, customers: 200 },
-  { year: 2023, revenue: 125000, customers: 250 },
 ]
 
 const navItems = [
@@ -74,7 +47,6 @@ const navItems = [
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [companyName, setCompanyName] = useState("Company name")
-  const [revenueBreakdownType, setRevenueBreakdownType] = useState("month")
   const router = useRouter()
   const { toast } = useToast()
 
@@ -90,7 +62,6 @@ export default function ReportsPage() {
       }
 
       fetchCompanyName(user)
-      // Fetch other report data here
       setLoading(false)
     }
 
@@ -154,32 +125,26 @@ export default function ReportsPage() {
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="grid gap-6">
-            {/* Revenue Breakdown */}
+            {/* Revenue Overview */}
             <Card className="p-6 bg-white/10 border-white/20">
-              <h2 className="text-xl font-semibold text-white mb-4">Revenue Breakdown</h2>
-              <div className="mb-4">
-                <Select value={revenueBreakdownType} onValueChange={setRevenueBreakdownType}>
-                  <SelectTrigger className="w-[180px] bg-[#1a1f2c] border-gray-700 text-white">
-                    <SelectValue placeholder="Select breakdown type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="month">By Month</SelectItem>
-                    <SelectItem value="year">By Year</SelectItem>
-                    <SelectItem value="service">By Service Type</SelectItem>
-                    <SelectItem value="customer">By Customer</SelectItem>
-                  </SelectContent>
-                </Select>
+              <h2 className="text-xl font-semibold text-white mb-4">Revenue Overview</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-white/5 rounded-lg">
+                  <TrendingUp className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                  <p className="text-2xl font-bold text-white">$12,450</p>
+                  <p className="text-sm text-gray-400">This Month</p>
+                </div>
+                <div className="text-center p-4 bg-white/5 rounded-lg">
+                  <Activity className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+                  <p className="text-2xl font-bold text-white">$8,320</p>
+                  <p className="text-sm text-gray-400">Last Month</p>
+                </div>
+                <div className="text-center p-4 bg-white/5 rounded-lg">
+                  <DollarSign className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
+                  <p className="text-2xl font-bold text-white">+49.5%</p>
+                  <p className="text-sm text-gray-400">Growth</p>
+                </div>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="revenue" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
             </Card>
 
             {/* Outstanding Payments */}
@@ -229,27 +194,9 @@ export default function ReportsPage() {
                 </TableBody>
               </Table>
             </Card>
-
-            {/* Year-over-Year Growth */}
-            <Card className="p-6 bg-white/10 border-white/20">
-              <h2 className="text-xl font-semibold text-white mb-4">Year-over-Year Growth</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={growthData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#8884d8" activeDot={{ r: 8 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="customers" stroke="#82ca9d" />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
           </div>
         </div>
       </div>
     </div>
   )
 }
-

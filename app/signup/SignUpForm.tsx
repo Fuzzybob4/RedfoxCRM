@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,11 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import type React from "react"
-import { useScrollToTop } from "../hooks/useScrollToTop"
 import { handleSignUp } from "@/lib/auth"
 
 export default function SignUpForm() {
-  useScrollToTop()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [firstName, setFirstName] = useState("")
@@ -28,37 +25,7 @@ export default function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { toast } = useToast()
-  const [isRateLimited, setIsRateLimited] = useState(false)
-  const [countdown, setCountdown] = useState(0)
-
-  useEffect(() => {
-    const planFromUrl = searchParams.get("plan")
-    if (planFromUrl === "starter" || planFromUrl === "professional") {
-      setSubscriptionType(planFromUrl)
-    }
-
-    const lastAttempt = localStorage.getItem("lastSignUpAttempt")
-    const now = Date.now()
-    if (lastAttempt && now - Number.parseInt(lastAttempt) < 60000) {
-      setIsRateLimited(true)
-      setCountdown(60 - Math.floor((now - Number.parseInt(lastAttempt)) / 1000))
-    }
-
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          setIsRateLimited(false)
-          clearInterval(timer)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [searchParams])
 
   useEffect(() => {
     // Update cost based on subscription type and billing period
@@ -71,21 +38,10 @@ export default function SignUpForm() {
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isRateLimited) {
-      toast({
-        title: "Rate Limited",
-        description: `Please wait ${countdown} seconds before trying again.`,
-        variant: "destructive",
-      })
-      return
-    }
-
     setIsLoading(true)
     setError(null)
 
     try {
-      localStorage.setItem("lastSignUpAttempt", Date.now().toString())
-
       const result = await handleSignUp({
         email,
         password,
@@ -243,7 +199,7 @@ export default function SignUpForm() {
         <Button
           type="submit"
           className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white"
-          disabled={isRateLimited || isLoading}
+          disabled={isLoading}
           onClick={handleSignUpSubmit}
         >
           {isLoading ? (
@@ -251,8 +207,6 @@ export default function SignUpForm() {
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Signing Up...
             </>
-          ) : isRateLimited ? (
-            `Try again in ${countdown}s`
           ) : (
             "Sign Up"
           )}
@@ -262,4 +216,3 @@ export default function SignUpForm() {
     </Card>
   )
 }
-

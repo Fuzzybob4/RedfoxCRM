@@ -12,7 +12,6 @@ import {
   User,
   LayoutDashboard,
   Activity,
-  Map,
   ShoppingBag,
   AlertCircle,
   Users2,
@@ -24,8 +23,8 @@ import {
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
-import Image from "next/image"
 import { useToast } from "@/components/ui/use-toast"
+import type { JSX } from "react/jsx-runtime"
 
 interface UserProfile {
   id: string
@@ -134,14 +133,14 @@ export default function DashboardPage({ params }: { params: { userId: string } }
       href: `/dashboard/${params.userId}`,
       active: true,
     },
-    { icon: <Eye className="h-5 w-5" />, label: "Sales", href: "/sales" },
-    { icon: <Activity className="h-5 w-5" />, label: "Service Trends", href: "/service-trends" },
-    { icon: <Map className="h-5 w-5" />, label: "Mapping", href: "/mapping" },
+    { icon: <DollarSign className="h-5 w-5" />, label: "Sales", href: "/sales" },
     { icon: <ShoppingBag className="h-5 w-5" />, label: "Orders", href: "/orders" },
-    { icon: <Users2 className="h-5 w-5" />, label: "Staff", href: "/staff" },
+    { icon: <Users2 className="h-5 w-5" />, label: "Customers", href: "/customers" },
+    { icon: <FileText className="h-5 w-5" />, label: "Invoices", href: "/invoices" },
+    { icon: <FileText className="h-5 w-5" />, label: "Estimates", href: "/estimates" },
+    { icon: <FileText className="h-5 w-5" />, label: "Projects", href: "/projects" },
     { icon: <FileText className="h-5 w-5" />, label: "Reports", href: "/reports" },
     { icon: <Mic className="h-5 w-5" />, label: "Marketing", href: "/marketing" },
-    { icon: <DollarSign className="h-5 w-5" />, label: "Payment Portal", href: "/payment-portal" },
   ]
 
   useEffect(() => {
@@ -208,14 +207,14 @@ export default function DashboardPage({ params }: { params: { userId: string } }
     }
 
     loadUserProfile()
-  }, [params.userId, router, toast]) // Added toast to dependencies
+  }, [params.userId, router, toast])
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
   }
 
   if (!user) {
-    return null // The redirection is handled in loadUserProfile
+    return null
   }
 
   return (
@@ -283,20 +282,19 @@ export default function DashboardPage({ params }: { params: { userId: string } }
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Regions Map */}
           <Card className="p-6 bg-white/10 border-white/20">
-            <h2 className="text-xl font-semibold text-white mb-4">Regions</h2>
-            <div className="relative h-[300px] bg-white/5 rounded-lg overflow-hidden">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/UI%20for%20user%20dashboard%20-FALQKnqB33V6OtfBPVRKAGFuybehW7.png"
-                alt="World Map"
-                fill
-                className="object-cover opacity-50"
-              />
+            <h2 className="text-xl font-semibold text-white mb-4">Business Overview</h2>
+            <div className="relative h-[300px] bg-white/5 rounded-lg overflow-hidden flex items-center justify-center">
+              <div className="text-center text-white">
+                <Activity className="h-16 w-16 mx-auto mb-4 text-[#F67721]" />
+                <p className="text-lg font-semibold">Business Analytics</p>
+                <p className="text-sm text-gray-400">Track your business performance</p>
+              </div>
             </div>
           </Card>
 
           {/* Activity Feed */}
           <Card className="p-6 bg-white/10 border-white/20">
-            <h2 className="text-xl font-semibold text-white mb-4">Feeds</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Recent Activity</h2>
             <div className="space-y-4">
               {activities.map((activity) => (
                 <div key={activity.id} className="flex items-center gap-4 text-white">
@@ -314,4 +312,3 @@ export default function DashboardPage({ params }: { params: { userId: string } }
     </div>
   )
 }
-

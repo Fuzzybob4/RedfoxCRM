@@ -234,4 +234,3 @@ export default async function SalesPage() {
     </div>
   )
 }
-

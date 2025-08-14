@@ -125,4 +125,3 @@ export default function ContactSalesPage() {
     </div>
   )
 }
-
