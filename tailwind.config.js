@@ -6,7 +6,8 @@ export default {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+        "*.{js,ts,jsx,tsx,mdx}"
+    ],
   theme: {
     container: {
       center: true,
@@ -55,4 +56,3 @@ export default {
   },
   plugins: [],
 } satisfies Config
-
