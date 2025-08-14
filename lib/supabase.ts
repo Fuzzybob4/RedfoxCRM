@@ -43,6 +43,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
           }
         : undefined,
   },
+  // Disable realtime for Edge Runtime compatibility
+  realtime: {
+    params: {
+      eventsPerSecond: 2,
+    },
+  },
 })
 
 // Enhanced session check with better error handling

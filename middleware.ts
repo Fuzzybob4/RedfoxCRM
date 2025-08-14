@@ -7,6 +7,14 @@ export async function middleware(req: NextRequest) {
     // Create a response object that we can modify
     const res = NextResponse.next()
 
+    // Only run auth logic for protected routes to avoid Edge Runtime issues
+    const protectedRoutes = ["/dashboard", "/sales", "/customers", "/profile", "/invoices", "/estimates", "/projects"]
+    const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
+
+    if (!isProtectedRoute) {
+      return res
+    }
+
     // Create a Supabase client specific to this middleware request
     const supabase = createMiddlewareClient({ req, res })
 
@@ -23,10 +31,6 @@ export async function middleware(req: NextRequest) {
       console.error("Failed to get session:", sessionError)
       // Continue without session
     }
-
-    // Protected routes that require authentication
-    const protectedRoutes = ["/dashboard", "/sales", "/customers", "/profile", "/invoices", "/estimates", "/projects"]
-    const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
 
     // If accessing a protected route without a session
     if (!session && isProtectedRoute) {
@@ -52,47 +56,6 @@ export async function middleware(req: NextRequest) {
       return response
     }
 
-    // If we have a session, try to refresh it
-    if (session) {
-      try {
-        const {
-          data: { session: refreshedSession },
-          error: refreshError,
-        } = await supabase.auth.refreshSession()
-
-        if (refreshError) {
-          console.error("Session refresh error:", refreshError)
-        } else if (refreshedSession) {
-          // Set cookies with error handling
-          try {
-            const cookieOptions = {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === "production",
-              sameSite: "lax" as const,
-              path: "/",
-            }
-
-            res.cookies.set("sb-access-token", refreshedSession.access_token, {
-              ...cookieOptions,
-              maxAge: 60 * 60 * 24 * 7, // 1 week
-            })
-
-            if (refreshedSession.refresh_token) {
-              res.cookies.set("sb-refresh-token", refreshedSession.refresh_token, {
-                ...cookieOptions,
-                maxAge: 60 * 60 * 24 * 30, // 30 days
-              })
-            }
-          } catch (cookieError) {
-            console.error("Failed to set auth cookies:", cookieError)
-          }
-        }
-      } catch (refreshError) {
-        console.error("Failed to refresh session:", refreshError)
-        // Continue with the original session
-      }
-    }
-
     return res
   } catch (error) {
     // Log the complete error
@@ -103,16 +66,15 @@ export async function middleware(req: NextRequest) {
   }
 }
 
-// Configure which routes use this middleware
+// Configure which routes use this middleware - be more specific to avoid Edge Runtime issues
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/dashboard/:path*",
+    "/sales/:path*",
+    "/customers/:path*",
+    "/profile/:path*",
+    "/invoices/:path*",
+    "/estimates/:path*",
+    "/projects/:path*",
   ],
 }

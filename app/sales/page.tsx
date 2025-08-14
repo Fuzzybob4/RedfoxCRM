@@ -56,7 +56,8 @@ const navItems = [
   { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/settings" },
 ]
 
-export default async function SalesPage() {
+export default async function SalesPage({ params }: { params: Promise<any> }) {
+  const resolvedParams = await params
   const supabase = createServerComponentClient({ cookies })
 
   const {
