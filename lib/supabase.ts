@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing required Supabase environment variables")
 }
 
-// Create the main Supabase client with your specified configuration
+// Create the main Supabase client with Edge Runtime compatible configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -46,7 +46,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   // Disable realtime for Edge Runtime compatibility
   realtime: {
     params: {
-      eventsPerSecond: 2,
+      eventsPerSecond: 1,
+    },
+  },
+  global: {
+    headers: {
+      "X-Client-Info": "redfox-crm@1.0.0",
     },
   },
 })

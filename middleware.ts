@@ -8,7 +8,22 @@ export async function middleware(req: NextRequest) {
     const res = NextResponse.next()
 
     // Only run auth logic for protected routes to avoid Edge Runtime issues
-    const protectedRoutes = ["/dashboard", "/sales", "/customers", "/profile", "/invoices", "/estimates", "/projects"]
+    const protectedRoutes = [
+      "/dashboard",
+      "/sales",
+      "/customers",
+      "/profile",
+      "/invoices",
+      "/estimates",
+      "/projects",
+      "/reports",
+      "/staff",
+      "/orders",
+      "/mapping",
+      "/service-trends",
+      "/settings",
+    ]
+
     const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
 
     if (!isProtectedRoute) {
@@ -76,5 +91,11 @@ export const config = {
     "/invoices/:path*",
     "/estimates/:path*",
     "/projects/:path*",
+    "/reports/:path*",
+    "/staff/:path*",
+    "/orders/:path*",
+    "/mapping/:path*",
+    "/service-trends/:path*",
+    "/settings/:path*",
   ],
 }
