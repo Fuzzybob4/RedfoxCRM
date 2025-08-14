@@ -9,9 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    // Removed deprecated appDir option
-  },
   webpack: (config, { isServer }) => {
     // Handle Edge Runtime compatibility issues
     if (!isServer) {
