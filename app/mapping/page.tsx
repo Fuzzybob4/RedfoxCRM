@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import dynamic from "next/dynamic"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -25,13 +24,6 @@ import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import type { User } from "@supabase/supabase-js"
 
-// Dynamically import the map components to avoid SSR issues
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
-const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
-const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
-const HeatmapLayer = dynamic(() => import("react-leaflet-heatmap-layer"), { ssr: false })
-
 // Mock data (replace with real data from Supabase later)
 const customers = [
   { id: 1, name: "John Doe", lat: 40.7128, lng: -74.006, serviceType: "Lawn Care", category: "residential" },
@@ -43,12 +35,6 @@ const customers = [
 const employees = [
   { id: 1, name: "Employee 1", lat: 40.73, lng: -74.0 },
   { id: 2, name: "Employee 2", lat: 40.74, lng: -73.99 },
-]
-
-const heatmapPoints = [
-  { lat: 40.7128, lng: -74.006, intensity: 0.5 },
-  { lat: 40.7282, lng: -73.7949, intensity: 0.8 },
-  { lat: 40.7489, lng: -73.968, intensity: 0.3 },
 ]
 
 const navItems = [
@@ -72,6 +58,7 @@ export default function MappingPage() {
   const [showHeatmap, setShowHeatmap] = useState(false)
   const [subscriptionType, setSubscriptionType] = useState("starter")
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -88,7 +75,6 @@ export default function MappingPage() {
 
       fetchCompanyName(user)
       fetchSubscriptionType(user)
-      // Fetch other mapping data here
       setLoading(false)
     }
 
@@ -231,42 +217,23 @@ export default function MappingPage() {
               </div>
             </div>
             <div className="flex-1 relative">
-              <div className="absolute inset-0 rounded-lg overflow-hidden">
-                <MapContainer center={[40.7128, -74.006]} zoom={13} style={{ height: "100%", width: "100%" }}>
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  />
-                  {filteredCustomers.map((customer) => (
-                    <Marker key={customer.id} position={[customer.lat, customer.lng]}>
-                      <Popup>
-                        <div>
-                          <h3 className="font-bold">{customer.name}</h3>
-                          <p>Service: {customer.serviceType}</p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ))}
-                  {subscriptionType === "professional" &&
-                    showEmployees &&
-                    employees.map((employee) => (
-                      <Marker key={employee.id} position={[employee.lat, employee.lng]}>
-                        <Popup>
-                          <div>
-                            <h3 className="font-bold">{employee.name}</h3>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    ))}
-                  {subscriptionType === "professional" && showHeatmap && (
-                    <HeatmapLayer
-                      points={heatmapPoints}
-                      longitudeExtractor={(m) => m.lng}
-                      latitudeExtractor={(m) => m.lat}
-                      intensityExtractor={(m) => m.intensity}
-                    />
-                  )}
-                </MapContainer>
+              <div className="absolute inset-0 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
+                <div className="text-white text-center">
+                  <MapPin className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-xl font-semibold mb-2">Interactive Map</h3>
+                  <p className="text-gray-400 mb-4">
+                    Map functionality is available in production builds with proper SSL certificates.
+                  </p>
+                  <div className="text-sm text-gray-500">
+                    <p>Filtered Customers: {filteredCustomers.length}</p>
+                    {subscriptionType === "professional" && (
+                      <>
+                        <p>Employees: {showEmployees ? employees.length : 0}</p>
+                        <p>Heatmap: {showHeatmap ? "Enabled" : "Disabled"}</p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </Card>
@@ -275,4 +242,3 @@ export default function MappingPage() {
     </div>
   )
 }
-

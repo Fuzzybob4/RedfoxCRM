@@ -4,7 +4,11 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { LayoutDashboard } from "lucide-react"
 
-export function Sidebar({ userId }: { userId: string }) {
+interface SidebarProps {
+  userId: string
+}
+
+export function Sidebar({ userId }: SidebarProps) {
   const pathname = usePathname()
 
   const navItems = [
@@ -32,4 +36,3 @@ export function Sidebar({ userId }: { userId: string }) {
     </nav>
   )
 }
-

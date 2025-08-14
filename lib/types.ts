@@ -14,3 +14,24 @@ export interface Customer {
   updated_at?: string
 }
 
+// Next.js 15 async params types
+export type PageProps<T = any> = {
+  params: Promise<T>
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export type DynamicPageProps<T = { [key: string]: string }> = PageProps<T>
+
+// Common param types
+export interface UserIdParams {
+  userId: string
+}
+
+export interface ReportParams {
+  reportId?: string
+}
+
+// Utility function to handle async params
+export async function resolveParams<T>(params: Promise<T>): Promise<T> {
+  return await params
+}

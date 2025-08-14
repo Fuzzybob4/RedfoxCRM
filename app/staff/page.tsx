@@ -5,12 +5,9 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
-  MoreVertical,
-  Download,
   LayoutDashboard,
   ScrollText,
   Users,
@@ -20,35 +17,36 @@ import {
   FileText,
   DollarSign,
   Briefcase,
+  Users2,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import type { User } from "@supabase/supabase-js"
 
-interface Invoice {
-  id: number
-  customer_name: string
-  amount: number
+interface StaffMember {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  role: string
   status: string
-  due_date: string
 }
 
 const navItems = [
   { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", href: "/dashboard" },
   { icon: <DollarSign className="h-5 w-5" />, label: "Sales", href: "/sales" },
-  { icon: <ScrollText className="h-5 w-5" />, label: "Invoices", href: "/invoices", active: true },
+  { icon: <ScrollText className="h-5 w-5" />, label: "Invoices", href: "/invoices" },
   { icon: <FileText className="h-5 w-5" />, label: "Estimates", href: "/estimates" },
   { icon: <Briefcase className="h-5 w-5" />, label: "Projects", href: "/projects" },
   { icon: <Users className="h-5 w-5" />, label: "Customers", href: "/customers" },
+  { icon: <Users2 className="h-5 w-5" />, label: "Staff", href: "/staff", active: true },
   { icon: <BarChart className="h-5 w-5" />, label: "Reports", href: "/reports" },
   { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/settings" },
 ]
 
-export default function InvoicesPage() {
-  const [invoiceCount, setInvoiceCount] = useState(0)
+export default function StaffPage() {
+  const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [companyName, setCompanyName] = useState("Company name")
   const router = useRouter()
   const { toast } = useToast()
@@ -65,7 +63,7 @@ export default function InvoicesPage() {
       }
 
       fetchCompanyName(user)
-      fetchInvoices(user)
+      fetchStaff(user)
     }
 
     checkAuthAndLoadData()
@@ -87,27 +85,34 @@ export default function InvoicesPage() {
     }
   }
 
-  async function fetchInvoices(user: User) {
+  async function fetchStaff(user: User) {
     if (!user) {
       console.error("No user found")
       setLoading(false)
       return
     }
 
-    const { data, error } = await supabase.from("invoices").select("*").eq("owner_id", user.id)
+    // Mock data for now - replace with actual Supabase query
+    const mockStaff: StaffMember[] = [
+      {
+        id: "1",
+        first_name: "John",
+        last_name: "Smith",
+        email: "john.smith@company.com",
+        role: "Manager",
+        status: "Active",
+      },
+      {
+        id: "2",
+        first_name: "Sarah",
+        last_name: "Johnson",
+        email: "sarah.johnson@company.com",
+        role: "Technician",
+        status: "Active",
+      },
+    ]
 
-    if (error) {
-      console.error("Error fetching invoices:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch invoices. Please try again.",
-        variant: "destructive",
-      })
-    } else {
-      setInvoices(data)
-      setInvoiceCount(data.length)
-    }
-
+    setStaff(mockStaff)
     setLoading(false)
   }
 
@@ -147,14 +152,12 @@ export default function InvoicesPage() {
           <div className="flex-1 flex items-center space-x-4">
             <Input
               type="search"
-              placeholder="Search invoices"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search staff"
               className="bg-[#1a1f2c] border-gray-700 text-white w-full max-w-md"
             />
             <Button className="bg-[#e85d3d] hover:bg-[#d54e2f] text-white">
               <UserPlus className="h-4 w-4 mr-2" />
-              New Invoice
+              Add Staff Member
             </Button>
           </div>
         </div>
@@ -164,64 +167,46 @@ export default function InvoicesPage() {
           <div className="grid gap-6">
             {/* Stats Cards */}
             <div className="flex gap-6 mb-8">
-              <Card className="w-[300px] bg-[#e85d3d] text-white">
+              <Card className="w-[300px] bg-[#2196F3] text-white">
                 <div className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">TOTAL INVOICES</p>
-                      <h2 className="text-4xl font-bold">{invoiceCount}</h2>
+                      <p className="text-sm font-medium">TOTAL STAFF</p>
+                      <h2 className="text-4xl font-bold">{staff.length}</h2>
                     </div>
-                    <DollarSign className="h-6 w-6" />
+                    <Users2 className="h-6 w-6" />
                   </div>
                 </div>
               </Card>
             </div>
 
-            {/* Invoices Table */}
+            {/* Staff Table */}
             <div className="bg-[#272e3f] rounded-lg p-6">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-semibold text-white">Invoices</h2>
-                  <span className="text-gray-400 text-sm">| {invoiceCount} Invoices</span>
+                  <h2 className="text-2xl font-semibold text-white">Staff Members</h2>
+                  <span className="text-gray-400 text-sm">| {staff.length} members</span>
                 </div>
-                <Button variant="ghost" size="icon" className="text-white">
-                  <Download className="h-5 w-5" />
-                </Button>
               </div>
 
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-400">Invoice ID</TableHead>
-                    <TableHead className="text-gray-400">Customer</TableHead>
-                    <TableHead className="text-gray-400">Amount</TableHead>
+                    <TableHead className="text-gray-400">Name</TableHead>
+                    <TableHead className="text-gray-400">Email</TableHead>
+                    <TableHead className="text-gray-400">Role</TableHead>
                     <TableHead className="text-gray-400">Status</TableHead>
-                    <TableHead className="text-gray-400">Due Date</TableHead>
-                    <TableHead className="text-gray-400">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id} className="border-gray-700">
-                      <TableCell className="font-medium text-white">INV-{invoice.id}</TableCell>
-                      <TableCell className="text-white">{invoice.customer_name}</TableCell>
-                      <TableCell className="text-white">${invoice.amount.toFixed(2)}</TableCell>
-                      <TableCell className="text-white">{invoice.status}</TableCell>
-                      <TableCell className="text-white">{invoice.due_date}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4 text-gray-400" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[160px]">
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  {staff.map((member) => (
+                    <TableRow key={member.id} className="border-gray-700">
+                      <TableCell className="font-medium text-white">
+                        {member.first_name} {member.last_name}
                       </TableCell>
+                      <TableCell className="text-white">{member.email}</TableCell>
+                      <TableCell className="text-white">{member.role}</TableCell>
+                      <TableCell className="text-white">{member.status}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
