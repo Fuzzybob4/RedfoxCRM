@@ -22,7 +22,6 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@remix-run/react": "latest",
     "@supabase/auth-helpers-nextjs": "latest",
-    "@supabase/auth-helpers-shared": "latest",
     "@supabase/supabase-js": "latest",
     "@sveltejs/kit": "latest",
     "@types/react": "^18.2.15",

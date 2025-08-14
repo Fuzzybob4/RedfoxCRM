@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js"
-import type { CookieOptions } from "@supabase/auth-helpers-shared"
 
 // Validate required environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -9,28 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing required Supabase environment variables")
 }
 
-// Safe cookie options with fallbacks
-const cookieOptions: CookieOptions = {
-  name: "sb-session",
-  lifetime: 7 * 24 * 60 * 60, // 7 days
-  path: "/",
-  sameSite: "lax",
-  secure: process.env.NODE_ENV === "production",
-}
-
-// Only add domain if it's properly formatted and we're in browser
-if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_DOMAIN) {
-  try {
-    // Remove protocol and any trailing slash
-    const domain = process.env.NEXT_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/$/, "")
-    if (domain && domain !== "localhost") {
-      cookieOptions.domain = domain
-    }
-  } catch (error) {
-    console.error("Failed to parse domain for cookie options:", error)
-  }
-}
-
+// Create the main Supabase client with your specified configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -42,8 +20,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         ? {
             getItem: (key) => {
               try {
-                const value = window.localStorage.getItem(key)
-                return value
+                return window.localStorage.getItem(key)
               } catch (error) {
                 console.error("Failed to get item from storage:", error)
                 return null
@@ -65,7 +42,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
             },
           }
         : undefined,
-    cookieOptions,
   },
 })
 
