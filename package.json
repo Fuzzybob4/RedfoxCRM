@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "build:check": "node scripts/monitor-build.js --continue-build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "pre-build": "node scripts/monitor-build.js",
+    "start": "next start",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -28,12 +31,16 @@
     "@supabase/supabase-js": "latest",
     "@sveltejs/kit": "latest",
     "@vercel/analytics": "latest",
+    "child_process": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "latest",
+    "fs": "latest",
+    "https": "latest",
     "leaflet": "latest",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
+    "path": "latest",
     "react": "^19",
     "react-day-picker": "latest",
     "react-dom": "^19",
