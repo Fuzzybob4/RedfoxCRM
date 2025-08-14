@@ -23,3 +23,4 @@ export default function Dashboard() {
 
   return <div>Redirecting...</div>
 }
+
