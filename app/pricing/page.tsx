@@ -8,7 +8,6 @@ import { useState } from "react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useScrollToTop } from "../hooks/useScrollToTop"
-import { Suspense } from "react"
 
 const pricingPlans = [
   {
@@ -64,10 +63,9 @@ const pricingPlans = [
   },
 ]
 
-function PricingPageContent() {
+export default function PricingPage() {
   const [annualBilling, setAnnualBilling] = useState(false)
   useScrollToTop()
-
   return (
     <div className="min-h-screen bg-[#08042B] text-white">
       <div className="container mx-auto px-4 py-16">
@@ -135,19 +133,5 @@ function PricingPageContent() {
         </div>
       </div>
     </div>
-  )
-}
-
-export default function PricingPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#08042B] text-white flex items-center justify-center">
-          <div className="text-white">Loading...</div>
-        </div>
-      }
-    >
-      <PricingPageContent />
-    </Suspense>
   )
 }

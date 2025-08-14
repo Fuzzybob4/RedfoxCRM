@@ -20,7 +20,7 @@ function SignUpContent() {
 export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-[#08042B] flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-      <Suspense fallback={<div className="text-white">Loading...</div>}>
+      <Suspense fallback={<div>Loading...</div>}>
         <SignUpContent />
       </Suspense>
     </div>

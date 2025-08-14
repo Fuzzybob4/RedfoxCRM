@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import type React from "react"
 import { useScrollToTop } from "../hooks/useScrollToTop"
 import { handleSignUp } from "@/lib/auth"
 
-function SignUpFormContent() {
+export default function SignUpForm() {
   useScrollToTop()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -260,13 +260,5 @@ function SignUpFormContent() {
       </CardFooter>
       {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
     </Card>
-  )
-}
-
-export default function SignUpForm() {
-  return (
-    <Suspense fallback={<div className="text-white">Loading...</div>}>
-      <SignUpFormContent />
-    </Suspense>
   )
 }

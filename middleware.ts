@@ -7,14 +7,6 @@ export async function middleware(req: NextRequest) {
     // Create a response object that we can modify
     const res = NextResponse.next()
 
-    // Debug log the request
-    console.debug("Middleware request:", {
-      url: req.url,
-      method: req.method,
-      headers: Object.fromEntries(req.headers),
-      timestamp: new Date().toISOString(),
-    })
-
     // Create a Supabase client specific to this middleware request
     const supabase = createMiddlewareClient({ req, res })
 
@@ -36,28 +28,15 @@ export async function middleware(req: NextRequest) {
     const protectedRoutes = ["/dashboard", "/sales", "/customers", "/profile", "/invoices", "/estimates", "/projects"]
     const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
 
-    // Debug log the route check
-    console.debug("Route check:", {
-      path: req.nextUrl.pathname,
-      isProtected: isProtectedRoute,
-      hasSession: !!session,
-      timestamp: new Date().toISOString(),
-    })
-
     // If accessing a protected route without a session
     if (!session && isProtectedRoute) {
-      console.debug("Redirecting to login:", {
-        from: req.nextUrl.pathname,
-        timestamp: new Date().toISOString(),
-      })
-
       // Store the attempted URL to redirect back after login
       const redirectUrl = new URL("/login", req.url)
       redirectUrl.searchParams.set("redirectTo", req.nextUrl.pathname)
 
       const response = NextResponse.redirect(redirectUrl)
 
-      // Set redirect cookie with fallback options if domain is not available
+      // Set redirect cookie with fallback options
       try {
         response.cookies.set("redirectTo", req.nextUrl.pathname, {
           httpOnly: true,
@@ -117,17 +96,7 @@ export async function middleware(req: NextRequest) {
     return res
   } catch (error) {
     // Log the complete error
-    console.error("Middleware critical error:", {
-      error:
-        error instanceof Error
-          ? {
-              message: error.message,
-              stack: error.stack,
-              name: error.name,
-            }
-          : error,
-      timestamp: new Date().toISOString(),
-    })
+    console.error("Middleware critical error:", error)
 
     // For critical errors, return a basic response to prevent the 500 error
     return NextResponse.next()
