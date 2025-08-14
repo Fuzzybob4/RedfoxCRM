@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import Image from "next/image"
 import { useToast } from "@/components/ui/use-toast"
-import type { JSX } from "react/jsx-runtime" // Added import for JSX
 
 interface UserProfile {
   id: string
@@ -43,8 +42,7 @@ interface ActivityItem {
   type: "success" | "error" | "warning" | "info"
 }
 
-export default async function DashboardPage({ params }: { params: Promise<{ userId: string }> }) {
-  const { userId } = await params
+export default function DashboardPage({ params }: { params: { userId: string } }) {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -133,7 +131,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
     {
       icon: <LayoutDashboard className="h-5 w-5" />,
       label: "Overview",
-      href: `/dashboard/${userId}`,
+      href: `/dashboard/${params.userId}`,
       active: true,
     },
     { icon: <Eye className="h-5 w-5" />, label: "Sales", href: "/sales" },
@@ -160,7 +158,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
         }
 
         // Redirect to the correct dashboard URL if needed
-        if (user.id !== userId) {
+        if (user.id !== params.userId) {
           router.push(`/dashboard/${user.id}`)
           return
         }
@@ -210,7 +208,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
     }
 
     loadUserProfile()
-  }, [userId, router, toast]) // Added toast to dependencies
+  }, [params.userId, router, toast]) // Added toast to dependencies
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
@@ -316,3 +314,4 @@ export default async function DashboardPage({ params }: { params: Promise<{ user
     </div>
   )
 }
+

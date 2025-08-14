@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, Suspense } from "react"
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,10 +12,11 @@ import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "../components/auth-provider"
 
-function LoginFormContent() {
+export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [loginAttempts, setLoginAttempts] = useState(0)
   const router = useRouter()
   const { toast } = useToast()
   const { setIsLoggedIn } = useAuth()
@@ -153,10 +154,3 @@ function LoginFormContent() {
   )
 }
 
-export default function LoginForm() {
-  return (
-    <Suspense fallback={<div className="text-white text-center">Loading login form...</div>}>
-      <LoginFormContent />
-    </Suspense>
-  )
-}
