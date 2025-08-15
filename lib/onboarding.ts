@@ -21,13 +21,12 @@ export async function checkUserOrganization() {
 
     console.log("User found:", user.id)
 
-    // Check if user has any memberships
+    // Check if user has any memberships - use correct column names
     const { data: memberships, error: membershipError } = await supabase
       .from("memberships")
       .select(`
-        id,
-        role,
         org_id,
+        role,
         organizations (
           id,
           name,
@@ -35,6 +34,7 @@ export async function checkUserOrganization() {
         )
       `)
       .eq("user_id", user.id)
+      .eq("is_active", true)
       .limit(1)
 
     if (membershipError) {
