@@ -3,6 +3,10 @@ import { supabase } from "./supabase"
 export interface BusinessInfo {
   businessName: string
   companySize: string
+  address?: string
+  phone?: string
+  email?: string
+  website?: string
 }
 
 export async function createBusiness(businessInfo: BusinessInfo) {
@@ -21,67 +25,99 @@ export async function createBusiness(businessInfo: BusinessInfo) {
   }
 
   try {
-    // First try using the RPC function (recommended approach)
+    // Use the RPC function with correct parameter names
     console.log("Attempting RPC function call...")
-    const { data: rpcData, error: rpcError } = await supabase.rpc("provision_first_org", {
-      org_name: businessInfo.businessName,
-      org_plan: "pro",
-      company_size: businessInfo.companySize,
+    const { data, error } = await supabase.rpc("provision_first_org", {
+      p_business_name: businessInfo.businessName,
+      p_plan: "pro",
+      p_company_size: businessInfo.companySize || null,
+      p_address: businessInfo.address || null,
+      p_phone: businessInfo.phone || null,
+      p_email: businessInfo.email || null,
+      p_website: businessInfo.website || null,
     })
 
-    if (!rpcError && rpcData?.success) {
-      console.log("RPC success:", rpcData)
-      return {
-        success: true,
-        organizationId: rpcData.organization_id,
-        message: "Business created successfully via RPC",
-      }
+    console.log("rpc result:", { data, error })
+
+    if (error) {
+      console.error("RPC function error:", error)
+      throw new Error(`RPC failed: ${error.message}`)
     }
 
-    console.log("RPC failed, trying direct insert...", rpcError)
-
-    // Fallback to direct insert
-    const { data: orgData, error: orgError } = await supabase
-      .from("organizations")
-      .insert([
-        {
-          name: businessInfo.businessName,
-          plan: "pro",
-          owner_id: user.id,
-          company_size: businessInfo.companySize,
-        },
-      ])
-      .select("id")
-      .single()
-
-    console.log("direct insert ->", { data: orgData, error: orgError })
-
-    if (orgError) {
-      throw new Error(`Failed to create organization: ${orgError.message}`)
+    if (!data) {
+      throw new Error("No organization ID returned from RPC")
     }
 
-    // Create membership
-    const { error: membershipError } = await supabase.from("organization_memberships").insert([
-      {
-        user_id: user.id,
-        organization_id: orgData.id,
-        role: "owner",
-      },
-    ])
-
-    if (membershipError) {
-      console.error("Membership creation failed:", membershipError)
-      // Don't throw here as org was created successfully
-    }
-
+    console.log("RPC success, organization ID:", data)
     return {
       success: true,
-      organizationId: orgData.id,
-      message: "Business created successfully via direct insert",
+      organizationId: data,
+      message: "Business created successfully via RPC",
     }
   } catch (error) {
     console.error("Business creation error:", error)
-    throw error
+
+    // Fallback to direct insert if RPC fails
+    console.log("RPC failed, trying direct insert fallback...")
+
+    try {
+      const { data: orgData, error: orgError } = await supabase
+        .from("organizations")
+        .insert([
+          {
+            name: businessInfo.businessName,
+            plan: "pro",
+            owner_id: user.id,
+            address: businessInfo.address || null,
+            phone: businessInfo.phone || null,
+            email: businessInfo.email || null,
+            website: businessInfo.website || null,
+          },
+        ])
+        .select("id")
+        .single()
+
+      console.log("direct insert ->", { data: orgData, error: orgError })
+
+      if (orgError) {
+        throw new Error(`Failed to create organization: ${orgError.message}`)
+      }
+
+      // Create membership
+      const { error: membershipError } = await supabase.from("memberships").insert([
+        {
+          org_id: orgData.id,
+          user_id: user.id,
+          role: "owner",
+          is_active: true,
+        },
+      ])
+
+      if (membershipError) {
+        console.error("Membership creation failed:", membershipError)
+        // Don't throw here as org was created successfully
+      }
+
+      // Update profile default org
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ default_org: orgData.id })
+        .eq("id", user.id)
+
+      if (profileError) {
+        console.error("Profile update failed:", profileError)
+        // Don't throw here as org was created successfully
+      }
+
+      return {
+        success: true,
+        organizationId: orgData.id,
+        message: "Business created successfully via direct insert",
+      }
+    } catch (fallbackError) {
+      console.error("Fallback insert also failed:", fallbackError)
+      throw fallbackError
+    }
   }
 }
 
@@ -101,18 +137,18 @@ export async function checkUserOrganization() {
 
   try {
     const { data: memberships, error } = await supabase
-      .from("organization_memberships")
+      .from("memberships")
       .select(`
-        organization_id,
+        org_id,
         role,
         organizations (
           id,
           name,
-          plan,
-          company_size
+          plan
         )
       `)
       .eq("user_id", user.id)
+      .eq("is_active", true)
       .limit(1)
 
     if (error) {

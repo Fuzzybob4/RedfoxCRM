@@ -6,23 +6,27 @@ import { useAuth } from "@/app/components/auth-provider"
 
 export function useOnboardingGate() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
     async function checkOnboardingStatus() {
       try {
+        setIsLoading(true)
+        setError(null)
+
         // Wait for auth to be ready
         if (authLoading) {
           console.log("Auth still loading...")
           return
         }
 
-        // If no user, they don't need onboarding (they need to login)
+        // If no user, they don't need onboarding (show home page)
         if (!user) {
-          console.log("No user found, skipping onboarding check")
+          console.log("No user found, showing home page")
           setNeedsOnboarding(false)
-          setLoading(false)
+          setIsLoading(false)
           return
         }
 
@@ -41,18 +45,29 @@ export function useOnboardingGate() {
             : null,
         })
 
+        // Only show onboarding if user is logged in AND doesn't have an organization
         setNeedsOnboarding(!hasOrganization)
-        setLoading(false)
-      } catch (error) {
-        console.error("Error checking onboarding status:", error)
-        // On error, assume no onboarding needed to prevent blocking
+        setIsLoading(false)
+      } catch (err) {
+        console.error("Error checking onboarding status:", err)
+        setError(err instanceof Error ? err.message : "Unknown error")
+        // Default to not showing onboarding on error (show home page)
         setNeedsOnboarding(false)
-        setLoading(false)
+        setIsLoading(false)
       }
     }
 
     checkOnboardingStatus()
   }, [user, authLoading])
 
-  return { needsOnboarding, loading }
+  const completeOnboarding = () => {
+    setNeedsOnboarding(false)
+  }
+
+  return {
+    needsOnboarding,
+    isLoading,
+    error,
+    completeOnboarding,
+  }
 }

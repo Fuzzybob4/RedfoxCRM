@@ -4,38 +4,48 @@ import type React from "react"
 
 import { useOnboardingGate } from "@/hooks/useOnboardingGate"
 import { OnboardingWizard } from "@/components/OnboardingWizard"
-import { useRouter } from "next/navigation"
 
 interface OnboardingGateProps {
   children: React.ReactNode
 }
 
 export function OnboardingGate({ children }: OnboardingGateProps) {
-  const { needsOnboarding, loading } = useOnboardingGate()
-  const router = useRouter()
-
-  const handleOnboardingComplete = () => {
-    console.log("Onboarding completed, refreshing...")
-    router.refresh()
-  }
+  const { needsOnboarding, isLoading, error, completeOnboarding } = useOnboardingGate()
 
   // Show loading state
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     )
   }
 
-  // Show onboarding if needed
-  if (needsOnboarding) {
-    return <OnboardingWizard onComplete={handleOnboardingComplete} />
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
   }
 
-  // Show normal app
+  // Show onboarding ONLY if user is logged in AND needs onboarding
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={completeOnboarding} />
+  }
+
+  // Show main app (home page or protected content)
   return <>{children}</>
 }

@@ -12,7 +12,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "RedFox CRM - Customer Relationship Management",
-  description: "Powerful CRM solution for managing your customer relationships and growing your business",
+  description: "Powerful CRM solution for managing your business relationships",
     generator: 'v0.app'
 }
 
