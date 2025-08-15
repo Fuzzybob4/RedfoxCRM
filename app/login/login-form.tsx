@@ -1,108 +1,83 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/lib/supabase"
-import { useAuth } from "../components/auth-provider"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import Link from "next/link"
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
-  const { setIsLoggedIn } = useAuth()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirectTo")
-  const message = searchParams.get("message")
+  const { toast } = useToast()
 
-  // Show verification message if redirected from signup
-  useEffect(() => {
-    if (message) {
-      toast({
-        title: "Account Created! 📧",
-        description: message,
-      })
-    }
-  }, [message, toast])
+  // Check if user was redirected from signup
+  const fromSignup = searchParams.get("from") === "signup"
+  const verified = searchParams.get("verified") === "true"
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
+      console.log("Attempting login for:", email)
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        console.error("Login error:", error)
 
-      if (!data.user) {
-        throw new Error("No user data returned")
+        let errorMessage = "Login failed. Please check your credentials."
+
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password. Please try again."
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please check your email and click the confirmation link before logging in."
+        } else if (error.message.includes("Too many requests")) {
+          errorMessage = "Too many login attempts. Please wait a moment and try again."
+        }
+
+        toast({
+          title: "Login Failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
+        return
       }
 
-      // Verify session is established
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (data.user) {
+        console.log("Login successful:", data.user.id)
 
-      if (sessionError) {
-        throw sessionError
-      }
+        toast({
+          title: "Welcome back!",
+          description: "You have been logged in successfully.",
+        })
 
-      if (!sessionData.session) {
-        throw new Error("Session not established")
-      }
-
-      // Add detailed session debug logging
-      console.debug("Login successful:", {
-        userId: data.user.id,
-        session: {
-          expiresAt: new Date(sessionData.session.expires_at! * 1000).toISOString(),
-          provider: sessionData.session.provider,
-        },
-        timestamp: new Date().toISOString(),
-      })
-
-      setIsLoggedIn(true)
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to RedFox CRM!",
-      })
-
-      // Force a router refresh to update auth state
-      router.refresh()
-
-      // Check if user needs onboarding before redirecting
-      const [profileResult, membershipsResult] = await Promise.all([
-        supabase.from("profiles").select("default_org").eq("id", data.user.id).single(),
-        supabase.from("memberships").select("org_id, role").eq("user_id", data.user.id),
-      ])
-
-      const profile = profileResult.data
-      const memberships = membershipsResult.data || []
-      const hasOrg = memberships.length > 0
-      const hasDefault = !!profile?.default_org
-      const needsOnboarding = !(hasOrg && hasDefault)
-
-      if (needsOnboarding) {
-        // Redirect to dashboard, onboarding will show automatically
-        router.replace(`/dashboard/${data.user.id}`)
-      } else {
-        // Use existing redirect logic
-        const redirectPath = redirectTo || `/dashboard/${data.user.id}`
-        router.replace(redirectPath)
+        // Small delay to let the auth state update
+        setTimeout(() => {
+          router.push("/dashboard")
+          router.refresh()
+        }, 500)
       }
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("Unexpected login error:", error)
       toast({
         title: "Login Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -111,71 +86,84 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-white mb-2">Welcome Back</h1>
-        <p className="text-xl text-gray-300">Log in to your RedFox CRM account</p>
-      </div>
-
-      <form onSubmit={handleLogin} className="mt-8 space-y-6">
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="email" className="text-white">
-              Email address
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              placeholder="Enter your email"
-            />
+    <div className="min-h-screen flex items-center justify-center bg-[#08042B] px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+          <CardDescription className="text-center">
+            {fromSignup && !verified
+              ? "Please check your email for a verification link, then log in below."
+              : verified
+                ? "Your email has been verified! Please log in to continue."
+                : "Sign in to your RedFox CRM account"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B]"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+          <div className="mt-4 text-center text-sm">
+            <Link href="/reset-password" className="text-[#F67721] hover:underline">
+              Forgot your password?
+            </Link>
           </div>
-          <div>
-            <Label htmlFor="password" className="text-white">
-              Password
-            </Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              placeholder="Enter your password"
-            />
+          <div className="mt-2 text-center text-sm">
+            {"Don't have an account? "}
+            <Link href="/signup" className="text-[#F67721] hover:underline">
+              Sign up
+            </Link>
           </div>
-        </div>
-
-        <div>
-          <Button
-            type="submit"
-            className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white font-semibold py-2 px-4 rounded-md transition duration-300 ease-in-out"
-            disabled={isLoading}
-          >
-            {isLoading ? "Logging in..." : "Log in"}
-          </Button>
-        </div>
-      </form>
-
-      <div className="text-center">
-        <Link href="/reset-password" className="text-[#F67721] hover:text-[#F5F906] transition-colors">
-          Forgot your password?
-        </Link>
-      </div>
-
-      <div className="text-center text-gray-300">
-        Don't have an account?{" "}
-        <Link href="/signup" className="text-[#F67721] hover:text-[#F5F906] transition-colors">
-          Sign up
-        </Link>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

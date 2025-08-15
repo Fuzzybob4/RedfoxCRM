@@ -1,22 +1,24 @@
 "use client"
 
-import { useOnboardingGate } from "@/hooks/useOnboardingGate"
 import { OnboardingWizard } from "@/components/OnboardingWizard"
+import { useOnboardingGate } from "@/hooks/useOnboardingGate"
 
 export function OnboardingGate() {
   const { needsOnboarding, loading } = useOnboardingGate()
 
-  // Don't render anything while loading
-  if (loading) return null
+  if (loading) {
+    return null // Don't show anything while loading
+  }
 
-  // Don't render if onboarding is not needed
-  if (!needsOnboarding) return null
+  if (!needsOnboarding) {
+    return null
+  }
 
   return (
     <OnboardingWizard
       open={true}
       onClose={() => {
-        // Refresh the page to update the onboarding state
+        // Refresh the page to reload the onboarding state
         window.location.reload()
       }}
     />

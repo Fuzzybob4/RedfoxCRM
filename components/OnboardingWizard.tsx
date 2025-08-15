@@ -20,7 +20,7 @@ type OrgForm = {
 type InviteRow = {
   name?: string
   email: string
-  role: "admin" | "member" | "viewer"
+  role: "admin" | "manager" | "employee" | "viewer"
 }
 
 interface OnboardingWizardProps {
@@ -38,7 +38,7 @@ const PLAN_OPTIONS = [
 export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [org, setOrg] = useState<OrgForm>({ name: "", plan: "pro" })
-  const [invites, setInvites] = useState<InviteRow[]>([{ email: "", role: "member" }])
+  const [invites, setInvites] = useState<InviteRow[]>([{ email: "", role: "employee" }])
   const [orgId, setOrgId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const { toast } = useToast()
@@ -55,12 +55,33 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
 
     setBusy(true)
     try {
+      console.log("Starting business creation process...")
+
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser()
-      if (!user) throw new Error("No authenticated user")
+
+      if (userError) {
+        console.error("User error:", userError)
+        throw new Error("Authentication error: " + userError.message)
+      }
+
+      if (!user) {
+        throw new Error("No authenticated user found")
+      }
+
+      console.log("User authenticated:", user.id)
 
       // 1) Create organization
+      console.log("Creating organization with data:", {
+        name: org.name.trim(),
+        plan: org.plan,
+        address: org.address?.trim() || null,
+        phone: org.phone?.trim() || null,
+        owner_id: user.id,
+      })
+
       const { data: newOrg, error: orgErr } = await supabase
         .from("organizations")
         .insert({
@@ -73,21 +94,43 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
         .select("id")
         .single()
 
-      if (orgErr) throw orgErr
+      if (orgErr) {
+        console.error("Organization creation error:", orgErr)
+        throw new Error("Failed to create organization: " + orgErr.message)
+      }
+
+      if (!newOrg?.id) {
+        throw new Error("Organization created but no ID returned")
+      }
+
+      console.log("Organization created successfully:", newOrg.id)
 
       // 2) Create owner membership
+      console.log("Creating owner membership...")
       const { error: memErr } = await supabase.from("memberships").insert({
         org_id: newOrg.id,
         user_id: user.id,
         role: "owner",
       })
 
-      if (memErr) throw memErr
+      if (memErr) {
+        console.error("Membership creation error:", memErr)
+        throw new Error("Failed to create membership: " + memErr.message)
+      }
+
+      console.log("Membership created successfully")
 
       // 3) Set as default organization
+      console.log("Setting default organization...")
       const { error: profileErr } = await supabase.from("profiles").update({ default_org: newOrg.id }).eq("id", user.id)
 
-      if (profileErr) throw profileErr
+      if (profileErr) {
+        console.error("Profile update error:", profileErr)
+        // Don't fail the whole process for this
+        console.warn("Failed to set default org, but continuing...")
+      } else {
+        console.log("Default organization set successfully")
+      }
 
       setOrgId(newOrg.id)
       toast({
@@ -96,7 +139,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
       })
       setStep(2)
     } catch (error) {
-      console.error("Error creating business:", error)
+      console.error("Error in saveBusiness:", error)
       toast({
         title: "Error creating business",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
@@ -162,7 +205,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
   }
 
   const addInviteRow = () => {
-    setInvites([...invites, { email: "", role: "member" }])
+    setInvites([...invites, { email: "", role: "employee" }])
   }
 
   const updateInvite = (index: number, field: keyof InviteRow, value: string) => {
@@ -318,7 +361,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="employee">Employee</SelectItem>
                         <SelectItem value="viewer">Viewer</SelectItem>
                       </SelectContent>
                     </Select>
