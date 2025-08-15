@@ -2,9 +2,7 @@ import { supabase } from "@/lib/supabase"
 
 export interface BusinessInfo {
   name: string
-  industry: string
   size: string
-  plan: string
 }
 
 export async function createBusiness(businessInfo: BusinessInfo) {
@@ -34,8 +32,8 @@ export async function createBusiness(businessInfo: BusinessInfo) {
     // Try using the RPC function first (recommended approach)
     console.log("Attempting RPC function call...")
     const { data: rpcResult, error: rpcError } = await supabase.rpc("provision_first_org", {
-      org_name: businessInfo.name,
-      org_plan: businessInfo.plan,
+      p_name: businessInfo.name,
+      p_plan: "pro", // Default plan since they already signed up
     })
 
     if (rpcError) {
@@ -48,7 +46,7 @@ export async function createBusiness(businessInfo: BusinessInfo) {
         .insert([
           {
             name: businessInfo.name,
-            plan: businessInfo.plan,
+            plan: "pro",
             owner_id: user.id,
           },
         ])
@@ -101,11 +99,15 @@ export async function createBusiness(businessInfo: BusinessInfo) {
 
     console.log("RPC function result:", rpcResult)
 
-    if (!rpcResult?.success) {
-      throw new Error(rpcResult?.error || "Failed to create organization via RPC")
+    if (!rpcResult) {
+      throw new Error("Failed to create organization via RPC")
     }
 
-    return rpcResult
+    return {
+      success: true,
+      org_id: rpcResult,
+      message: "Organization created successfully via RPC",
+    }
   } catch (error) {
     console.error("Error in createBusiness:", error)
     throw error

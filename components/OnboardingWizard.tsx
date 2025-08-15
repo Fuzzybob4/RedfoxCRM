@@ -21,9 +21,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [loading, setLoading] = useState(false)
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     name: "",
-    industry: "",
     size: "",
-    plan: "starter",
   })
   const { toast } = useToast()
 
@@ -113,27 +111,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="industry">Industry</Label>
-                <Select
-                  value={businessInfo.industry}
-                  onValueChange={(value) => setBusinessInfo({ ...businessInfo, industry: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technology">Technology</SelectItem>
-                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                    <SelectItem value="finance">Finance</SelectItem>
-                    <SelectItem value="retail">Retail</SelectItem>
-                    <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                    <SelectItem value="consulting">Consulting</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="company-size">Company Size</Label>
                 <Select
                   value={businessInfo.size}
@@ -152,24 +129,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="plan">Plan</Label>
-                <Select
-                  value={businessInfo.plan}
-                  onValueChange={(value) => setBusinessInfo({ ...businessInfo, plan: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="starter">Starter - Free</SelectItem>
-                    <SelectItem value="pro">Pro - $29/month</SelectItem>
-                    <SelectItem value="enterprise">Enterprise - $99/month</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || !businessInfo.name.trim()}>
                 {loading ? "Creating..." : "Continue"}
               </Button>
             </form>

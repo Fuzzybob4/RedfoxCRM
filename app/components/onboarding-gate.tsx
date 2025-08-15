@@ -4,46 +4,34 @@ import type React from "react"
 
 import { useOnboardingGate } from "@/hooks/useOnboardingGate"
 import { OnboardingWizard } from "@/components/OnboardingWizard"
-import { useAuth } from "./auth-provider"
 
 interface OnboardingGateProps {
   children: React.ReactNode
 }
 
 export function OnboardingGate({ children }: OnboardingGateProps) {
-  const { isLoggedIn, loading: authLoading } = useAuth()
-  const { needsOnboarding, loading: onboardingLoading, error, refetch } = useOnboardingGate()
+  const { needsOnboarding, loading, error, completeOnboarding } = useOnboardingGate()
 
-  // Show loading while checking auth and onboarding status
-  if (authLoading || onboardingLoading) {
+  // Show loading state
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
     )
   }
 
-  // If there's an auth error and user is not logged in, show children (login page)
-  if (error && !isLoggedIn) {
-    console.log("Auth error and not logged in, showing children:", error)
+  // Show error state or normal app if there's an auth error
+  if (error) {
+    console.error("Auth error in onboarding gate:", error)
     return <>{children}</>
   }
 
-  // If user is logged in and needs onboarding, show wizard
-  if (isLoggedIn && needsOnboarding) {
-    return (
-      <OnboardingWizard
-        onComplete={() => {
-          console.log("Onboarding completed, refetching status...")
-          refetch()
-        }}
-      />
-    )
+  // Show onboarding if needed
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={completeOnboarding} />
   }
 
-  // Otherwise, show the normal app
+  // Show normal app
   return <>{children}</>
 }
