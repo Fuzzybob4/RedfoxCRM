@@ -1,98 +1,126 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Play } from "lucide-react"
+import { ArrowRight, Play, Star, Users, TrendingUp, Shield } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#08042B] via-[#1a0f4a] to-[#2d1b69]">
+    <section className="relative min-h-screen bg-gradient-to-br from-[#08042B] via-[#1a0f4a] to-[#2d1b69] overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <Image src="/abstract-geometric-pattern.png" alt="" fill className="object-cover" priority />
       </div>
 
-      <div className="container mx-auto px-4 py-20 relative z-10">
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-10 w-20 h-20 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
+      <div className="absolute top-40 right-20 w-32 h-32 bg-purple-500/20 rounded-full blur-xl animate-pulse delay-1000"></div>
+      <div className="absolute bottom-40 left-20 w-24 h-24 bg-orange-500/20 rounded-full blur-xl animate-pulse delay-2000"></div>
+
+      <div className="relative z-10 container mx-auto px-4 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm">
-                <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                Now Available - Advanced CRM Features
-              </div>
-
-              <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
-                Streamline Your
-                <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Business Workflow
-                </span>
-              </h1>
-
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Powerful CRM tools tailored to your business, available at your fingertips. Manage customers, track
-                sales, and grow your revenue with ease.
-              </p>
+          <div className="text-center lg:text-left">
+            {/* Trust Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
+              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+              <span className="text-white text-sm">Trusted by 10,000+ businesses</span>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              Transform Your
+              <span className="block bg-gradient-to-r from-[#F67721] to-[#F5F906] bg-clip-text text-transparent">
+                Customer Relationships
+              </span>
+            </h1>
+
+            <p className="text-xl text-gray-300 mb-8 max-w-2xl">
+              RedFox CRM helps landscaping and service businesses grow faster with powerful customer management,
+              automated workflows, and intelligent insights.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <Button
+                asChild
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="bg-gradient-to-r from-[#F67721] to-[#F5F906] hover:from-[#F5F906] hover:to-[#F67721] text-[#08042B] font-semibold px-8 py-4 text-lg"
               >
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <Link href="/signup">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
               </Button>
 
               <Button
                 variant="outline"
                 size="lg"
-                className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300 bg-transparent"
+                className="border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg bg-transparent"
               >
-                <Play className="mr-2 h-5 w-5" />
+                <Play className="mr-2 w-5 h-5" />
                 Watch Demo
               </Button>
             </div>
 
-            <div className="flex items-center space-x-8 pt-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">10K+</div>
-                <div className="text-sm text-gray-400">Active Users</div>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-8 text-center lg:text-left">
+              <div>
+                <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                  <Users className="w-5 h-5 text-[#F67721]" />
+                  <span className="text-2xl font-bold text-white">10K+</span>
+                </div>
+                <p className="text-gray-400 text-sm">Active Users</p>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">99.9%</div>
-                <div className="text-sm text-gray-400">Uptime</div>
+              <div>
+                <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                  <TrendingUp className="w-5 h-5 text-[#F67721]" />
+                  <span className="text-2xl font-bold text-white">40%</span>
+                </div>
+                <p className="text-gray-400 text-sm">Revenue Growth</p>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">24/7</div>
-                <div className="text-sm text-gray-400">Support</div>
+              <div>
+                <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                  <Shield className="w-5 h-5 text-[#F67721]" />
+                  <span className="text-2xl font-bold text-white">99.9%</span>
+                </div>
+                <p className="text-gray-400 text-sm">Uptime</p>
               </div>
             </div>
           </div>
 
           {/* Right Content - Dashboard Preview */}
           <div className="relative">
-            <div className="relative z-10 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl">
+            <div className="relative z-10 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <Image
                 src="/modern-crm-dashboard.png"
-                alt="CRM Dashboard Preview"
+                alt="RedFox CRM Dashboard Preview"
                 width={600}
                 height={400}
-                className="rounded-lg shadow-lg"
+                className="rounded-lg shadow-2xl"
                 priority
               />
             </div>
 
-            {/* Floating Elements */}
-            <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-400 to-blue-500 rounded-full p-4 shadow-lg animate-pulse">
-              <div className="w-4 h-4 bg-white rounded-full"></div>
+            {/* Floating Cards */}
+            <div className="absolute -top-4 -right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg animate-bounce">
+              <div className="text-sm font-medium">Revenue Up</div>
+              <div className="text-2xl font-bold">+32%</div>
             </div>
 
-            <div className="absolute -bottom-4 -left-4 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full p-6 shadow-lg">
-              <div className="text-white text-sm font-semibold">+25% Growth</div>
+            <div className="absolute -bottom-4 -left-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg animate-bounce delay-1000">
+              <div className="text-sm font-medium">New Customers</div>
+              <div className="text-2xl font-bold">+127</div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Bottom Wave */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 120" className="w-full h-20 fill-white">
+          <path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,64C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z"></path>
+        </svg>
       </div>
     </section>
   )

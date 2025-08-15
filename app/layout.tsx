@@ -11,8 +11,9 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Red Fox CRM - Streamline Your Business Workflow",
-  description: "Powerful CRM tools tailored to your business, available at your fingertips.",
+  title: "RedFox CRM - Transform Your Customer Relationships",
+  description:
+    "RedFox CRM helps landscaping and service businesses grow faster with powerful customer management, automated workflows, and intelligent insights.",
     generator: 'v0.app'
 }
 
@@ -25,12 +26,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <Header />
           <OnboardingGate>
-            <main>{children}</main>
+            <Header />
+            {children}
+            <Footer />
+            <Toaster />
           </OnboardingGate>
-          <Footer />
-          <Toaster />
         </AuthProvider>
       </body>
     </html>

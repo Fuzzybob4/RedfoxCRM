@@ -1,133 +1,138 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Star, Quote } from "lucide-react"
 import Image from "next/image"
 
 const testimonials = [
   {
     name: "Sarah Johnson",
-    role: "Owner, Bright Lights Holiday Services",
-    company: "Holiday Lighting Business",
+    title: "Owner, Green Thumb Landscaping",
     image: "/professional-woman-headshot.png",
     rating: 5,
-    text: "RedFox CRM transformed our holiday lighting business. We can now manage 200+ installations seamlessly, track our crews in real-time, and our customer satisfaction has never been higher. The seasonal scheduling features are a game-changer!",
+    content:
+      "RedFox CRM transformed our business operations. We've increased our customer retention by 40% and our team is more organized than ever. The scheduling features alone have saved us 10 hours per week.",
+    stats: {
+      label: "Customer Retention",
+      value: "+40%",
+    },
   },
   {
     name: "Mike Rodriguez",
-    role: "Operations Manager",
-    company: "GreenScape Landscaping",
+    title: "CEO, Holiday Lights Pro",
     image: "/professional-man-headshot.png",
     rating: 5,
-    text: "The route optimization and recurring service features have saved us hours every week. Our team loves the mobile app, and our customers appreciate the professional communication tools. ROI was evident within the first month.",
+    content:
+      "The seasonal business features are incredible. RedFox CRM helps us manage our holiday lighting installations and takedowns seamlessly. Our revenue has grown 60% since implementing the system.",
+    stats: {
+      label: "Revenue Growth",
+      value: "+60%",
+    },
   },
   {
-    name: "Emily Chen",
-    role: "CEO",
-    company: "Urban Garden Solutions",
+    name: "Jennifer Chen",
+    title: "Operations Manager, Elite Property Services",
     image: "/professional-woman-headshot-2.png",
     rating: 5,
-    text: "As we scaled from 50 to 500+ clients, RedFox CRM grew with us. The automation tools handle our follow-ups, the reporting gives us insights we never had before, and the customer portal has reduced our admin work by 60%.",
+    content:
+      "Managing multiple properties used to be a nightmare. Now with RedFox CRM, we can track all maintenance requests, coordinate our teams, and keep tenants happy. It's been a game-changer for our efficiency.",
+    stats: {
+      label: "Efficiency Gain",
+      value: "+75%",
+    },
   },
   {
     name: "David Thompson",
-    role: "Founder",
-    company: "Elite Property Services",
+    title: "Founder, Thompson Home Services",
     image: "/professional-man-headshot-2.png",
     rating: 5,
-    text: "The integration capabilities are outstanding. We connected our accounting software, scheduling tools, and payment processing. Everything works together seamlessly, and our team productivity has increased by 40%.",
+    content:
+      "The automation features have revolutionized how we handle customer communications. Follow-ups are automatic, scheduling is seamless, and our customer satisfaction scores have never been higher.",
+    stats: {
+      label: "Customer Satisfaction",
+      value: "+85%",
+    },
   },
-]
-
-const stats = [
-  { value: "98%", label: "Customer Satisfaction" },
-  { value: "45%", label: "Average Revenue Increase" },
-  { value: "60%", label: "Time Saved on Admin" },
-  { value: "10K+", label: "Happy Customers" },
 ]
 
 export function TestimonialsSection() {
   return (
-    <section className="py-24 bg-gradient-to-b from-[#08042B] to-[#1a0f4a]">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <Badge className="mb-4 bg-yellow-500/20 text-yellow-300 border-yellow-500/30">Testimonials</Badge>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
-            Trusted by Thousands of
-            <span className="block bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-              Growing Businesses
-            </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Trusted by Thousands of Service Businesses
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            See how businesses like yours are using RedFox CRM to streamline operations, increase revenue, and deliver
-            exceptional customer experiences.
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            See how RedFox CRM is helping service businesses across the country grow faster and operate more
+            efficiently.
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                {stat.value}
-              </div>
-              <div className="text-gray-400 text-sm lg:text-base">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
         {/* Testimonials Grid */}
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {testimonials.map((testimonial, index) => (
-            <Card
-              key={index}
-              className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300"
-            >
+            <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 bg-gray-50">
               <CardContent className="p-8">
-                <div className="flex items-start space-x-4 mb-6">
-                  <div className="relative">
-                    <Image
-                      src={testimonial.image || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      width={60}
-                      height={60}
-                      className="rounded-full"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-white">{testimonial.name}</h4>
-                    <p className="text-gray-400 text-sm">{testimonial.role}</p>
-                    <p className="text-gray-500 text-sm">{testimonial.company}</p>
-                  </div>
-                  <div className="flex space-x-1">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
+                {/* Quote Icon */}
+                <Quote className="w-8 h-8 text-[#F67721] mb-4" />
+
+                {/* Rating */}
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+
+                {/* Content */}
+                <p className="text-gray-700 mb-6 leading-relaxed">"{testimonial.content}"</p>
+
+                {/* Stats */}
+                <div className="bg-gradient-to-r from-[#F67721] to-[#F5F906] rounded-lg p-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{testimonial.stats.value}</div>
+                    <div className="text-white/90 text-sm">{testimonial.stats.label}</div>
                   </div>
                 </div>
 
-                <div className="relative">
-                  <Quote className="absolute -top-2 -left-2 h-8 w-8 text-blue-400/30" />
-                  <p className="text-gray-300 leading-relaxed pl-6">"{testimonial.text}"</p>
+                {/* Author */}
+                <div className="flex items-center gap-4">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                    <Image
+                      src={testimonial.image || "/placeholder.svg"}
+                      alt={testimonial.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                    <div className="text-gray-600 text-sm">{testimonial.title}</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="text-center mt-16">
-          <p className="text-gray-400 mb-4">Join thousands of satisfied customers who trust RedFox CRM</p>
-          <div className="flex justify-center items-center space-x-2 text-yellow-400">
-            <div className="flex space-x-1">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-current" />
-              ))}
-            </div>
-            <span className="text-white font-semibold">4.9/5</span>
-            <span className="text-gray-400">from 2,500+ reviews</span>
+        {/* Bottom Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 text-center">
+          <div>
+            <div className="text-3xl font-bold text-[#F67721] mb-2">10,000+</div>
+            <div className="text-gray-600">Happy Customers</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-[#F67721] mb-2">99.9%</div>
+            <div className="text-gray-600">Uptime</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-[#F67721] mb-2">4.9/5</div>
+            <div className="text-gray-600">Customer Rating</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-[#F67721] mb-2">24/7</div>
+            <div className="text-gray-600">Support</div>
           </div>
         </div>
       </div>

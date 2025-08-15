@@ -5,14 +5,13 @@ import { useAuth } from "../app/components/auth-provider"
 import { supabase } from "../lib/supabase"
 
 export function useOnboardingGate() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function checkOnboardingStatus() {
-      if (!user) {
-        setNeedsOnboarding(false)
+      if (!user || authLoading) {
         setLoading(false)
         return
       }
@@ -40,7 +39,7 @@ export function useOnboardingGate() {
     }
 
     checkOnboardingStatus()
-  }, [user])
+  }, [user, authLoading])
 
   return { needsOnboarding, loading }
 }
