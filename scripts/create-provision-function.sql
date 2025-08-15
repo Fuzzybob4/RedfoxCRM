@@ -1,75 +1,63 @@
 -- Create the provision_first_org function
-CREATE OR REPLACE FUNCTION public.provision_first_org(
-  p_name TEXT,
-  p_plan TEXT DEFAULT 'pro',
-  p_address TEXT DEFAULT NULL,
-  p_phone TEXT DEFAULT NULL,
-  p_email TEXT DEFAULT NULL,
-  p_website TEXT DEFAULT NULL
+CREATE OR REPLACE FUNCTION provision_first_org(
+  org_name TEXT,
+  org_plan TEXT DEFAULT 'pro',
+  company_size TEXT DEFAULT 'small'
 )
-RETURNS TEXT
+RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  new_org_id UUID;
   current_user_id UUID;
+  new_org_id UUID;
+  result JSON;
 BEGIN
-  -- Get the current user ID
+  -- Get the current authenticated user
   current_user_id := auth.uid();
   
   -- Check if user is authenticated
   IF current_user_id IS NULL THEN
-    RAISE EXCEPTION 'User must be authenticated';
+    RAISE EXCEPTION 'User not authenticated';
   END IF;
 
-  -- Insert the organization
-  INSERT INTO public.organizations (
-    name,
-    plan,
-    owner_id,
-    address,
-    phone,
-    email,
-    website,
-    is_active
-  ) VALUES (
-    p_name,
-    p_plan::TEXT,
-    current_user_id,
-    p_address,
-    p_phone,
-    p_email,
-    p_website,
-    true
-  )
+  -- Check if user already has an organization
+  IF EXISTS (
+    SELECT 1 FROM organization_memberships 
+    WHERE user_id = current_user_id
+  ) THEN
+    RAISE EXCEPTION 'User already has an organization';
+  END IF;
+
+  -- Insert the new organization
+  INSERT INTO organizations (name, plan, owner_id, company_size)
+  VALUES (org_name, org_plan, current_user_id, company_size)
   RETURNING id INTO new_org_id;
 
-  -- Create owner membership
-  INSERT INTO public.memberships (
-    org_id,
-    user_id,
-    role,
-    is_active,
-    hired_date
-  ) VALUES (
-    new_org_id,
-    current_user_id,
-    'owner',
-    true,
-    CURRENT_DATE
+  -- Create membership for the owner
+  INSERT INTO organization_memberships (user_id, organization_id, role)
+  VALUES (current_user_id, new_org_id, 'owner');
+
+  -- Return success result
+  result := json_build_object(
+    'success', true,
+    'organization_id', new_org_id,
+    'message', 'Organization created successfully'
   );
 
-  -- Update user's default org
-  UPDATE public.profiles 
-  SET default_org = new_org_id,
-      updated_at = NOW()
-  WHERE id = current_user_id;
+  RETURN result;
 
-  -- Return the organization ID
-  RETURN new_org_id::TEXT;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Return error result
+    result := json_build_object(
+      'success', false,
+      'error', SQLERRM,
+      'message', 'Failed to create organization'
+    );
+    RETURN result;
 END;
 $$;
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.provision_first_org TO authenticated;
+GRANT EXECUTE ON FUNCTION provision_first_org(TEXT, TEXT, TEXT) TO authenticated;

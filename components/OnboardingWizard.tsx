@@ -4,48 +4,65 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createBusiness, type BusinessInfo } from "@/lib/onboarding"
-import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
+import { supabase } from "@/lib/supabase"
 
 interface OnboardingWizardProps {
   onComplete: () => void
 }
 
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
-  const [step, setStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
-    name: "",
-    size: "",
+    businessName: "",
+    companySize: "",
   })
   const { toast } = useToast()
 
   const handleBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!businessInfo.businessName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your business name",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!businessInfo.companySize) {
+      toast({
+        title: "Error",
+        description: "Please select your company size",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
-      console.log("Submitting business info:", businessInfo)
       const result = await createBusiness(businessInfo)
-      console.log("Business creation result:", result)
 
-      toast({
-        title: "Success!",
-        description: "Your organization has been created successfully.",
-      })
-
-      // Move to next step
-      setStep(2)
+      if (result.success) {
+        toast({
+          title: "Success!",
+          description: result.message,
+        })
+        setCurrentStep(2)
+      }
     } catch (error) {
-      console.error("Error creating business:", error)
+      console.error("Business creation failed:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create organization",
+        description: error instanceof Error ? error.message : "Failed to create business",
         variant: "destructive",
       })
     } finally {
@@ -53,68 +70,78 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     }
   }
 
-  const handleComplete = () => {
-    toast({
-      title: "Welcome!",
-      description: "Your account setup is complete. Welcome to RedFox CRM!",
-    })
-    onComplete()
-  }
-
-  // Debug function for testing direct insert
-  const testDirectInsert = async () => {
+  const handleTestDirectInsert = async () => {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
+      console.log("logged-in user id =", user?.id)
+
+      if (!user) {
+        alert("Please sign in first")
+        return
+      }
+
       const { data, error } = await supabase
         .from("organizations")
-        .insert([{ name: "RLS Test", plan: "pro", owner_id: user!.id }]) // only required cols
+        .insert([{ name: "RLS Test", plan: "pro", owner_id: user.id }])
         .select("id")
         .single()
+
       console.log("direct insert ->", { data, error })
+
       toast({
-        title: "Direct Insert Test",
-        description: `Result: ${data ? "Success" : "Failed"} - Check console for details`,
-        variant: data ? "default" : "destructive",
+        title: error ? "Insert Failed" : "Insert Success",
+        description: error ? error.message : `Created org with ID: ${data?.id}`,
+        variant: error ? "destructive" : "default",
       })
     } catch (error) {
-      console.error("Direct insert test error:", error)
+      console.error("Direct insert test failed:", error)
       toast({
-        title: "Direct Insert Test Failed",
+        title: "Test Failed",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       })
     }
   }
 
-  if (step === 1) {
+  if (currentStep === 1) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Welcome to RedFox CRM</CardTitle>
-            <CardDescription>Let's set up your business information to get started.</CardDescription>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Welcome to RedFox CRM</CardTitle>
+            <CardDescription>Let's set up your business profile to get started</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleBusinessSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="business-name">Business Name</Label>
+                <Label htmlFor="businessName">Business Name *</Label>
                 <Input
-                  id="business-name"
+                  id="businessName"
                   type="text"
                   placeholder="Enter your business name"
-                  value={businessInfo.name}
-                  onChange={(e) => setBusinessInfo({ ...businessInfo, name: e.target.value })}
+                  value={businessInfo.businessName}
+                  onChange={(e) =>
+                    setBusinessInfo((prev) => ({
+                      ...prev,
+                      businessName: e.target.value,
+                    }))
+                  }
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="company-size">Company Size</Label>
+                <Label htmlFor="companySize">Company Size</Label>
                 <Select
-                  value={businessInfo.size}
-                  onValueChange={(value) => setBusinessInfo({ ...businessInfo, size: value })}
+                  value={businessInfo.companySize}
+                  onValueChange={(value) =>
+                    setBusinessInfo((prev) => ({
+                      ...prev,
+                      companySize: value,
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select company size" />
@@ -129,15 +156,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 </Select>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading || !businessInfo.name.trim()}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Creating..." : "Continue"}
               </Button>
             </form>
 
             {/* Debug section */}
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600 mb-2">Debug Tools:</p>
-              <Button variant="outline" size="sm" onClick={testDirectInsert} className="w-full bg-transparent">
+              <p className="text-sm text-gray-500 mb-2">Debug Tools:</p>
+              <Button variant="outline" size="sm" onClick={handleTestDirectInsert} className="w-full bg-transparent">
                 Test Direct Insert
               </Button>
             </div>
@@ -147,33 +174,31 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     )
   }
 
-  if (step === 2) {
+  if (currentStep === 2) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Setup Complete!</CardTitle>
-            <CardDescription>Your organization has been created successfully.</CardDescription>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-green-600">🎉 Welcome to RedFox CRM!</CardTitle>
+            <CardDescription>Your business profile has been created successfully</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Welcome to RedFox CRM!</h3>
-                <p className="text-gray-600 mb-4">
-                  Your account is now set up and ready to use. You can start managing your customers, projects, and
-                  more.
-                </p>
-              </div>
-
-              <Button onClick={handleComplete} className="w-full">
-                Get Started
-              </Button>
+          <CardContent className="text-center space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">Business Summary</h3>
+              <p>
+                <strong>Name:</strong> {businessInfo.businessName}
+              </p>
+              <p>
+                <strong>Size:</strong> {businessInfo.companySize}
+              </p>
+              <p>
+                <strong>Plan:</strong> Pro
+              </p>
             </div>
+
+            <Button onClick={onComplete} className="w-full">
+              Get Started
+            </Button>
           </CardContent>
         </Card>
       </div>

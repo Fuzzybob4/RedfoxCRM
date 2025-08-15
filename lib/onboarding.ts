@@ -1,168 +1,129 @@
-import { supabase } from "@/lib/supabase"
+import { supabase } from "./supabase"
 
 export interface BusinessInfo {
-  name: string
-  size: string
+  businessName: string
+  companySize: string
 }
 
 export async function createBusiness(businessInfo: BusinessInfo) {
+  console.log("Creating business with info:", businessInfo)
+
+  // Check for authenticated user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  console.log("logged-in user id =", user?.id, "error =", userError)
+
+  if (!user) {
+    alert("Please sign in first")
+    throw new Error("User not authenticated")
+  }
+
   try {
-    console.log("Creating business with info:", businessInfo)
-
-    // Check authentication first
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    console.log("logged-in user id =", user?.id, "error =", authError)
-
-    if (authError) {
-      console.error("Authentication error:", authError)
-      throw new Error(`Authentication failed: ${authError.message}`)
-    }
-
-    if (!user) {
-      alert("Please sign in first")
-      throw new Error("User not authenticated")
-    }
-
-    console.log("User authenticated, proceeding with business creation...")
-
-    // Try using the RPC function first (recommended approach)
+    // First try using the RPC function (recommended approach)
     console.log("Attempting RPC function call...")
-    const { data: rpcResult, error: rpcError } = await supabase.rpc("provision_first_org", {
-      p_name: businessInfo.name,
-      p_plan: "pro", // Default plan since they already signed up
+    const { data: rpcData, error: rpcError } = await supabase.rpc("provision_first_org", {
+      org_name: businessInfo.businessName,
+      org_plan: "pro",
+      company_size: businessInfo.companySize,
     })
 
-    if (rpcError) {
-      console.error("RPC function error:", rpcError)
-      console.log("Falling back to direct insert...")
-
-      // Fallback to direct insert
-      const { data: orgData, error: insertError } = await supabase
-        .from("organizations")
-        .insert([
-          {
-            name: businessInfo.name,
-            plan: "pro",
-            owner_id: user.id,
-          },
-        ])
-        .select("id")
-        .single()
-
-      console.log("direct insert ->", { data: orgData, error: insertError })
-
-      if (insertError) {
-        console.error("Direct insert failed:", insertError)
-        throw new Error(`Failed to create organization: ${insertError.message}`)
-      }
-
-      if (!orgData) {
-        throw new Error("No organization data returned from insert")
-      }
-
-      // Create membership manually
-      const { error: membershipError } = await supabase.from("memberships").insert([
-        {
-          user_id: user.id,
-          org_id: orgData.id,
-          role: "owner",
-          is_active: true,
-        },
-      ])
-
-      if (membershipError) {
-        console.error("Membership creation failed:", membershipError)
-        throw new Error(`Failed to create membership: ${membershipError.message}`)
-      }
-
-      // Update profile default org
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ default_org: orgData.id })
-        .eq("id", user.id)
-
-      if (profileError) {
-        console.error("Profile update failed:", profileError)
-        // Don't throw here as the org is created, just log the error
-      }
-
+    if (!rpcError && rpcData?.success) {
+      console.log("RPC success:", rpcData)
       return {
         success: true,
-        org_id: orgData.id,
-        message: "Organization created successfully via direct insert",
+        organizationId: rpcData.organization_id,
+        message: "Business created successfully via RPC",
       }
     }
 
-    console.log("RPC function result:", rpcResult)
+    console.log("RPC failed, trying direct insert...", rpcError)
 
-    if (!rpcResult) {
-      throw new Error("Failed to create organization via RPC")
+    // Fallback to direct insert
+    const { data: orgData, error: orgError } = await supabase
+      .from("organizations")
+      .insert([
+        {
+          name: businessInfo.businessName,
+          plan: "pro",
+          owner_id: user.id,
+          company_size: businessInfo.companySize,
+        },
+      ])
+      .select("id")
+      .single()
+
+    console.log("direct insert ->", { data: orgData, error: orgError })
+
+    if (orgError) {
+      throw new Error(`Failed to create organization: ${orgError.message}`)
+    }
+
+    // Create membership
+    const { error: membershipError } = await supabase.from("organization_memberships").insert([
+      {
+        user_id: user.id,
+        organization_id: orgData.id,
+        role: "owner",
+      },
+    ])
+
+    if (membershipError) {
+      console.error("Membership creation failed:", membershipError)
+      // Don't throw here as org was created successfully
     }
 
     return {
       success: true,
-      org_id: rpcResult,
-      message: "Organization created successfully via RPC",
+      organizationId: orgData.id,
+      message: "Business created successfully via direct insert",
     }
   } catch (error) {
-    console.error("Error in createBusiness:", error)
+    console.error("Business creation error:", error)
     throw error
   }
 }
 
-export async function checkOnboardingStatus() {
+export async function checkUserOrganization() {
+  console.log("Checking user organization...")
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  console.log("logged-in user id =", user?.id, "error =", userError)
+
+  if (!user) {
+    console.log("No authenticated user found")
+    return null
+  }
+
   try {
-    console.log("Checking onboarding status...")
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    console.log("logged-in user id =", user?.id, "error =", authError)
-
-    if (authError) {
-      console.error("Auth error in onboarding check:", authError)
-      return { needsOnboarding: false, user: null, error: authError.message }
-    }
-
-    if (!user) {
-      console.log("No authenticated user found")
-      return { needsOnboarding: false, user: null, error: "No user authenticated" }
-    }
-
-    // Check for existing memberships
-    const { data: memberships, error: membershipError } = await supabase
-      .from("memberships")
-      .select("org_id, organizations(name, plan)")
+    const { data: memberships, error } = await supabase
+      .from("organization_memberships")
+      .select(`
+        organization_id,
+        role,
+        organizations (
+          id,
+          name,
+          plan,
+          company_size
+        )
+      `)
       .eq("user_id", user.id)
-      .eq("is_active", true)
+      .limit(1)
 
-    if (membershipError) {
-      console.error("Error checking memberships:", membershipError)
-      return { needsOnboarding: true, user, error: membershipError.message }
+    if (error) {
+      console.error("Error checking organization:", error)
+      return null
     }
 
-    console.log("User memberships:", memberships)
-
-    const needsOnboarding = !memberships || memberships.length === 0
-
-    return {
-      needsOnboarding,
-      user,
-      memberships,
-      error: null,
-    }
+    console.log("Organization check result:", memberships)
+    return memberships?.[0] || null
   } catch (error) {
-    console.error("Error in checkOnboardingStatus:", error)
-    return {
-      needsOnboarding: false,
-      user: null,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }
+    console.error("Unexpected error checking organization:", error)
+    return null
   }
 }
