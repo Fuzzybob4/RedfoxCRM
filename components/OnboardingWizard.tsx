@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { createBusiness, composeAddress } from "@/lib/onboarding"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,8 +14,14 @@ import { X, Building, Users, CreditCard, Check } from "lucide-react"
 type OrgForm = {
   name: string
   plan: "free" | "pro" | "business" | "enterprise"
-  address?: string
+  line1?: string
+  line2?: string
+  city?: string
+  state?: string
+  zip?: string
   phone?: string
+  email?: string
+  website?: string
 }
 
 type InviteRow = {
@@ -57,82 +64,36 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
     try {
       console.log("Starting business creation process...")
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser()
+      // Compose address from parts
+      const address = composeAddress({
+        line1: org.line1,
+        line2: org.line2,
+        city: org.city,
+        state: org.state,
+        zip: org.zip,
+      })
 
-      if (userError) {
-        console.error("User error:", userError)
-        throw new Error("Authentication error: " + userError.message)
-      }
-
-      if (!user) {
-        throw new Error("No authenticated user found")
-      }
-
-      console.log("User authenticated:", user.id)
-
-      // 1) Create organization
-      console.log("Creating organization with data:", {
+      console.log("Creating business with data:", {
         name: org.name.trim(),
         plan: org.plan,
-        address: org.address?.trim() || null,
-        phone: org.phone?.trim() || null,
-        owner_id: user.id,
+        address,
+        phone: org.phone || null,
+        email: org.email || null,
+        website: org.website || null,
       })
 
-      const { data: newOrg, error: orgErr } = await supabase
-        .from("organizations")
-        .insert({
-          name: org.name.trim(),
-          plan: org.plan,
-          address: org.address?.trim() || null,
-          phone: org.phone?.trim() || null,
-          owner_id: user.id,
-        })
-        .select("id")
-        .single()
-
-      if (orgErr) {
-        console.error("Organization creation error:", orgErr)
-        throw new Error("Failed to create organization: " + orgErr.message)
-      }
-
-      if (!newOrg?.id) {
-        throw new Error("Organization created but no ID returned")
-      }
-
-      console.log("Organization created successfully:", newOrg.id)
-
-      // 2) Create owner membership
-      console.log("Creating owner membership...")
-      const { error: memErr } = await supabase.from("memberships").insert({
-        org_id: newOrg.id,
-        user_id: user.id,
-        role: "owner",
+      const newOrgId = await createBusiness({
+        name: org.name.trim(),
+        plan: org.plan,
+        address,
+        phone: org.phone || null,
+        email: org.email || null,
+        website: org.website || null,
       })
 
-      if (memErr) {
-        console.error("Membership creation error:", memErr)
-        throw new Error("Failed to create membership: " + memErr.message)
-      }
+      console.log("Business created successfully:", newOrgId)
 
-      console.log("Membership created successfully")
-
-      // 3) Set as default organization
-      console.log("Setting default organization...")
-      const { error: profileErr } = await supabase.from("profiles").update({ default_org: newOrg.id }).eq("id", user.id)
-
-      if (profileErr) {
-        console.error("Profile update error:", profileErr)
-        // Don't fail the whole process for this
-        console.warn("Failed to set default org, but continuing...")
-      } else {
-        console.log("Default organization set successfully")
-      }
-
-      setOrgId(newOrg.id)
+      setOrgId(newOrgId)
       toast({
         title: "Business created!",
         description: "Your business profile has been set up successfully.",
@@ -274,24 +235,93 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    placeholder="Business address (optional)"
-                    value={org.address || ""}
-                    onChange={(e) => setOrg({ ...org, address: e.target.value })}
-                    className="mt-1"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="line1">Address Line 1</Label>
+                    <Input
+                      id="line1"
+                      placeholder="Street address"
+                      value={org.line1 || ""}
+                      onChange={(e) => setOrg({ ...org, line1: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="line2">Address Line 2</Label>
+                    <Input
+                      id="line2"
+                      placeholder="Apt, suite, etc."
+                      value={org.line2 || ""}
+                      onChange={(e) => setOrg({ ...org, line2: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      placeholder="City"
+                      value={org.city || ""}
+                      onChange={(e) => setOrg({ ...org, city: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      placeholder="State"
+                      value={org.state || ""}
+                      onChange={(e) => setOrg({ ...org, state: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zip">ZIP Code</Label>
+                    <Input
+                      id="zip"
+                      placeholder="ZIP"
+                      value={org.zip || ""}
+                      onChange={(e) => setOrg({ ...org, zip: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      placeholder="Business phone"
+                      value={org.phone || ""}
+                      onChange={(e) => setOrg({ ...org, phone: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Business email"
+                      value={org.email || ""}
+                      onChange={(e) => setOrg({ ...org, email: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="website">Website</Label>
                   <Input
-                    id="phone"
-                    placeholder="Business phone (optional)"
-                    value={org.phone || ""}
-                    onChange={(e) => setOrg({ ...org, phone: e.target.value })}
+                    id="website"
+                    placeholder="https://yourwebsite.com"
+                    value={org.website || ""}
+                    onChange={(e) => setOrg({ ...org, website: e.target.value })}
                     className="mt-1"
                   />
                 </div>
