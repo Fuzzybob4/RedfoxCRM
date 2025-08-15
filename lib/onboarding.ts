@@ -1,147 +1,166 @@
-"use client"
-
 import { supabase } from "@/lib/supabase"
 
-/** Make sure we're logged in and return the user id (auth.uid on the DB side). */
-async function getUserOrThrow() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-  if (error) throw error
-  if (!user) throw new Error("You must be signed in before creating a business.")
-  return user.id
-}
-
-/** Optional: combine address parts into a single string column if your DB only has `organizations.address` */
-export function composeAddress(parts: {
-  line1?: string
-  line2?: string
-  city?: string
-  state?: string
-  zip?: string
-}) {
-  const { line1, line2, city, state, zip } = parts
-  const cityState = city && state ? `${city}, ${state}` : city || state || ""
-  const arr = [line1, line2, cityState, zip].filter(Boolean)
-  return arr.length ? arr.join(" · ") : null
-}
-
-/**
- * Path A — use the RPC (recommended).
- * Requires the SQL function `public.provision_first_org(name, plan, address, phone, email, website)`.
- */
-export async function createBusinessViaRPC(input: {
+export interface BusinessInfo {
   name: string
-  plan?: "free" | "pro" | "business" | "enterprise"
-  address?: string | null
-  phone?: string | null
-  email?: string | null
-  website?: string | null
-}) {
-  await getUserOrThrow() // ensures we're authenticated (otherwise RLS will block)
-
-  console.log("Creating business via RPC:", input)
-
-  const { data, error } = await supabase.rpc("provision_first_org", {
-    p_name: input.name,
-    p_plan: input.plan ?? "pro",
-    p_address: input.address ?? null,
-    p_phone: input.phone ?? null,
-    p_email: input.email ?? null,
-    p_website: input.website ?? null,
-  })
-
-  if (error) {
-    // This is the *real* error from Postgres/RLS
-    console.error("provision_first_org error:", error)
-    throw new Error(error.message ?? "Failed to create organization")
-  }
-
-  console.log("Business created successfully:", data)
-  // data is the new org id (uuid)
-  return data as string
+  industry: string
+  size: string
+  plan: string
 }
 
-/**
- * Path B — direct INSERT (only use if you don't use the RPC).
- * IMPORTANT: must set owner_id = current user id to pass RLS.
- */
-export async function createBusinessDirect(input: {
-  name: string
-  plan?: "free" | "pro" | "business" | "enterprise"
-  address?: string | null
-  phone?: string | null
-  email?: string | null
-  website?: string | null
-}) {
-  const userId = await getUserOrThrow() // <- critical for owner_id
-
-  console.log("Creating business directly:", input, "User ID:", userId)
-
-  const { data, error } = await supabase
-    .from("organizations")
-    .insert([
-      {
-        name: input.name,
-        plan: input.plan ?? "pro",
-        owner_id: userId, // <- REQUIRED by RLS policy
-        address: input.address ?? null, // add/remove fields to match your schema
-        phone: input.phone ?? null,
-        email: input.email ?? null,
-        website: input.website ?? null,
-      },
-    ])
-    .select("id")
-    .single()
-
-  if (error) {
-    console.error("organizations.insert error:", error)
-    throw new Error(error.message ?? "Failed to create organization")
-  }
-
-  console.log("Organization created:", data)
-
-  // Create owner membership
-  const { error: membershipError } = await supabase.from("memberships").insert([
-    {
-      org_id: data.id,
-      user_id: userId,
-      role: "owner",
-      is_active: true,
-    },
-  ])
-
-  if (membershipError) {
-    console.error("membership.insert error:", membershipError)
-    throw new Error(membershipError.message ?? "Failed to create membership")
-  }
-
-  // Set default org
-  const { error: profileError } = await supabase.from("profiles").update({ default_org: data.id }).eq("id", userId)
-
-  if (profileError) {
-    console.error("profiles.update error:", profileError)
-    // Don't throw here, it's not critical
-  }
-
-  return data.id as string
-}
-
-/** One public entry — choose RPC first, fallback to direct for debugging */
-export async function createBusiness(input: {
-  name: string
-  plan?: "free" | "pro" | "business" | "enterprise"
-  address?: string | null
-  phone?: string | null
-  email?: string | null
-  website?: string | null
-}) {
+export async function createBusiness(businessInfo: BusinessInfo) {
   try {
-    return await createBusinessViaRPC(input)
-  } catch (e) {
-    // If RPC is misconfigured (signature, RLS, etc.), try direct insert to see clearer errors
-    console.warn("RPC failed, trying direct insert fallback. Reason:", (e as any)?.message)
-    return await createBusinessDirect(input)
+    console.log("Creating business with info:", businessInfo)
+
+    // Check authentication first
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    console.log("logged-in user id =", user?.id, "error =", authError)
+
+    if (authError) {
+      console.error("Authentication error:", authError)
+      throw new Error(`Authentication failed: ${authError.message}`)
+    }
+
+    if (!user) {
+      alert("Please sign in first")
+      throw new Error("User not authenticated")
+    }
+
+    console.log("User authenticated, proceeding with business creation...")
+
+    // Try using the RPC function first (recommended approach)
+    console.log("Attempting RPC function call...")
+    const { data: rpcResult, error: rpcError } = await supabase.rpc("provision_first_org", {
+      org_name: businessInfo.name,
+      org_plan: businessInfo.plan,
+    })
+
+    if (rpcError) {
+      console.error("RPC function error:", rpcError)
+      console.log("Falling back to direct insert...")
+
+      // Fallback to direct insert
+      const { data: orgData, error: insertError } = await supabase
+        .from("organizations")
+        .insert([
+          {
+            name: businessInfo.name,
+            plan: businessInfo.plan,
+            owner_id: user.id,
+          },
+        ])
+        .select("id")
+        .single()
+
+      console.log("direct insert ->", { data: orgData, error: insertError })
+
+      if (insertError) {
+        console.error("Direct insert failed:", insertError)
+        throw new Error(`Failed to create organization: ${insertError.message}`)
+      }
+
+      if (!orgData) {
+        throw new Error("No organization data returned from insert")
+      }
+
+      // Create membership manually
+      const { error: membershipError } = await supabase.from("memberships").insert([
+        {
+          user_id: user.id,
+          org_id: orgData.id,
+          role: "owner",
+          is_active: true,
+        },
+      ])
+
+      if (membershipError) {
+        console.error("Membership creation failed:", membershipError)
+        throw new Error(`Failed to create membership: ${membershipError.message}`)
+      }
+
+      // Update profile default org
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ default_org: orgData.id })
+        .eq("id", user.id)
+
+      if (profileError) {
+        console.error("Profile update failed:", profileError)
+        // Don't throw here as the org is created, just log the error
+      }
+
+      return {
+        success: true,
+        org_id: orgData.id,
+        message: "Organization created successfully via direct insert",
+      }
+    }
+
+    console.log("RPC function result:", rpcResult)
+
+    if (!rpcResult?.success) {
+      throw new Error(rpcResult?.error || "Failed to create organization via RPC")
+    }
+
+    return rpcResult
+  } catch (error) {
+    console.error("Error in createBusiness:", error)
+    throw error
+  }
+}
+
+export async function checkOnboardingStatus() {
+  try {
+    console.log("Checking onboarding status...")
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    console.log("logged-in user id =", user?.id, "error =", authError)
+
+    if (authError) {
+      console.error("Auth error in onboarding check:", authError)
+      return { needsOnboarding: false, user: null, error: authError.message }
+    }
+
+    if (!user) {
+      console.log("No authenticated user found")
+      return { needsOnboarding: false, user: null, error: "No user authenticated" }
+    }
+
+    // Check for existing memberships
+    const { data: memberships, error: membershipError } = await supabase
+      .from("memberships")
+      .select("org_id, organizations(name, plan)")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+
+    if (membershipError) {
+      console.error("Error checking memberships:", membershipError)
+      return { needsOnboarding: true, user, error: membershipError.message }
+    }
+
+    console.log("User memberships:", memberships)
+
+    const needsOnboarding = !memberships || memberships.length === 0
+
+    return {
+      needsOnboarding,
+      user,
+      memberships,
+      error: null,
+    }
+  } catch (error) {
+    console.error("Error in checkOnboardingStatus:", error)
+    return {
+      needsOnboarding: false,
+      user: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
   }
 }

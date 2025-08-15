@@ -1,77 +1,59 @@
 "use client"
+
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { checkOnboardingStatus } from "@/lib/onboarding"
 
 export function useOnboardingGate() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    ;(async () => {
+    const checkStatus = async () => {
       try {
-        console.log("Checking onboarding status...")
+        setLoading(true)
+        setError(null)
 
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser()
+        const result = await checkOnboardingStatus()
 
-        if (userError) {
-          console.error("Error getting user:", userError)
-          setNeedsOnboarding(false)
-          setLoading(false)
-          return
+        if (result.error) {
+          console.log("Onboarding check returned error:", result.error)
+          setError(result.error)
+
+          // If it's an auth session missing error, don't show onboarding
+          if (result.error.includes("Auth session missing") || result.error.includes("No user authenticated")) {
+            setNeedsOnboarding(false)
+          } else {
+            setNeedsOnboarding(true)
+          }
+        } else {
+          setNeedsOnboarding(result.needsOnboarding)
+          setUser(result.user)
+          console.log("Onboarding status:", {
+            needsOnboarding: result.needsOnboarding,
+            hasUser: !!result.user,
+            memberships: result.memberships?.length || 0,
+          })
         }
-
-        setUser(user)
-
-        if (!user) {
-          console.log("No user found, onboarding not needed")
-          setNeedsOnboarding(false)
-          setLoading(false)
-          return
-        }
-
-        console.log("User found:", user.id)
-
-        // Pull profile & memberships
-        const [{ data: profile, error: profileError }, { data: memberships, error: membershipError }] =
-          await Promise.all([
-            supabase.from("profiles").select("default_org").eq("id", user.id).single(),
-            supabase.from("memberships").select("org_id, role").eq("user_id", user.id),
-          ])
-
-        if (profileError) {
-          console.error("Error getting profile:", profileError)
-        }
-
-        if (membershipError) {
-          console.error("Error getting memberships:", membershipError)
-        }
-
-        const hasOrg = (memberships?.length ?? 0) > 0
-        const hasDefault = !!profile?.default_org
-
-        console.log("Onboarding check:", {
-          hasOrg,
-          hasDefault,
-          memberships: memberships?.length ?? 0,
-          defaultOrg: profile?.default_org,
-        })
-
-        const needsOnboardingResult = !(hasOrg && hasDefault)
-        setNeedsOnboarding(needsOnboardingResult)
-
-        console.log("Needs onboarding:", needsOnboardingResult)
       } catch (error) {
-        console.error("Error in onboarding gate:", error)
+        console.error("Error in useOnboardingGate:", error)
+        setError(error instanceof Error ? error.message : "Unknown error")
         setNeedsOnboarding(false)
       } finally {
         setLoading(false)
       }
-    })()
+    }
+
+    checkStatus()
   }, [])
 
-  return { user, needsOnboarding, loading }
+  const refetch = async () => {
+    const result = await checkOnboardingStatus()
+    setNeedsOnboarding(result.needsOnboarding)
+    setUser(result.user)
+    setError(result.error)
+  }
+
+  return { user, needsOnboarding, loading, error, refetch }
 }
