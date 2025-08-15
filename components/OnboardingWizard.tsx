@@ -1,15 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { createBusiness, composeAddress } from "@/lib/onboarding"
-import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
-import { X, Building, Users, CreditCard, Check } from "lucide-react"
+import { createBusiness, composeAddress, sendTeamInvites } from "@/lib/onboarding"
+import { useToast } from "@/hooks/use-toast"
+import { Loader2, Building, Users, CheckCircle } from "lucide-react"
 
 type OrgForm = {
   name: string
@@ -35,16 +34,20 @@ interface OnboardingWizardProps {
   onClose: () => void
 }
 
-const PLAN_OPTIONS = [
-  { value: "free", label: "Free", description: "Perfect for getting started" },
-  { value: "pro", label: "Pro", description: "For growing businesses" },
-  { value: "business", label: "Business", description: "For established companies" },
-  { value: "enterprise", label: "Enterprise", description: "For large organizations" },
-]
-
 export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [org, setOrg] = useState<OrgForm>({ name: "", plan: "pro" })
+  const [org, setOrg] = useState<OrgForm>({
+    name: "",
+    plan: "pro",
+    line1: "",
+    line2: "",
+    city: "",
+    state: "",
+    zip: "",
+    phone: "",
+    email: "",
+    website: "",
+  })
   const [invites, setInvites] = useState<InviteRow[]>([{ email: "", role: "employee" }])
   const [orgId, setOrgId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -61,10 +64,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
     }
 
     setBusy(true)
-    try {
-      console.log("Starting business creation process...")
 
-      // Compose address from parts
+    try {
       const address = composeAddress({
         line1: org.line1,
         line2: org.line2,
@@ -74,7 +75,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
       })
 
       console.log("Creating business with data:", {
-        name: org.name.trim(),
+        name: org.name,
         plan: org.plan,
         address,
         phone: org.phone || null,
@@ -83,7 +84,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
       })
 
       const newOrgId = await createBusiness({
-        name: org.name.trim(),
+        name: org.name,
         plan: org.plan,
         address,
         phone: org.phone || null,
@@ -99,11 +100,11 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
         description: "Your business profile has been set up successfully.",
       })
       setStep(2)
-    } catch (error) {
-      console.error("Error in saveBusiness:", error)
+    } catch (error: any) {
+      console.error("Error creating business:", error)
       toast({
         title: "Error creating business",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       })
     } finally {
@@ -111,58 +112,40 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
     }
   }
 
-  const sendInvites = async () => {
+  const sendInvitations = async () => {
     if (!orgId) {
       setStep(3)
       return
     }
 
-    setBusy(true)
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error("No authenticated user")
+    const validInvites = invites.filter((invite) => invite.email.trim())
 
-      const validInvites = invites
-        .filter((invite) => invite.email.trim())
-        .map((invite) => ({
-          org_id: orgId,
-          email: invite.email.trim().toLowerCase(),
-          role: invite.role,
-          invited_name: invite.name?.trim() || null,
-          invited_by: user.id,
-        }))
-
-      if (validInvites.length > 0) {
-        const { error } = await supabase.from("invites").insert(validInvites)
-        if (error) throw error
-
-        toast({
-          title: "Invites sent!",
-          description: `${validInvites.length} team member${validInvites.length === 1 ? "" : "s"} invited.`,
-        })
-      }
-
+    if (validInvites.length === 0) {
       setStep(3)
-    } catch (error) {
+      return
+    }
+
+    setBusy(true)
+
+    try {
+      const sentCount = await sendTeamInvites(orgId, validInvites)
+      toast({
+        title: "Invitations sent!",
+        description: `${sentCount} team member${sentCount === 1 ? "" : "s"} invited successfully.`,
+      })
+      setStep(3)
+    } catch (error: any) {
       console.error("Error sending invites:", error)
       toast({
-        title: "Error sending invites",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        title: "Error sending invitations",
+        description: error.message || "Failed to send some invitations",
         variant: "destructive",
       })
+      // Still proceed to step 3 even if invites fail
+      setStep(3)
     } finally {
       setBusy(false)
     }
-  }
-
-  const finish = () => {
-    toast({
-      title: "Welcome to RedFox CRM! 🎉",
-      description: "Your account is now set up and ready to use.",
-    })
-    onClose()
   }
 
   const addInviteRow = () => {
@@ -181,48 +164,47 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
     }
   }
 
+  const finish = () => {
+    toast({
+      title: "Welcome to RedFox CRM!",
+      description: "Your account is now set up and ready to use.",
+    })
+    onClose()
+  }
+
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              {[1, 2, 3].map((stepNum) => (
-                <div
-                  key={stepNum}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    stepNum === step
-                      ? "bg-[#F67721] text-white"
-                      : stepNum < step
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {stepNum < step ? <Check className="w-4 h-4" /> : stepNum}
-                </div>
-              ))}
-            </div>
-            <CardTitle className="ml-4">
-              {step === 1 && "Business Information"}
-              {step === 2 && "Invite Your Team"}
-              {step === 3 && "Branding & Payments"}
-            </CardTitle>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {step === 1 && (
+              <>
+                <Building className="w-5 h-5" /> Business Information
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <Users className="w-5 h-5" /> Invite Your Team
+              </>
+            )}
+            {step === 3 && (
+              <>
+                <CheckCircle className="w-5 h-5" /> All Set!
+              </>
+            )}
+          </CardTitle>
+          <div className="flex gap-2">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className={`h-2 flex-1 rounded ${s <= step ? "bg-orange-500" : "bg-gray-200"}`} />
+            ))}
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {step === 1 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[#F67721] mb-4">
-                <Building className="w-5 h-5" />
-                <span className="font-medium">Tell us about your business</span>
-              </div>
-
+            <>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="businessName">Business Name *</Label>
@@ -231,8 +213,22 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                     placeholder="Enter your business name"
                     value={org.name}
                     onChange={(e) => setOrg({ ...org, name: e.target.value })}
-                    className="mt-1"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="plan">Plan Selection</Label>
+                  <Select value={org.plan} onValueChange={(value: any) => setOrg({ ...org, plan: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free - Basic features</SelectItem>
+                      <SelectItem value="pro">Pro - Advanced features</SelectItem>
+                      <SelectItem value="business">Business - Full features</SelectItem>
+                      <SelectItem value="enterprise">Enterprise - Custom solution</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -241,9 +237,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                     <Input
                       id="line1"
                       placeholder="Street address"
-                      value={org.line1 || ""}
+                      value={org.line1}
                       onChange={(e) => setOrg({ ...org, line1: e.target.value })}
-                      className="mt-1"
                     />
                   </div>
                   <div>
@@ -251,9 +246,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                     <Input
                       id="line2"
                       placeholder="Apt, suite, etc."
-                      value={org.line2 || ""}
+                      value={org.line2}
                       onChange={(e) => setOrg({ ...org, line2: e.target.value })}
-                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -264,9 +258,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                     <Input
                       id="city"
                       placeholder="City"
-                      value={org.city || ""}
+                      value={org.city}
                       onChange={(e) => setOrg({ ...org, city: e.target.value })}
-                      className="mt-1"
                     />
                   </div>
                   <div>
@@ -274,9 +267,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                     <Input
                       id="state"
                       placeholder="State"
-                      value={org.state || ""}
+                      value={org.state}
                       onChange={(e) => setOrg({ ...org, state: e.target.value })}
-                      className="mt-1"
                     />
                   </div>
                   <div>
@@ -284,9 +276,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                     <Input
                       id="zip"
                       placeholder="ZIP"
-                      value={org.zip || ""}
+                      value={org.zip}
                       onChange={(e) => setOrg({ ...org, zip: e.target.value })}
-                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -297,9 +288,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                     <Input
                       id="phone"
                       placeholder="Business phone"
-                      value={org.phone || ""}
+                      value={org.phone}
                       onChange={(e) => setOrg({ ...org, phone: e.target.value })}
-                      className="mt-1"
                     />
                   </div>
                   <div>
@@ -308,9 +298,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                       id="email"
                       type="email"
                       placeholder="Business email"
-                      value={org.email || ""}
+                      value={org.email}
                       onChange={(e) => setOrg({ ...org, email: e.target.value })}
-                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -320,137 +309,118 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                   <Input
                     id="website"
                     placeholder="https://yourwebsite.com"
-                    value={org.website || ""}
+                    value={org.website}
                     onChange={(e) => setOrg({ ...org, website: e.target.value })}
-                    className="mt-1"
                   />
-                </div>
-
-                <div>
-                  <Label>Plan Selection</Label>
-                  <Select value={org.plan} onValueChange={(value: any) => setOrg({ ...org, plan: value })}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PLAN_OPTIONS.map((plan) => (
-                        <SelectItem key={plan.value} value={plan.value}>
-                          <div>
-                            <div className="font-medium">{plan.label}</div>
-                            <div className="text-sm text-gray-500">{plan.description}</div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end">
                 <Button
                   onClick={saveBusiness}
                   disabled={busy || !org.name.trim()}
-                  className="bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B]"
+                  className="bg-orange-500 hover:bg-orange-600"
                 >
-                  {busy ? "Creating..." : "Continue"}
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Continue
                 </Button>
               </div>
-            </div>
+            </>
           )}
 
           {step === 2 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[#F67721] mb-4">
-                <Users className="w-5 h-5" />
-                <span className="font-medium">Invite your team members</span>
-              </div>
+            <>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Invite team members to collaborate on your projects. You can always add more later.
+                </p>
 
-              <p className="text-sm text-gray-600 mb-4">
-                Add team members to collaborate on your projects. You can always invite more people later.
-              </p>
-
-              <div className="space-y-3">
                 {invites.map((invite, index) => (
-                  <div key={index} className="flex gap-2 items-start">
-                    <Input
-                      placeholder="Name (optional)"
-                      value={invite.name || ""}
-                      onChange={(e) => updateInvite(index, "name", e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      type="email"
-                      placeholder="Email address"
-                      value={invite.email}
-                      onChange={(e) => updateInvite(index, "email", e.target.value)}
-                      className="flex-1"
-                    />
-                    <Select value={invite.role} onValueChange={(value: any) => updateInvite(index, "role", value)}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="employee">Employee</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div key={index} className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <Label htmlFor={`name-${index}`}>Name (optional)</Label>
+                      <Input
+                        id={`name-${index}`}
+                        placeholder="Full name"
+                        value={invite.name || ""}
+                        onChange={(e) => updateInvite(index, "name", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor={`email-${index}`}>Email *</Label>
+                      <Input
+                        id={`email-${index}`}
+                        type="email"
+                        placeholder="email@example.com"
+                        value={invite.email}
+                        onChange={(e) => updateInvite(index, "email", e.target.value)}
+                      />
+                    </div>
+                    <div className="w-32">
+                      <Label htmlFor={`role-${index}`}>Role</Label>
+                      <Select value={invite.role} onValueChange={(value: any) => updateInvite(index, "role", value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="employee">Employee</SelectItem>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     {invites.length > 1 && (
-                      <Button variant="outline" size="icon" onClick={() => removeInvite(index)} className="shrink-0">
-                        <X className="w-4 h-4" />
+                      <Button variant="outline" size="sm" onClick={() => removeInvite(index)}>
+                        Remove
                       </Button>
                     )}
                   </div>
                 ))}
+
+                <Button variant="outline" onClick={addInviteRow}>
+                  + Add Another Person
+                </Button>
               </div>
 
-              <Button variant="outline" onClick={addInviteRow} className="w-full bg-transparent">
-                + Add another team member
-              </Button>
-
-              <div className="flex justify-between pt-4">
+              <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}>
                   Back
                 </Button>
-                <Button
-                  onClick={sendInvites}
-                  disabled={busy}
-                  className="bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B]"
-                >
-                  {busy ? "Sending..." : "Continue"}
+                <Button onClick={sendInvitations} disabled={busy} className="bg-orange-500 hover:bg-orange-600">
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Continue
                 </Button>
               </div>
-            </div>
+            </>
           )}
 
           {step === 3 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[#F67721] mb-4">
-                <CreditCard className="w-5 h-5" />
-                <span className="font-medium">Branding & Payments</span>
-              </div>
-
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-8 h-8 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">You're all set!</h3>
-                <p className="text-gray-600 mb-6">
-                  Your RedFox CRM account is ready to use. You can upload your logo and connect billing later in
-                  Settings.
+            <>
+              <div className="text-center space-y-4">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+                <h3 className="text-xl font-semibold">Welcome to RedFox CRM!</h3>
+                <p className="text-gray-600">
+                  Your business profile has been created successfully. You can now start managing your customers,
+                  projects, and team.
                 </p>
+                <div className="bg-gray-50 p-4 rounded-lg text-sm text-left">
+                  <h4 className="font-medium mb-2">What's next?</h4>
+                  <ul className="space-y-1 text-gray-600">
+                    <li>• Add your first customers</li>
+                    <li>• Create projects and estimates</li>
+                    <li>• Customize your business settings</li>
+                    <li>• Upload your logo and branding</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={() => setStep(2)}>
-                  Back
-                </Button>
-                <Button onClick={finish} className="bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B]">
+              <div className="flex justify-center">
+                <Button onClick={finish} className="bg-orange-500 hover:bg-orange-600">
                   Get Started
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

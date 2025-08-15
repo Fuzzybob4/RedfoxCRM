@@ -102,20 +102,21 @@ export async function createBusinessDirect(input: {
       user_id: userId,
       role: "owner",
       is_active: true,
+      hired_date: new Date().toISOString().split("T")[0],
     },
   ])
 
   if (membershipError) {
-    console.error("membership creation error:", membershipError)
-    throw new Error("Failed to create membership: " + membershipError.message)
+    console.error("memberships.insert error:", membershipError)
+    throw new Error(membershipError.message ?? "Failed to create membership")
   }
 
   // Set default org
   const { error: profileError } = await supabase.from("profiles").update({ default_org: data.id }).eq("id", userId)
 
   if (profileError) {
-    console.warn("Failed to set default org:", profileError)
-    // Don't fail the whole process for this
+    console.error("profiles.update error:", profileError)
+    // Don't throw here, as the org was created successfully
   }
 
   return data.id as string
@@ -137,4 +138,39 @@ export async function createBusiness(input: {
     console.warn("RPC failed, trying direct insert fallback. Reason:", (e as any)?.message)
     return await createBusinessDirect(input)
   }
+}
+
+// Function to send team invitations
+export async function sendTeamInvites(
+  orgId: string,
+  invites: Array<{
+    name?: string
+    email: string
+    role: "admin" | "manager" | "employee" | "viewer"
+  }>,
+) {
+  const userId = await getUserOrThrow()
+
+  const inviteRows = invites
+    .filter((invite) => invite.email.trim())
+    .map((invite) => ({
+      org_id: orgId,
+      email: invite.email.trim(),
+      role: invite.role,
+      invited_name: invite.name?.trim() || null,
+      invited_by: userId,
+    }))
+
+  if (inviteRows.length === 0) {
+    return // No valid invites to send
+  }
+
+  const { error } = await supabase.from("invites").insert(inviteRows)
+
+  if (error) {
+    console.error("invites.insert error:", error)
+    throw new Error(error.message ?? "Failed to send invitations")
+  }
+
+  return inviteRows.length
 }

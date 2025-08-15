@@ -1,22 +1,29 @@
 "use client"
+
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import type { User } from "@supabase/supabase-js"
 
 export function useOnboardingGate() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    ;(async () => {
+    let mounted = true
+
+    async function checkOnboardingStatus() {
       try {
         const {
           data: { user },
           error: userError,
         } = await supabase.auth.getUser()
 
+        if (!mounted) return
+
         if (userError) {
           console.error("Error getting user:", userError)
+          setUser(null)
           setNeedsOnboarding(false)
           setLoading(false)
           return
@@ -30,41 +37,64 @@ export function useOnboardingGate() {
           return
         }
 
-        // Pull profile & memberships
-        const [{ data: profile, error: profileError }, { data: memberships, error: membershipError }] =
-          await Promise.all([
-            supabase.from("profiles").select("default_org").eq("id", user.id).single(),
-            supabase.from("memberships").select("org_id, role, is_active").eq("user_id", user.id).eq("is_active", true),
-          ])
+        // Check if user has completed onboarding
+        const [{ data: profile }, { data: memberships }] = await Promise.all([
+          supabase.from("profiles").select("default_org").eq("id", user.id).single(),
+          supabase.from("memberships").select("org_id, role, is_active").eq("user_id", user.id).eq("is_active", true),
+        ])
 
-        if (profileError) {
-          console.error("Error fetching profile:", profileError)
-        }
-
-        if (membershipError) {
-          console.error("Error fetching memberships:", membershipError)
-        }
+        if (!mounted) return
 
         const hasActiveMembership = (memberships?.length ?? 0) > 0
         const hasDefaultOrg = !!profile?.default_org
 
+        // User needs onboarding if they don't have both an active membership and default org
+        const needsOnboarding = !(hasActiveMembership && hasDefaultOrg)
+
         console.log("Onboarding check:", {
+          userId: user.id,
           hasActiveMembership,
           hasDefaultOrg,
-          memberships,
-          profile,
+          needsOnboarding,
         })
 
-        // Show onboarding if user has no active memberships OR no default org
-        setNeedsOnboarding(!(hasActiveMembership && hasDefaultOrg))
+        setNeedsOnboarding(needsOnboarding)
       } catch (error) {
-        console.error("Error in onboarding gate:", error)
-        setNeedsOnboarding(false)
+        console.error("Error checking onboarding status:", error)
+        if (mounted) {
+          setNeedsOnboarding(false)
+        }
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
-    })()
+    }
+
+    checkOnboardingStatus()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        checkOnboardingStatus()
+      }
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
-  return { user, needsOnboarding, loading }
+  return {
+    user,
+    needsOnboarding,
+    loading,
+    refetch: () => {
+      setLoading(true)
+      // Trigger re-check by updating a dependency
+    },
+  }
 }
