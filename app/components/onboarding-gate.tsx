@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useOnboardingGate } from "@/hooks/useOnboardingGate"
 import { OnboardingWizard } from "@/components/OnboardingWizard"
 

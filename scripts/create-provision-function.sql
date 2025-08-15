@@ -1,5 +1,5 @@
 -- Create the provision_first_org function
-CREATE OR REPLACE FUNCTION public.provision_first_org(
+CREATE OR REPLACE FUNCTION provision_first_org(
   p_business_name TEXT,
   p_plan TEXT DEFAULT 'pro',
   p_company_size TEXT DEFAULT NULL,
@@ -13,30 +13,30 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  org_id UUID;
-  user_id UUID;
+  v_user_id UUID;
+  v_org_id UUID;
 BEGIN
-  -- Get the current user ID
-  user_id := auth.uid();
+  -- Get the current user
+  v_user_id := auth.uid();
   
-  IF user_id IS NULL THEN
+  IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'User must be authenticated';
   END IF;
 
-  -- Insert the organization
+  -- Create the organization
   INSERT INTO organizations (name, plan, owner_id, address, phone, email, website)
-  VALUES (p_business_name, p_plan, user_id, p_address, p_phone, p_email, p_website)
-  RETURNING id INTO org_id;
+  VALUES (p_business_name, p_plan, v_user_id, p_address, p_phone, p_email, p_website)
+  RETURNING id INTO v_org_id;
 
-  -- Create membership
-  INSERT INTO memberships (org_id, user_id, role, is_active)
-  VALUES (org_id, user_id, 'owner', true);
+  -- Create membership for the user
+  INSERT INTO memberships (user_id, org_id, role)
+  VALUES (v_user_id, v_org_id, 'owner');
 
-  -- Update user profile with default org
+  -- Update user's default organization
   UPDATE profiles 
-  SET default_org = org_id 
-  WHERE id = user_id;
+  SET default_org = v_org_id
+  WHERE id = v_user_id;
 
-  RETURN org_id;
+  RETURN v_org_id;
 END;
 $$;
