@@ -41,6 +41,9 @@ importers:
       '@radix-ui/react-toast':
         specifier: latest
         version: 1.2.15(@types/react-dom@19.0.0)(@types/react@19.0.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@remix-run/react':
+        specifier: latest
+        version: 2.17.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2)
       '@sendgrid/mail':
         specifier: latest
         version: 8.1.5
@@ -53,9 +56,12 @@ importers:
       '@supabase/supabase-js':
         specifier: latest
         version: 2.55.0
+      '@sveltejs/kit':
+        specifier: latest
+        version: 2.31.0(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))
       '@vercel/analytics':
-        specifier: ^1.5.0
-        version: 1.5.0(@remix-run/react@2.17.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2))(@sveltejs/kit@2.30.1(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(next@15.2.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(svelte@5.38.1)(vue-router@4.5.1(vue@3.5.18(typescript@5.0.2)))(vue@3.5.18(typescript@5.0.2))
+        specifier: latest
+        version: 1.5.0(@remix-run/react@2.17.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2))(@sveltejs/kit@2.31.0(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(next@15.2.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(svelte@5.38.1)(vue-router@4.5.1(vue@3.5.18(typescript@5.0.2)))(vue@3.5.18(typescript@5.0.2))
       child_process:
         specifier: latest
         version: 1.0.2
@@ -86,6 +92,9 @@ importers:
       react-dom:
         specifier: ^19
         version: 19.0.0(react@19.0.0)
+      svelte:
+        specifier: latest
+        version: 5.38.1
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.5.5
@@ -95,6 +104,12 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.17)
+      vue:
+        specifier: latest
+        version: 3.5.18(typescript@5.0.2)
+      vue-router:
+        specifier: latest
+        version: 4.5.1(vue@3.5.18(typescript@5.0.2))
     devDependencies:
       '@types/node':
         specifier: ^22
@@ -1304,14 +1319,18 @@ packages:
     peerDependencies:
       acorn: ^8.9.0
 
-  '@sveltejs/kit@2.30.1':
-    resolution: {integrity: sha512-LyRpQmokZdMK4QOlGBbLX12c37IRnvC3rE6ysA4gLmBWMx5mheeEEjkZZXhtIL9Lze0BgMttaALFoROTx+kbEw==}
+  '@sveltejs/kit@2.31.0':
+    resolution: {integrity: sha512-XVuXtztIEDyfC8QcPSf6KO1WPdtqJ8P00t6j8db6KJRmY5mYmpC8G/waFw2FN99NcqZ+odPF3j8Qy6WBs4WLCQ==}
     engines: {node: '>=18.13'}
     hasBin: true
     peerDependencies:
+      '@opentelemetry/api': ^1.0.0
       '@sveltejs/vite-plugin-svelte': ^3.0.0 || ^4.0.0-next.1 || ^5.0.0 || ^6.0.0-next.0
       svelte: ^4.0.0 || ^5.0.0-next.0
       vite: ^5.0.3 || ^6.0.0 || ^7.0.0-beta.0
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.0':
     resolution: {integrity: sha512-iwQ8Z4ET6ZFSt/gC+tVfcsSBHwsqc6RumSaiLUkAurW3BCpJam65cmHw0oOlDMTO0u+PZi9hilBRYN+LZNHTUQ==}
@@ -2334,22 +2353,18 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@babel/helper-string-parser@7.27.1':
-    optional: true
+  '@babel/helper-string-parser@7.27.1': {}
 
-  '@babel/helper-validator-identifier@7.27.1':
-    optional: true
+  '@babel/helper-validator-identifier@7.27.1': {}
 
   '@babel/parser@7.28.0':
     dependencies:
       '@babel/types': 7.28.2
-    optional: true
 
   '@babel/types@7.28.2':
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
-    optional: true
 
   '@emnapi/runtime@1.4.5':
     dependencies:
@@ -2544,7 +2559,6 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.30
-    optional: true
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -2596,8 +2610,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@polka/url@1.0.0-next.29':
-    optional: true
+  '@polka/url@1.0.0-next.29': {}
 
   '@radix-ui/number@1.1.1': {}
 
@@ -3198,10 +3211,8 @@ snapshots:
       turbo-stream: 2.4.1
     optionalDependencies:
       typescript: 5.0.2
-    optional: true
 
-  '@remix-run/router@1.23.0':
-    optional: true
+  '@remix-run/router@1.23.0': {}
 
   '@remix-run/server-runtime@2.17.0(typescript@5.0.2)':
     dependencies:
@@ -3214,7 +3225,6 @@ snapshots:
       turbo-stream: 2.4.1
     optionalDependencies:
       typescript: 5.0.2
-    optional: true
 
   '@rollup/rollup-android-arm-eabi@4.46.2':
     optional: true
@@ -3294,8 +3304,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@standard-schema/spec@1.0.0':
-    optional: true
+  '@standard-schema/spec@1.0.0': {}
 
   '@supabase/auth-helpers-nextjs@0.10.0(@supabase/supabase-js@2.55.0)':
     dependencies:
@@ -3353,9 +3362,8 @@ snapshots:
   '@sveltejs/acorn-typescript@1.0.5(acorn@8.15.0)':
     dependencies:
       acorn: 8.15.0
-    optional: true
 
-  '@sveltejs/kit@2.30.1(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))':
+  '@sveltejs/kit@2.31.0(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))':
     dependencies:
       '@standard-schema/spec': 1.0.0
       '@sveltejs/acorn-typescript': 1.0.5(acorn@8.15.0)
@@ -3373,7 +3381,6 @@ snapshots:
       sirv: 3.0.1
       svelte: 5.38.1
       vite: 7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)
-    optional: true
 
   '@sveltejs/vite-plugin-svelte-inspector@5.0.0(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))':
     dependencies:
@@ -3383,7 +3390,6 @@ snapshots:
       vite: 7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   '@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))':
     dependencies:
@@ -3397,7 +3403,6 @@ snapshots:
       vitefu: 1.1.1(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   '@swc/counter@0.1.3': {}
 
@@ -3405,11 +3410,9 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@types/cookie@0.6.0':
-    optional: true
+  '@types/cookie@0.6.0': {}
 
-  '@types/estree@1.0.8':
-    optional: true
+  '@types/estree@1.0.8': {}
 
   '@types/node@22.0.0':
     dependencies:
@@ -3429,10 +3432,10 @@ snapshots:
     dependencies:
       '@types/node': 22.0.0
 
-  '@vercel/analytics@1.5.0(@remix-run/react@2.17.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2))(@sveltejs/kit@2.30.1(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(next@15.2.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(svelte@5.38.1)(vue-router@4.5.1(vue@3.5.18(typescript@5.0.2)))(vue@3.5.18(typescript@5.0.2))':
+  '@vercel/analytics@1.5.0(@remix-run/react@2.17.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2))(@sveltejs/kit@2.31.0(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(next@15.2.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(svelte@5.38.1)(vue-router@4.5.1(vue@3.5.18(typescript@5.0.2)))(vue@3.5.18(typescript@5.0.2))':
     optionalDependencies:
       '@remix-run/react': 2.17.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2)
-      '@sveltejs/kit': 2.30.1(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))
+      '@sveltejs/kit': 2.31.0(@sveltejs/vite-plugin-svelte@6.1.2(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)))(svelte@5.38.1)(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1))
       next: 15.2.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react: 19.0.0
       svelte: 5.38.1
@@ -3446,13 +3449,11 @@ snapshots:
       entities: 4.5.0
       estree-walker: 2.0.2
       source-map-js: 1.2.1
-    optional: true
 
   '@vue/compiler-dom@3.5.18':
     dependencies:
       '@vue/compiler-core': 3.5.18
       '@vue/shared': 3.5.18
-    optional: true
 
   '@vue/compiler-sfc@3.5.18':
     dependencies:
@@ -3465,27 +3466,22 @@ snapshots:
       magic-string: 0.30.17
       postcss: 8.5.6
       source-map-js: 1.2.1
-    optional: true
 
   '@vue/compiler-ssr@3.5.18':
     dependencies:
       '@vue/compiler-dom': 3.5.18
       '@vue/shared': 3.5.18
-    optional: true
 
-  '@vue/devtools-api@6.6.4':
-    optional: true
+  '@vue/devtools-api@6.6.4': {}
 
   '@vue/reactivity@3.5.18':
     dependencies:
       '@vue/shared': 3.5.18
-    optional: true
 
   '@vue/runtime-core@3.5.18':
     dependencies:
       '@vue/reactivity': 3.5.18
       '@vue/shared': 3.5.18
-    optional: true
 
   '@vue/runtime-dom@3.5.18':
     dependencies:
@@ -3493,23 +3489,18 @@ snapshots:
       '@vue/runtime-core': 3.5.18
       '@vue/shared': 3.5.18
       csstype: 3.1.3
-    optional: true
 
   '@vue/server-renderer@3.5.18(vue@3.5.18(typescript@5.0.2))':
     dependencies:
       '@vue/compiler-ssr': 3.5.18
       '@vue/shared': 3.5.18
       vue: 3.5.18(typescript@5.0.2)
-    optional: true
 
-  '@vue/shared@3.5.18':
-    optional: true
+  '@vue/shared@3.5.18': {}
 
-  '@web3-storage/multipart-parser@1.0.0':
-    optional: true
+  '@web3-storage/multipart-parser@1.0.0': {}
 
-  acorn@8.15.0:
-    optional: true
+  acorn@8.15.0: {}
 
   ansi-regex@5.0.1: {}
 
@@ -3534,8 +3525,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  aria-query@5.3.2:
-    optional: true
+  aria-query@5.3.2: {}
 
   asynckit@0.4.0: {}
 
@@ -3547,8 +3537,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axobject-query@4.1.0:
-    optional: true
+  axobject-query@4.1.0: {}
 
   balanced-match@1.0.2: {}
 
@@ -3621,11 +3610,9 @@ snapshots:
 
   commander@4.1.1: {}
 
-  cookie@0.6.0:
-    optional: true
+  cookie@0.6.0: {}
 
-  cookie@0.7.2:
-    optional: true
+  cookie@0.7.2: {}
 
   cross-spawn@7.0.6:
     dependencies:
@@ -3640,7 +3627,6 @@ snapshots:
   debug@4.4.1:
     dependencies:
       ms: 2.1.3
-    optional: true
 
   deepmerge@4.3.1: {}
 
@@ -3651,8 +3637,7 @@ snapshots:
 
   detect-node-es@1.1.0: {}
 
-  devalue@5.1.1:
-    optional: true
+  devalue@5.1.1: {}
 
   didyoumean@1.2.2: {}
 
@@ -3670,8 +3655,7 @@ snapshots:
 
   emoji-regex@9.2.2: {}
 
-  entities@4.5.0:
-    optional: true
+  entities@4.5.0: {}
 
   es-define-property@1.0.1: {}
 
@@ -3716,18 +3700,14 @@ snapshots:
       '@esbuild/win32-arm64': 0.25.9
       '@esbuild/win32-ia32': 0.25.9
       '@esbuild/win32-x64': 0.25.9
-    optional: true
 
-  esm-env@1.2.2:
-    optional: true
+  esm-env@1.2.2: {}
 
   esrap@2.1.0:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
-    optional: true
 
-  estree-walker@2.0.2:
-    optional: true
+  estree-walker@2.0.2: {}
 
   fast-glob@3.3.3:
     dependencies:
@@ -3744,7 +3724,6 @@ snapshots:
   fdir@6.4.6(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
-    optional: true
 
   fill-range@7.1.1:
     dependencies:
@@ -3849,7 +3828,6 @@ snapshots:
   is-reference@3.0.3:
     dependencies:
       '@types/estree': 1.0.8
-    optional: true
 
   isexe@2.0.0: {}
 
@@ -3863,15 +3841,13 @@ snapshots:
 
   jose@4.15.9: {}
 
-  kleur@4.1.5:
-    optional: true
+  kleur@4.1.5: {}
 
   lilconfig@3.1.3: {}
 
   lines-and-columns@1.2.4: {}
 
-  locate-character@3.0.0:
-    optional: true
+  locate-character@3.0.0: {}
 
   lru-cache@10.4.3: {}
 
@@ -3882,7 +3858,6 @@ snapshots:
   magic-string@0.30.17:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
-    optional: true
 
   math-intrinsics@1.1.0: {}
 
@@ -3905,14 +3880,11 @@ snapshots:
 
   minipass@7.1.2: {}
 
-  mri@1.2.0:
-    optional: true
+  mri@1.2.0: {}
 
-  mrmime@2.0.1:
-    optional: true
+  mrmime@2.0.1: {}
 
-  ms@2.1.3:
-    optional: true
+  ms@2.1.3: {}
 
   mz@2.7.0:
     dependencies:
@@ -3973,8 +3945,7 @@ snapshots:
 
   picomatch@2.3.1: {}
 
-  picomatch@4.0.3:
-    optional: true
+  picomatch@4.0.3: {}
 
   pify@2.3.0: {}
 
@@ -4028,7 +3999,6 @@ snapshots:
       nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
-    optional: true
 
   process@0.11.10: {}
 
@@ -4077,13 +4047,11 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
       react-router: 6.30.0(react@19.0.0)
-    optional: true
 
   react-router@6.30.0(react@19.0.0):
     dependencies:
       '@remix-run/router': 1.23.0
       react: 19.0.0
-    optional: true
 
   react-style-singleton@2.2.3(@types/react@19.0.0)(react@19.0.0):
     dependencies:
@@ -4136,7 +4104,6 @@ snapshots:
       '@rollup/rollup-win32-ia32-msvc': 4.46.2
       '@rollup/rollup-win32-x64-msvc': 4.46.2
       fsevents: 2.3.3
-    optional: true
 
   run-parallel@1.2.0:
     dependencies:
@@ -4145,7 +4112,6 @@ snapshots:
   sade@1.8.1:
     dependencies:
       mri: 1.2.0
-    optional: true
 
   scheduler@0.25.0: {}
 
@@ -4199,12 +4165,10 @@ snapshots:
       '@polka/url': 1.0.0-next.29
       mrmime: 2.0.1
       totalist: 3.0.1
-    optional: true
 
   source-map-js@1.2.1: {}
 
-  source-map@0.7.6:
-    optional: true
+  source-map@0.7.6: {}
 
   streamsearch@1.1.0: {}
 
@@ -4261,7 +4225,6 @@ snapshots:
       locate-character: 3.0.0
       magic-string: 0.30.17
       zimmerframe: 1.1.2
-    optional: true
 
   tailwind-merge@2.5.5: {}
 
@@ -4308,14 +4271,12 @@ snapshots:
     dependencies:
       fdir: 6.4.6(picomatch@4.0.3)
       picomatch: 4.0.3
-    optional: true
 
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
 
-  totalist@3.0.1:
-    optional: true
+  totalist@3.0.1: {}
 
   tr46@0.0.3: {}
 
@@ -4323,8 +4284,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  turbo-stream@2.4.1:
-    optional: true
+  turbo-stream@2.4.1: {}
 
   typescript@5.0.2: {}
 
@@ -4368,18 +4328,15 @@ snapshots:
       fsevents: 2.3.3
       jiti: 1.21.7
       yaml: 2.8.1
-    optional: true
 
   vitefu@1.1.1(vite@7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)):
     optionalDependencies:
       vite: 7.1.2(@types/node@22.0.0)(jiti@1.21.7)(yaml@2.8.1)
-    optional: true
 
   vue-router@4.5.1(vue@3.5.18(typescript@5.0.2)):
     dependencies:
       '@vue/devtools-api': 6.6.4
       vue: 3.5.18(typescript@5.0.2)
-    optional: true
 
   vue@3.5.18(typescript@5.0.2):
     dependencies:
@@ -4390,7 +4347,6 @@ snapshots:
       '@vue/shared': 3.5.18
     optionalDependencies:
       typescript: 5.0.2
-    optional: true
 
   webidl-conversions@3.0.1: {}
 
@@ -4419,5 +4375,4 @@ snapshots:
 
   yaml@2.8.1: {}
 
-  zimmerframe@1.1.2:
-    optional: true
+  zimmerframe@1.1.2: {}

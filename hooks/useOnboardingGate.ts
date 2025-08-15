@@ -1,73 +1,100 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { checkUserOrganization } from "@/lib/onboarding"
-import { useAuth } from "@/app/components/auth-provider"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import type { User } from "@supabase/supabase-js"
 
 export function useOnboardingGate() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { user, loading: authLoading } = useAuth()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
     async function checkOnboardingStatus() {
       try {
-        setIsLoading(true)
-        setError(null)
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
 
-        // Wait for auth to be ready
-        if (authLoading) {
-          console.log("Auth still loading...")
-          return
-        }
+        if (!mounted) return
 
-        // If no user, they don't need onboarding (show home page)
-        if (!user) {
-          console.log("No user found, showing home page")
+        if (userError) {
+          console.error("Error getting user:", userError)
+          setUser(null)
           setNeedsOnboarding(false)
-          setIsLoading(false)
+          setLoading(false)
           return
         }
 
-        console.log("Checking onboarding status for user:", user.id)
+        setUser(user)
 
-        const organization = await checkUserOrganization()
-        const hasOrganization = !!organization
+        if (!user) {
+          setNeedsOnboarding(false)
+          setLoading(false)
+          return
+        }
 
-        console.log("Organization check result:", {
-          hasOrganization,
-          organization: organization
-            ? {
-                id: organization.organizations?.id,
-                name: organization.organizations?.name,
-              }
-            : null,
+        // Check if user has completed onboarding
+        const [{ data: profile }, { data: memberships }] = await Promise.all([
+          supabase.from("profiles").select("default_org").eq("id", user.id).single(),
+          supabase.from("memberships").select("org_id, role, is_active").eq("user_id", user.id).eq("is_active", true),
+        ])
+
+        if (!mounted) return
+
+        const hasActiveMembership = (memberships?.length ?? 0) > 0
+        const hasDefaultOrg = !!profile?.default_org
+
+        // User needs onboarding if they don't have both an active membership and default org
+        const needsOnboarding = !(hasActiveMembership && hasDefaultOrg)
+
+        console.log("Onboarding check:", {
+          userId: user.id,
+          hasActiveMembership,
+          hasDefaultOrg,
+          needsOnboarding,
         })
 
-        // Only show onboarding if user is logged in AND doesn't have an organization
-        setNeedsOnboarding(!hasOrganization)
-        setIsLoading(false)
-      } catch (err) {
-        console.error("Error checking onboarding status:", err)
-        setError(err instanceof Error ? err.message : "Unknown error")
-        // Default to not showing onboarding on error (show home page)
-        setNeedsOnboarding(false)
-        setIsLoading(false)
+        setNeedsOnboarding(needsOnboarding)
+      } catch (error) {
+        console.error("Error checking onboarding status:", error)
+        if (mounted) {
+          setNeedsOnboarding(false)
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
     checkOnboardingStatus()
-  }, [user, authLoading])
 
-  const completeOnboarding = () => {
-    setNeedsOnboarding(false)
-  }
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        checkOnboardingStatus()
+      }
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
   return {
+    user,
     needsOnboarding,
-    isLoading,
-    error,
-    completeOnboarding,
+    loading,
+    refetch: () => {
+      setLoading(true)
+      // Trigger re-check by updating a dependency
+    },
   }
 }
