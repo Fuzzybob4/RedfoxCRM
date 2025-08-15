@@ -7,6 +7,7 @@ import { Footer } from "./components/footer"
 import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@vercel/analytics/react"
 import { Suspense } from "react"
+import { OnboardingGate } from "./components/onboarding-gate"
 import type React from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -30,6 +31,7 @@ export default function RootLayout({
             <Header />
             <main className="pt-24 flex-grow">{children}</main>
             <Footer />
+            <OnboardingGate />
           </AuthProvider>
         </Suspense>
         <Toaster />

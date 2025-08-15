@@ -15,7 +15,6 @@ export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [loginAttempts, setLoginAttempts] = useState(0)
   const router = useRouter()
   const { toast } = useToast()
   const { setIsLoggedIn } = useAuth()
@@ -79,9 +78,26 @@ export default function LoginForm() {
       // Force a router refresh to update auth state
       router.refresh()
 
-      // Use router.replace to avoid navigation history issues
-      const redirectPath = redirectTo || `/dashboard/${data.user.id}`
-      router.replace(redirectPath)
+      // Check if user needs onboarding before redirecting
+      const [profileResult, membershipsResult] = await Promise.all([
+        supabase.from("profiles").select("default_org").eq("id", data.user.id).single(),
+        supabase.from("memberships").select("org_id, role").eq("user_id", data.user.id),
+      ])
+
+      const profile = profileResult.data
+      const memberships = membershipsResult.data || []
+      const hasOrg = memberships.length > 0
+      const hasDefault = !!profile?.default_org
+      const needsOnboarding = !(hasOrg && hasDefault)
+
+      if (needsOnboarding) {
+        // Redirect to dashboard, onboarding will show automatically
+        router.replace(`/dashboard/${data.user.id}`)
+      } else {
+        // Use existing redirect logic
+        const redirectPath = redirectTo || `/dashboard/${data.user.id}`
+        router.replace(redirectPath)
+      }
     } catch (error) {
       console.error("Login error:", error)
       toast({
