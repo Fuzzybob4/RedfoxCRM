@@ -41,6 +41,8 @@ export async function createBusinessViaRPC(input: {
 }) {
   await getUserOrThrow() // ensures we're authenticated (otherwise RLS will block)
 
+  console.log("Creating business via RPC:", input)
+
   const { data, error } = await supabase.rpc("provision_first_org", {
     p_name: input.name,
     p_plan: input.plan ?? "pro",
@@ -56,6 +58,7 @@ export async function createBusinessViaRPC(input: {
     throw new Error(error.message ?? "Failed to create organization")
   }
 
+  console.log("Business created successfully:", data)
   // data is the new org id (uuid)
   return data as string
 }
@@ -73,6 +76,8 @@ export async function createBusinessDirect(input: {
   website?: string | null
 }) {
   const userId = await getUserOrThrow() // <- critical for owner_id
+
+  console.log("Creating business directly:", input, "User ID:", userId)
 
   const { data, error } = await supabase
     .from("organizations")
@@ -95,6 +100,8 @@ export async function createBusinessDirect(input: {
     throw new Error(error.message ?? "Failed to create organization")
   }
 
+  console.log("Organization created:", data)
+
   // Create owner membership
   const { error: membershipError } = await supabase.from("memberships").insert([
     {
@@ -102,12 +109,11 @@ export async function createBusinessDirect(input: {
       user_id: userId,
       role: "owner",
       is_active: true,
-      hired_date: new Date().toISOString().split("T")[0],
     },
   ])
 
   if (membershipError) {
-    console.error("memberships.insert error:", membershipError)
+    console.error("membership.insert error:", membershipError)
     throw new Error(membershipError.message ?? "Failed to create membership")
   }
 
@@ -116,7 +122,7 @@ export async function createBusinessDirect(input: {
 
   if (profileError) {
     console.error("profiles.update error:", profileError)
-    // Don't throw here, as the org was created successfully
+    // Don't throw here, it's not critical
   }
 
   return data.id as string
@@ -138,39 +144,4 @@ export async function createBusiness(input: {
     console.warn("RPC failed, trying direct insert fallback. Reason:", (e as any)?.message)
     return await createBusinessDirect(input)
   }
-}
-
-// Function to send team invitations
-export async function sendTeamInvites(
-  orgId: string,
-  invites: Array<{
-    name?: string
-    email: string
-    role: "admin" | "manager" | "employee" | "viewer"
-  }>,
-) {
-  const userId = await getUserOrThrow()
-
-  const inviteRows = invites
-    .filter((invite) => invite.email.trim())
-    .map((invite) => ({
-      org_id: orgId,
-      email: invite.email.trim(),
-      role: invite.role,
-      invited_name: invite.name?.trim() || null,
-      invited_by: userId,
-    }))
-
-  if (inviteRows.length === 0) {
-    return // No valid invites to send
-  }
-
-  const { error } = await supabase.from("invites").insert(inviteRows)
-
-  if (error) {
-    console.error("invites.insert error:", error)
-    throw new Error(error.message ?? "Failed to send invitations")
-  }
-
-  return inviteRows.length
 }

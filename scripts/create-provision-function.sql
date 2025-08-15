@@ -1,5 +1,5 @@
 -- Create the provision_first_org function
-CREATE OR REPLACE FUNCTION public.provision_first_org(
+CREATE OR REPLACE FUNCTION provision_first_org(
   p_name TEXT,
   p_plan TEXT DEFAULT 'pro',
   p_address TEXT DEFAULT NULL,
@@ -7,27 +7,16 @@ CREATE OR REPLACE FUNCTION public.provision_first_org(
   p_email TEXT DEFAULT NULL,
   p_website TEXT DEFAULT NULL
 )
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+RETURNS UUID AS $$
 DECLARE
   v_user_id UUID;
   v_org_id UUID;
 BEGIN
-  -- Get the current user
+  -- Get the current user ID
   v_user_id := auth.uid();
   
   IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'You must be authenticated to create an organization';
-  END IF;
-
-  -- Check if user already has an organization
-  IF EXISTS (
-    SELECT 1 FROM memberships 
-    WHERE user_id = v_user_id AND is_active = true
-  ) THEN
-    RAISE EXCEPTION 'User already belongs to an organization';
+    RAISE EXCEPTION 'User must be authenticated';
   END IF;
 
   -- Create the organization
@@ -41,30 +30,28 @@ BEGIN
     website
   )
   VALUES (
-    p_name,
-    p_plan,
-    v_user_id,
-    p_address,
-    p_phone,
-    p_email,
+    p_name, 
+    p_plan, 
+    v_user_id, 
+    p_address, 
+    p_phone, 
+    p_email, 
     p_website
   )
   RETURNING id INTO v_org_id;
 
   -- Create owner membership
   INSERT INTO memberships (
-    org_id,
-    user_id,
-    role,
-    is_active,
-    hired_date
+    org_id, 
+    user_id, 
+    role, 
+    is_active
   )
   VALUES (
-    v_org_id,
-    v_user_id,
-    'owner',
-    true,
-    CURRENT_DATE
+    v_org_id, 
+    v_user_id, 
+    'owner', 
+    true
   );
 
   -- Set as default organization in profiles
@@ -87,13 +74,12 @@ BEGIN
     'organization', 
     v_org_id, 
     'created', 
-    'Organization created and user set as owner'
+    'Organization created during onboarding'
   );
 
-  -- Return the organization ID
   RETURN v_org_id;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.provision_first_org TO authenticated;
+GRANT EXECUTE ON FUNCTION provision_first_org TO authenticated;

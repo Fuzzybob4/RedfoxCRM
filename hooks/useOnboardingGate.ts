@@ -1,29 +1,24 @@
 "use client"
-
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import type { User } from "@supabase/supabase-js"
 
 export function useOnboardingGate() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let mounted = true
-
-    async function checkOnboardingStatus() {
+    ;(async () => {
       try {
+        console.log("Checking onboarding status...")
+
         const {
           data: { user },
           error: userError,
         } = await supabase.auth.getUser()
 
-        if (!mounted) return
-
         if (userError) {
           console.error("Error getting user:", userError)
-          setUser(null)
           setNeedsOnboarding(false)
           setLoading(false)
           return
@@ -32,69 +27,51 @@ export function useOnboardingGate() {
         setUser(user)
 
         if (!user) {
+          console.log("No user found, onboarding not needed")
           setNeedsOnboarding(false)
           setLoading(false)
           return
         }
 
-        // Check if user has completed onboarding
-        const [{ data: profile }, { data: memberships }] = await Promise.all([
-          supabase.from("profiles").select("default_org").eq("id", user.id).single(),
-          supabase.from("memberships").select("org_id, role, is_active").eq("user_id", user.id).eq("is_active", true),
-        ])
+        console.log("User found:", user.id)
 
-        if (!mounted) return
+        // Pull profile & memberships
+        const [{ data: profile, error: profileError }, { data: memberships, error: membershipError }] =
+          await Promise.all([
+            supabase.from("profiles").select("default_org").eq("id", user.id).single(),
+            supabase.from("memberships").select("org_id, role").eq("user_id", user.id),
+          ])
 
-        const hasActiveMembership = (memberships?.length ?? 0) > 0
-        const hasDefaultOrg = !!profile?.default_org
+        if (profileError) {
+          console.error("Error getting profile:", profileError)
+        }
 
-        // User needs onboarding if they don't have both an active membership and default org
-        const needsOnboarding = !(hasActiveMembership && hasDefaultOrg)
+        if (membershipError) {
+          console.error("Error getting memberships:", membershipError)
+        }
+
+        const hasOrg = (memberships?.length ?? 0) > 0
+        const hasDefault = !!profile?.default_org
 
         console.log("Onboarding check:", {
-          userId: user.id,
-          hasActiveMembership,
-          hasDefaultOrg,
-          needsOnboarding,
+          hasOrg,
+          hasDefault,
+          memberships: memberships?.length ?? 0,
+          defaultOrg: profile?.default_org,
         })
 
-        setNeedsOnboarding(needsOnboarding)
+        const needsOnboardingResult = !(hasOrg && hasDefault)
+        setNeedsOnboarding(needsOnboardingResult)
+
+        console.log("Needs onboarding:", needsOnboardingResult)
       } catch (error) {
-        console.error("Error checking onboarding status:", error)
-        if (mounted) {
-          setNeedsOnboarding(false)
-        }
+        console.error("Error in onboarding gate:", error)
+        setNeedsOnboarding(false)
       } finally {
-        if (mounted) {
-          setLoading(false)
-        }
+        setLoading(false)
       }
-    }
-
-    checkOnboardingStatus()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        checkOnboardingStatus()
-      }
-    })
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
+    })()
   }, [])
 
-  return {
-    user,
-    needsOnboarding,
-    loading,
-    refetch: () => {
-      setLoading(true)
-      // Trigger re-check by updating a dependency
-    },
-  }
+  return { user, needsOnboarding, loading }
 }
