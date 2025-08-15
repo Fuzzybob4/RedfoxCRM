@@ -1,135 +1,166 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Check } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { useScrollToTop } from "../hooks/useScrollToTop"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Check, X } from "lucide-react"
 
-const pricingPlans = [
+const plans = [
   {
     name: "Starter",
-    description: "Perfect for solo business owners and small startups",
-    monthlyPrice: 19,
-    yearlyPrice: 182.4,
+    price: "$29",
+    description: "Perfect for small teams getting started",
     features: [
-      "Basic scheduling with calendar interface",
-      "Simple booking page",
-      "Up to 2 team members",
-      "Basic analytics & reports",
-      "Single service type (Holiday or Lawn Care)",
+      { name: "Up to 1,000 contacts", included: true },
+      { name: "Basic pipeline management", included: true },
+      { name: "Email integration", included: true },
+      { name: "Mobile app access", included: true },
+      { name: "Standard support", included: true },
+      { name: "Advanced reporting", included: false },
+      { name: "Custom workflows", included: false },
+      { name: "API access", included: false },
+      { name: "Priority support", included: false },
     ],
+    popular: false,
     cta: "Start Free Trial",
-    href: "/signup?plan=starter",
   },
   {
     name: "Professional",
-    description: "For growing businesses with multiple teams",
-    monthlyPrice: 85,
-    yearlyPrice: 816.0,
+    price: "$79",
+    description: "Best for growing businesses",
     features: [
-      "Advanced scheduling & routing",
-      "Basic invoicing and payment",
-      "Up to 5 team members",
-      "Advanced analytics & reporting",
-      "Customers mapping",
-      "Inventory management",
-      "Custom branding",
+      { name: "Up to 10,000 contacts", included: true },
+      { name: "Advanced pipeline management", included: true },
+      { name: "Email & calendar integration", included: true },
+      { name: "Mobile app access", included: true },
+      { name: "Priority support", included: true },
+      { name: "Advanced reporting", included: true },
+      { name: "Custom workflows", included: true },
+      { name: "API access", included: true },
+      { name: "Custom integrations", included: false },
     ],
-    cta: "Choose Professional Plan",
-    href: "/signup?plan=professional",
     popular: true,
+    cta: "Start Free Trial",
   },
   {
     name: "Enterprise",
-    description: "For large organizations with complex needs",
-    monthlyPrice: "Custom",
-    yearlyPrice: "Custom",
+    price: "$199",
+    description: "For large organizations",
     features: [
-      "Unlimited scheduling & routing",
-      "White-label customer portal",
-      "Unlimited team members",
-      "Custom analytics & reporting",
-      "Pay Roll",
-      "Priority support",
-      "Custom integrations",
-      "Dedicated account manager",
+      { name: "Unlimited contacts", included: true },
+      { name: "Advanced automation", included: true },
+      { name: "Custom integrations", included: true },
+      { name: "Advanced security", included: true },
+      { name: "Dedicated account manager", included: true },
+      { name: "Custom training", included: true },
+      { name: "SLA guarantee", included: true },
+      { name: "White-label options", included: true },
+      { name: "On-premise deployment", included: true },
     ],
+    popular: false,
     cta: "Contact Sales",
-    href: "/sales",
+  },
+]
+
+const faqs = [
+  {
+    question: "Can I change my plan at any time?",
+    answer:
+      "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.",
+  },
+  {
+    question: "Is there a free trial?",
+    answer: "Yes, all plans come with a 14-day free trial. No credit card required to get started.",
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We accept all major credit cards, PayPal, and bank transfers for Enterprise customers.",
+  },
+  {
+    question: "Can I cancel my subscription?",
+    answer:
+      "Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.",
   },
 ]
 
 export default function PricingPage() {
-  const [annualBilling, setAnnualBilling] = useState(false)
-  useScrollToTop()
   return (
-    <div className="min-h-screen bg-[#08042B] text-white">
-      <div className="container mx-auto px-4 py-16">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">Pricing Plans</h1>
-        <p className="text-xl text-center text-gray-300 mb-8">Choose the perfect plan for your business needs</p>
+    <div className="container mx-auto px-4 py-16">
+      <div className="text-center mb-16">
+        <Badge variant="secondary" className="mb-4">
+          Pricing
+        </Badge>
+        <h1 className="text-4xl font-bold mb-4">Simple, transparent pricing</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Choose the perfect plan for your business. All plans include a 14-day free trial with no credit card required.
+        </p>
+      </div>
 
-        <div className="flex items-center justify-center mb-12">
-          <Label htmlFor="billing-toggle" className="mr-2">
-            {annualBilling ? "Yearly" : "Monthly"}
-          </Label>
-          <Switch
-            id="billing-toggle"
-            checked={annualBilling}
-            onCheckedChange={(checked) => {
-              setAnnualBilling(checked)
-              // You might want to add analytics or other side effects here
-            }}
-          />
-        </div>
+      {/* Pricing Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
+        {plans.map((plan, index) => (
+          <Card key={index} className={`relative ${plan.popular ? "border-primary shadow-lg scale-105" : ""}`}>
+            {plan.popular && (
+              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">Most Popular</Badge>
+            )}
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">{plan.name}</CardTitle>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">{plan.price}</span>
+                <span className="text-muted-foreground">/month</span>
+              </div>
+              <CardDescription className="mt-2">{plan.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3 mb-8">
+                {plan.features.map((feature, featureIndex) => (
+                  <li key={featureIndex} className="flex items-center">
+                    {feature.included ? (
+                      <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    ) : (
+                      <X className="w-5 h-5 text-muted-foreground mr-3 flex-shrink-0" />
+                    )}
+                    <span className={`text-sm ${!feature.included ? "text-muted-foreground" : ""}`}>
+                      {feature.name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
+                {plan.cta}
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {pricingPlans.map((plan) => (
-            <Card
-              key={plan.name}
-              className={`relative overflow-hidden bg-white/10 border-white/20 ${
-                plan.popular ? "border-[#F67721]" : ""
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute top-0 right-0 bg-[#F67721] text-white text-sm px-3 py-1 rounded-bl-lg">
-                  Popular
-                </div>
-              )}
+      {/* FAQ Section */}
+      <div className="max-w-3xl mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+        <div className="space-y-6">
+          {faqs.map((faq, index) => (
+            <Card key={index}>
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-white">{plan.name}</CardTitle>
-                <CardDescription className="text-gray-300">{plan.description}</CardDescription>
+                <CardTitle className="text-lg">{faq.question}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold mb-4 text-white">
-                  {typeof plan.monthlyPrice === "number" ? (
-                    <>
-                      ${annualBilling ? plan.yearlyPrice.toFixed(2) : plan.monthlyPrice.toFixed(2)}
-                      <span className="text-xl font-normal text-gray-300">{annualBilling ? "/year" : "/mo"}</span>
-                    </>
-                  ) : (
-                    plan.monthlyPrice
-                  )}
-                </div>
-                <ul className="space-y-2">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center">
-                      <Check className="h-5 w-5 mr-2 text-[#92E138]" />
-                      <span className="text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-muted-foreground">{faq.answer}</p>
               </CardContent>
-              <CardFooter>
-                <Button asChild className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white">
-                  <Link href={plan.href}>{plan.cta}</Link>
-                </Button>
-              </CardFooter>
             </Card>
           ))}
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="text-center mt-16">
+        <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
+        <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+          Join thousands of businesses already using RedFox CRM to grow their sales and manage customer relationships
+          more effectively.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button size="lg">Start Free Trial</Button>
+          <Button variant="outline" size="lg">
+            Contact Sales
+          </Button>
         </div>
       </div>
     </div>

@@ -1,551 +1,238 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  ArrowDown,
-  MoreVertical,
-  Download,
-  LayoutDashboard,
-  ScrollText,
-  Package,
-  Users,
-  BarChart,
-  Settings,
-  UserPlus,
-  Upload,
-  ArrowUp,
-} from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { useToast } from "@/components/ui/use-toast"
-import type { User } from "@supabase/supabase-js"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Plus, Search, Filter, MoreHorizontal, Mail, Phone, Building } from "lucide-react"
 
-interface Customer {
-  id: number
-  owner_id: string
-  first_name: string
-  last_name: string
-  email: string
-  phone_number: string
-  address: string
-  city: string
-  state: string
-  zip: string
-  lead_status: string
-}
-
-const navItems = [
-  { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", href: "/dashboard" },
-  { icon: <ScrollText className="h-5 w-5" />, label: "Orders", href: "/orders" },
-  { icon: <Package className="h-5 w-5" />, label: "Products", href: "/products" },
-  { icon: <Users className="h-5 w-5" />, label: "Customers", href: "/customers", active: true },
-  { icon: <BarChart className="h-5 w-5" />, label: "Reports", href: "/reports" },
-  { icon: <Settings className="h-5 w-5" />, label: "Integrations", href: "/integrations" },
+const customers = [
+  {
+    id: 1,
+    name: "John Smith",
+    email: "john.smith@acmecorp.com",
+    company: "Acme Corp",
+    phone: "+1 (555) 123-4567",
+    status: "active",
+    lastContact: "2024-01-15",
+    dealValue: "$50,000",
+    tags: ["Enterprise", "High Value"],
+  },
+  {
+    id: 2,
+    name: "Sarah Johnson",
+    email: "sarah@techstart.com",
+    company: "TechStart Inc",
+    phone: "+1 (555) 987-6543",
+    status: "prospect",
+    lastContact: "2024-01-12",
+    dealValue: "$12,000",
+    tags: ["Startup", "Tech"],
+  },
+  {
+    id: 3,
+    name: "Mike Davis",
+    email: "mike.davis@globalsolutions.com",
+    company: "Global Solutions",
+    phone: "+1 (555) 456-7890",
+    status: "active",
+    lastContact: "2024-01-10",
+    dealValue: "$75,000",
+    tags: ["Enterprise", "Long-term"],
+  },
+  {
+    id: 4,
+    name: "Emily Chen",
+    email: "emily@innovatetech.com",
+    company: "InnovateTech",
+    phone: "+1 (555) 234-5678",
+    status: "inactive",
+    lastContact: "2023-12-20",
+    dealValue: "$8,500",
+    tags: ["SMB", "Tech"],
+  },
 ]
 
-const leadStatusOptions = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Closed Won", "Closed Lost"]
+const statusColors = {
+  active: "default",
+  prospect: "secondary",
+  inactive: "outline",
+} as const
 
 export default function CustomersPage() {
-  const [customerCount, setCustomerCount] = useState(0)
-  const [decreasePercentage] = useState(13)
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [newCustomer, setNewCustomer] = useState<Omit<Customer, "id" | "owner_id">>({
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone_number: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    lead_status: "New",
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedStatus, setSelectedStatus] = useState("all")
+
+  const filteredCustomers = customers.filter((customer) => {
+    const matchesSearch =
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.company.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = selectedStatus === "all" || customer.status === selectedStatus
+    return matchesSearch && matchesStatus
   })
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false)
-  const [paidInvoices, setPaidInvoices] = useState(0)
-  const [invoiceIncreasePercentage] = useState(5)
-  const [companyName, setCompanyName] = useState("RedFox CRM User") // Updated initial state
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
-  const { toast } = useToast()
 
-  useEffect(() => {
-    async function checkAuthAndLoadCustomers() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      fetchCompanyName(user)
-      fetchCustomers(user)
-    }
-
-    checkAuthAndLoadCustomers()
-  }, [router])
-
-  async function fetchCompanyName(user: User) {
-    if (!user) return
-
-    try {
-      const { data, error } = await supabase
-        .from("company_profiles")
-        .select("company_name")
-        .eq("owner_id", user.id)
-        .single()
-
-      if (error) {
-        if (error.code === "PGRST116") {
-          // No company profile found, set a default name
-          setCompanyName("My Company")
-        } else {
-          console.error("Error fetching company name:", error)
-          // Set a generic company name in case of other errors
-          setCompanyName("RedFox CRM User")
-        }
-      } else if (data && data.company_name) {
-        setCompanyName(data.company_name)
-      } else {
-        // If no error but also no data, set a default name
-        setCompanyName("My Company")
-      }
-    } catch (error) {
-      console.error("Unexpected error fetching company name:", error)
-      setCompanyName("RedFox CRM User")
-    }
-  }
-
-  async function fetchCustomers(user: User) {
-    if (!user) {
-      console.error("No user found")
-      setLoading(false)
-      return
-    }
-
-    const { data, error } = await supabase.from("customers").select("*").eq("owner_id", user.id)
-
-    if (error) {
-      console.error("Error fetching customers:", error)
-    } else {
-      setCustomers(data)
-      setCustomerCount(data.length)
-    }
-
-    setLoading(false)
-  }
-
-  const handleAddCustomer = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to add a customer.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const { data, error } = await supabase
-      .from("customers")
-      .insert([{ ...newCustomer, owner_id: user.id }])
-      .select()
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add customer. Please try again.",
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Success",
-        description: "Customer added successfully.",
-      })
-      setCustomers([...customers, data[0] as Customer])
-      setCustomerCount(customerCount + 1)
-      setIsAddCustomerOpen(false)
-      setNewCustomer({
-        first_name: "",
-        last_name: "",
-        email: "",
-        phone_number: "",
-        address: "",
-        city: "",
-        state: "",
-        zip: "",
-        lead_status: "New",
-      })
-    }
-  }
-
-  const handleUploadCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      const csvData = event.target?.result as string
-      const rows = csvData.split("\n").slice(1) // Assume first row is header
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to upload customers.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const newCustomers = rows.map((row) => {
-        const [first_name, last_name, email, phone_number, address, city, state, zip, lead_status] = row.split(",")
-        return {
-          owner_id: user.id,
-          first_name,
-          last_name,
-          email,
-          phone_number,
-          address,
-          city,
-          state,
-          zip,
-          lead_status,
-        }
-      })
-
-      const { data, error } = await supabase.from("customers").insert(newCustomers).select()
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to upload CSV. Please try again.",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Success",
-          description: `${newCustomers.length} customers added successfully.`,
-        })
-        setCustomers([...customers, ...(data as Customer[])])
-        setCustomerCount(customerCount + newCustomers.length)
-      }
-    }
-    reader.readAsText(file)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-[#1a1f2c]">
-        <div className="text-white">Loading...</div>
-      </div>
-    )
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
   }
 
   return (
-    <div className="flex h-screen bg-[#1a1f2c]">
-      {/* Left Sidebar */}
-      <div className="w-64 bg-[#272e3f] text-gray-300">
-        <div className="p-4 border-b border-gray-700">
-          <h1 className="text-xl font-semibold text-white">{companyName}</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Customers</h1>
+          <p className="text-muted-foreground">Manage your customer relationships and contacts</p>
         </div>
-        <nav className="p-4 space-y-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors
-                ${item.active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white"}`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Saved Reports Section */}
-        <div className="p-4 border-t border-gray-700">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase mb-4">SAVED REPORTS</h2>
-          <nav className="space-y-2">
-            <Link
-              href="/reports/current-month"
-              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-white/5 rounded-md"
-            >
-              Current month
-            </Link>
-            <Link
-              href="/reports/last-quarter"
-              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-white/5 rounded-md"
-            >
-              Last quarter
-            </Link>
-            <Link
-              href="/reports/engagement"
-              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-white/5 rounded-md"
-            >
-              Social engagement
-            </Link>
-            <Link
-              href="/reports/year-end"
-              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-white/5 rounded-md"
-            >
-              Year-end sale
-            </Link>
-          </nav>
-        </div>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Customer
+        </Button>
       </div>
 
-      <div className="flex-1 flex flex-col">
-        {/* Top Search Bar */}
-        <div className="h-16 bg-[#272e3f] flex items-center px-4 border-b border-gray-700">
-          <div className="flex-1 flex items-center space-x-4">
-            <Input
-              type="search"
-              placeholder="Search customers"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-[#1a1f2c] border-gray-700 text-white w-full max-w-md"
-            />
-            <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#e85d3d] hover:bg-[#d54e2f] text-white">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add Customer
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-[#272e3f] text-white">
-                <DialogHeader>
-                  <DialogTitle>Add New Customer</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAddCustomer} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="first_name">First Name</Label>
-                      <Input
-                        id="first_name"
-                        value={newCustomer.first_name}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, first_name: e.target.value })}
-                        className="bg-[#1a1f2c] border-gray-700 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="last_name">Last Name</Label>
-                      <Input
-                        id="last_name"
-                        value={newCustomer.last_name}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
-                        className="bg-[#1a1f2c] border-gray-700 text-white"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={newCustomer.email}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-700 text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone_number">Phone Number</Label>
-                    <Input
-                      id="phone_number"
-                      value={newCustomer.phone_number}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-700 text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={newCustomer.address}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-700 text-white"
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={newCustomer.city}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
-                        className="bg-[#1a1f2c] border-gray-700 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="state">State</Label>
-                      <Input
-                        id="state"
-                        value={newCustomer.state}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, state: e.target.value })}
-                        className="bg-[#1a1f2c] border-gray-700 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="zip">ZIP</Label>
-                      <Input
-                        id="zip"
-                        value={newCustomer.zip}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, zip: e.target.value })}
-                        className="bg-[#1a1f2c] border-gray-700 text-white"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="lead_status">Lead Status</Label>
-                    <Select
-                      value={newCustomer.lead_status}
-                      onValueChange={(value) => setNewCustomer({ ...newCustomer, lead_status: value })}
-                    >
-                      <SelectTrigger className="bg-[#1a1f2c] border-gray-700 text-white">
-                        <SelectValue placeholder="Select lead status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {leadStatusOptions.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button type="submit" className="bg-[#e85d3d] hover:bg-[#d54e2f] text-white">
-                    Add Customer
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload CSV
-            </Button>
-            <input type="file" ref={fileInputRef} onChange={handleUploadCSV} accept=".csv" className="hidden" />
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="grid gap-6">
-            {/* Stats Cards */}
-            <div className="flex gap-6 mb-8">
-              {/* New Customers Card */}
-              <Card className="w-[300px] bg-[#e85d3d] text-white">
-                <div className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">TOTAL CUSTOMERS</p>
-                      <h2 className="text-4xl font-bold">{customerCount}</h2>
-                    </div>
-                    <ArrowDown className="h-6 w-6" />
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm">{decreasePercentage}% DECREASE</p>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Paid Invoices Card */}
-              <Card className="w-[300px] bg-[#4CAF50] text-white">
-                <div className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">PAID INVOICES</p>
-                      <h2 className="text-4xl font-bold">{paidInvoices}</h2>
-                    </div>
-                    <ArrowUp className="h-6 w-6" />
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm">{invoiceIncreasePercentage}% INCREASE</p>
-                  </div>
-                </div>
-              </Card>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Customers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{filteredCustomers.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{filteredCustomers.filter((c) => c.status === "active").length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Prospects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{filteredCustomers.filter((c) => c.status === "prospect").length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Value</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              $
+              {filteredCustomers
+                .reduce((sum, c) => sum + Number.parseInt(c.dealValue.replace(/[$,]/g, "")), 0)
+                .toLocaleString()}
             </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Customers Table */}
-            <div className="bg-[#272e3f] rounded-lg p-6">
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-semibold text-white">Customers</h2>
-                  <span className="text-gray-400 text-sm">| {customerCount} Customers</span>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search customers, companies, or emails..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="prospect">Prospect</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline">
+          <Filter className="w-4 h-4 mr-2" />
+          More Filters
+        </Button>
+      </div>
+
+      {/* Customers List */}
+      <div className="space-y-4">
+        {filteredCustomers.map((customer) => (
+          <Card key={customer.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 flex-1">
+                  <Avatar className="h-12 w-12">
+                    <AvatarFallback>{getInitials(customer.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">{customer.name}</h3>
+                      <Badge variant={statusColors[customer.status as keyof typeof statusColors]}>
+                        {customer.status}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Mail className="w-4 h-4 mr-2" />
+                        {customer.email}
+                      </div>
+                      <div className="flex items-center">
+                        <Phone className="w-4 h-4 mr-2" />
+                        {customer.phone}
+                      </div>
+                      <div className="flex items-center">
+                        <Building className="w-4 h-4 mr-2" />
+                        {customer.company}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-3 text-sm">
+                      <span>
+                        <span className="font-medium">Deal Value:</span> {customer.dealValue}
+                      </span>
+                      <span>
+                        <span className="font-medium">Last Contact:</span> {customer.lastContact}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      {customer.tags.map((tag, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <Button variant="ghost" size="icon" className="text-white">
-                  <Download className="h-5 w-5" />
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="w-4 h-4" />
                 </Button>
               </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-400">Name</TableHead>
-                    <TableHead className="text-gray-400">Email</TableHead>
-                    <TableHead className="text-gray-400">Phone</TableHead>
-                    <TableHead className="text-gray-400">Address</TableHead>
-                    <TableHead className="text-gray-400">Lead Status</TableHead>
-                    <TableHead className="text-gray-400">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customers.map((customer) => (
-                    <TableRow key={customer.id} className="border-gray-700">
-                      <TableCell className="font-medium text-white">
-                        {customer.first_name} {customer.last_name}
-                      </TableCell>
-                      <TableCell className="text-white">{customer.email}</TableCell>
-                      <TableCell className="text-white">{customer.phone_number}</TableCell>
-                      <TableCell className="text-white">
-                        {customer.address}, {customer.city}, {customer.state} {customer.zip}
-                      </TableCell>
-                      <TableCell className="text-white">{customer.lead_status}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4 text-gray-400" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[160px]">
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {filteredCustomers.length === 0 && (
+        <Card className="text-center py-12">
+          <CardContent>
+            <p className="text-muted-foreground">No customers found matching your criteria.</p>
+            <Button className="mt-4">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Your First Customer
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

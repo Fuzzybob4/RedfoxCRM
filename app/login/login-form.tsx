@@ -1,169 +1,220 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
-import Link from "next/link"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
 
-export default function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
+export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [message, setMessage] = useState("")
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { toast } = useToast()
 
-  // Check if user was redirected from signup
-  const fromSignup = searchParams.get("from") === "signup"
-  const verified = searchParams.get("verified") === "true"
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSignIn = async (formData: FormData) => {
     setIsLoading(true)
+    setMessage("")
+
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
 
     try {
-      console.log("Attempting login for:", email)
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
         password,
       })
 
       if (error) {
-        console.error("Login error:", error)
-
-        let errorMessage = "Login failed. Please check your credentials."
-
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "Invalid email or password. Please try again."
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Please check your email and click the confirmation link before logging in."
-        } else if (error.message.includes("Too many requests")) {
-          errorMessage = "Too many login attempts. Please wait a moment and try again."
-        }
-
-        toast({
-          title: "Login Failed",
-          description: errorMessage,
-          variant: "destructive",
-        })
-        return
-      }
-
-      if (data.user) {
-        console.log("Login successful:", data.user.id)
-
-        toast({
-          title: "Welcome back!",
-          description: "You have been logged in successfully.",
-        })
-
-        // Small delay to let the auth state update
-        setTimeout(() => {
-          router.push("/dashboard")
-          router.refresh()
-        }, 500)
+        setMessage(error.message)
+      } else {
+        router.push("/dashboard")
       }
     } catch (error) {
-      console.error("Unexpected login error:", error)
-      toast({
-        title: "Login Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+      setMessage("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSignUp = async (formData: FormData) => {
+    setIsLoading(true)
+    setMessage("")
+
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
+    const fullName = formData.get("fullName") as string
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
       })
+
+      if (error) {
+        setMessage(error.message)
+      } else {
+        setMessage("Check your email for the confirmation link!")
+      }
+    } catch (error) {
+      setMessage("An unexpected error occurred")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#08042B] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#08042B] via-[#1a0f4a] to-[#2d1b69] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
-          <CardDescription className="text-center">
-            {fromSignup && !verified
-              ? "Please check your email for a verification link, then log in below."
-              : verified
-                ? "Your email has been verified! Please log in to continue."
-                : "Sign in to your RedFox CRM account"}
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">Welcome to RedFox CRM</CardTitle>
+          <CardDescription className="text-center">Sign in to your account or create a new one</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="signin" className="space-y-4">
+              <form action={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="signin-email"
+                      name="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="signin-password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="pl-10 pr-10"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
-              </div>
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B]"
-              disabled={isLoading}
+              </form>
+            </TabsContent>
+
+            <TabsContent value="signup" className="space-y-4">
+              <form action={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="signup-name"
+                      name="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="signup-email"
+                      name="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="signup-password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create a password"
+                      className="pl-10 pr-10"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating account..." : "Create Account"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+
+          {message && (
+            <div
+              className={`mt-4 p-3 rounded-md text-sm ${
+                message.includes("Check your email")
+                  ? "bg-green-50 text-green-700 border border-green-200"
+                  : "bg-red-50 text-red-700 border border-red-200"
+              }`}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            <Link href="/reset-password" className="text-[#F67721] hover:underline">
-              Forgot your password?
-            </Link>
-          </div>
-          <div className="mt-2 text-center text-sm">
-            {"Don't have an account? "}
-            <Link href="/signup" className="text-[#F67721] hover:underline">
-              Sign up
-            </Link>
-          </div>
+              {message}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   )
 }
+
+// Default export for compatibility
+export default LoginForm

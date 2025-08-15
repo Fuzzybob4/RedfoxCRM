@@ -1,116 +1,150 @@
-import { Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import Link from "next/link"
+"use client"
 
-const pricingPlans = [
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Check, Star } from "lucide-react"
+
+const plans = [
   {
     name: "Starter",
-    description: "Perfect for solo business owners and small startups",
-    price: "19",
-    trial: "14-day free trial",
+    price: "$29",
+    period: "/month",
+    description: "Perfect for small businesses getting started",
     features: [
-      "Basic scheduling with calendar interface",
-      "Simple booking page",
-      "Up to 2 team members",
-      "Basic analytics & reports",
-      "Single service type (Holiday or Lawn Care)",
+      "Up to 1,000 contacts",
+      "Basic CRM features",
+      "Email support",
+      "Mobile app access",
+      "Basic reporting",
+      "1 user account",
     ],
     popular: false,
-    href: "/signup?plan=starter",
+    cta: "Start Free Trial",
   },
   {
     name: "Professional",
-    description: "For growing businesses with multiple teams",
-    price: "85",
+    price: "$79",
+    period: "/month",
+    description: "Ideal for growing businesses with advanced needs",
     features: [
-      "Advanced scheduling & routing",
-      "Basic invoicing and payment",
-      "Up to 5 team members",
-      "Advanced analytics & reporting",
-      "Customers mapping",
-      "Inventory management",
-      "Custom branding",
+      "Up to 10,000 contacts",
+      "Advanced CRM features",
+      "Priority support",
+      "Mobile app access",
+      "Advanced reporting & analytics",
+      "Up to 5 user accounts",
+      "Automation tools",
+      "Custom fields",
+      "API access",
     ],
     popular: true,
-    buttonText: "Choose Professional Plan",
-    href: "/signup?plan=professional",
+    cta: "Start Free Trial",
   },
   {
     name: "Enterprise",
-    description: "For large organizations with complex needs",
-    price: "Custom",
+    price: "$199",
+    period: "/month",
+    description: "For large organizations with complex requirements",
     features: [
-      "Unlimited scheduling & routing",
-      "White-label customer portal",
-      "Unlimited team members",
-      "Custom analytics & reporting",
-      "Pay Roll",
-      "Priority support",
+      "Unlimited contacts",
+      "All CRM features",
+      "24/7 phone support",
+      "Mobile app access",
+      "Custom reporting",
+      "Unlimited user accounts",
+      "Advanced automation",
       "Custom integrations",
       "Dedicated account manager",
+      "SLA guarantee",
     ],
     popular: false,
-    href: "/sales",
+    cta: "Contact Sales",
   },
 ]
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-20">
+    <section className="py-24 bg-gradient-to-b from-[#1a0f4a] to-[#08042B]">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-white">Choose Your Plan</h2>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-            Select the perfect plan for your business needs. All plans include our core CRM features, with additional
-            capabilities as you grow.
+        {/* Header */}
+        <div className="text-center mb-16">
+          <Badge className="mb-4 bg-green-500/20 text-green-300 border-green-500/30">Pricing</Badge>
+          <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
+            Simple, Transparent
+            <span className="block bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+              Pricing Plans
+            </span>
+          </h2>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Choose the perfect plan for your business. All plans include a 14-day free trial with no credit card
+            required.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {pricingPlans.map((plan) => (
+        {/* Pricing Cards */}
+        <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          {plans.map((plan, index) => (
             <Card
-              key={plan.name}
-              className={`relative overflow-hidden bg-white/10 border-white/20 ${
-                plan.popular ? "border-[#F67721]" : ""
+              key={index}
+              className={`relative bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 ${
+                plan.popular
+                  ? "ring-2 ring-blue-500/50 scale-105 bg-gradient-to-b from-blue-500/10 to-purple-500/10"
+                  : ""
               }`}
             >
               {plan.popular && (
-                <div className="absolute top-0 right-0 bg-[#F67721] text-white text-sm px-3 py-1 rounded-bl-lg">
-                  Popular
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1">
+                    <Star className="w-3 h-3 mr-1" />
+                    Most Popular
+                  </Badge>
                 </div>
               )}
-              <CardHeader>
-                <CardTitle className="text-white">{plan.name}</CardTitle>
-                <CardDescription className="text-gray-300">{plan.description}</CardDescription>
-                <div className="mt-4">
-                  <div className="flex items-baseline gap-1">
-                    {plan.price !== "Custom" && <span className="text-sm text-gray-300">$</span>}
-                    <span className="text-3xl font-bold text-white">{plan.price}</span>
-                    {plan.price !== "Custom" && <span className="text-gray-300">/month</span>}
-                  </div>
-                  {plan.trial && <p className="text-sm text-[#92E138] mt-1">{plan.trial}</p>}
+
+              <CardHeader className="text-center pb-8">
+                <CardTitle className="text-2xl font-bold text-white mb-2">{plan.name}</CardTitle>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold text-white">{plan.price}</span>
+                  <span className="text-gray-400">{plan.period}</span>
                 </div>
+                <p className="text-gray-300">{plan.description}</p>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-gray-300">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center">
-                      <Check className="h-4 w-4 mr-2 text-[#92E138]" />
-                      {feature}
+
+              <CardContent className="space-y-6">
+                <ul className="space-y-3">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center text-gray-300">
+                      <Check className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white" asChild>
-                  <Link href={plan.href}>
-                    {plan.buttonText || (plan.price === "Custom" ? "Contact Sales" : "Start Free Trial")}
-                  </Link>
+
+                <Button
+                  className={`w-full py-3 text-lg font-semibold rounded-xl transition-all duration-300 ${
+                    plan.popular
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl"
+                      : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                  }`}
+                >
+                  {plan.cta}
                 </Button>
-              </CardFooter>
+              </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Additional Info */}
+        <div className="text-center mt-16">
+          <p className="text-gray-400 mb-4">
+            All plans include SSL security, regular backups, and 99.9% uptime guarantee
+          </p>
+          <div className="flex justify-center space-x-8 text-sm text-gray-500">
+            <span>✓ No setup fees</span>
+            <span>✓ Cancel anytime</span>
+            <span>✓ 14-day free trial</span>
+          </div>
         </div>
       </div>
     </section>

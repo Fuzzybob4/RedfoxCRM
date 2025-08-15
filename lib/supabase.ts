@@ -13,8 +13,8 @@ Object.entries(requiredEnvVars).forEach(([key, value]) => {
   }
 })
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // Safe cookie options with fallbacks
 const cookieOptions: CookieOptions = {
@@ -46,60 +46,11 @@ console.debug("Supabase initialization:", {
   timestamp: new Date().toISOString(),
 })
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: "sb-session",
-    storage: {
-      getItem: (key) => {
-        try {
-          if (typeof window === "undefined") return null
-          const value = window.localStorage.getItem(key)
-          console.debug("Auth storage - getItem:", {
-            key,
-            hasValue: !!value,
-            timestamp: new Date().toISOString(),
-          })
-          return value
-        } catch (error) {
-          console.error("Failed to get item from storage:", error)
-          return null
-        }
-      },
-      setItem: (key, value) => {
-        try {
-          if (typeof window === "undefined") return
-          window.localStorage.setItem(key, value)
-          console.debug("Auth storage - setItem:", {
-            key,
-            hasValue: !!value,
-            timestamp: new Date().toISOString(),
-          })
-        } catch (error) {
-          console.error("Failed to set item in storage:", error)
-        }
-      },
-      removeItem: (key) => {
-        try {
-          if (typeof window === "undefined") return
-          window.localStorage.removeItem(key)
-          console.debug("Auth storage - removeItem:", {
-            key,
-            timestamp: new Date().toISOString(),
-          })
-        } catch (error) {
-          console.error("Failed to remove item from storage:", error)
-        }
-      },
-    },
-    cookieOptions,
-    debug: true,
-  },
-  persistSession: true,
-  autoRefreshToken: true,
-})
+// Create and export the Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Export createClient as a named export for compatibility
+export { createClient }
 
 // Enhanced session check with better error handling
 export async function checkSession() {

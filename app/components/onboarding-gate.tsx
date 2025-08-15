@@ -1,28 +1,40 @@
 "use client"
 
-import { useOnboardingGate } from "@/hooks/useOnboardingGate"
-import { OnboardingWizard } from "@/components/OnboardingWizard"
+import type React from "react"
 
-export function OnboardingGate() {
-  const { needsOnboarding, loading } = useOnboardingGate()
+import { useEffect, useState } from "react"
+import { useAuth } from "./auth-provider"
+import { OnboardingWizard } from "../../components/OnboardingWizard"
+import { useOnboardingGate } from "../../hooks/useOnboardingGate"
 
-  // Don't render anything while loading
-  if (loading) {
-    return null
+interface OnboardingGateProps {
+  children: React.ReactNode
+}
+
+export function OnboardingGate({ children }: OnboardingGateProps) {
+  const { user, loading } = useAuth()
+  const { needsOnboarding, loading: onboardingLoading } = useOnboardingGate()
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    if (!loading && !onboardingLoading && user && needsOnboarding) {
+      setShowOnboarding(true)
+    } else {
+      setShowOnboarding(false)
+    }
+  }, [user, needsOnboarding, loading, onboardingLoading])
+
+  if (loading || onboardingLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#08042B]">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+      </div>
+    )
   }
 
-  // Only show the wizard if the user needs onboarding
-  if (!needsOnboarding) {
-    return null
+  if (showOnboarding) {
+    return <OnboardingWizard />
   }
 
-  return (
-    <OnboardingWizard
-      open={true}
-      onClose={() => {
-        // Refresh the page to update the auth state
-        window.location.reload()
-      }}
-    />
-  )
+  return <>{children}</>
 }

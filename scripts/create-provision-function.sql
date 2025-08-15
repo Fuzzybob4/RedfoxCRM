@@ -1,99 +1,68 @@
--- Create the provision_first_org function
-CREATE OR REPLACE FUNCTION public.provision_first_org(
-  p_name TEXT,
+-- Create the provision_first_org function with proper type casting
+CREATE OR REPLACE FUNCTION provision_first_org(
+  p_business_name TEXT,
   p_plan TEXT DEFAULT 'pro',
+  p_company_size TEXT DEFAULT NULL,
   p_address TEXT DEFAULT NULL,
   p_phone TEXT DEFAULT NULL,
   p_email TEXT DEFAULT NULL,
   p_website TEXT DEFAULT NULL
 )
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+RETURNS UUID AS $$
 DECLARE
-  v_user_id UUID;
-  v_org_id UUID;
+  new_org_id UUID;
+  current_user_id UUID;
 BEGIN
-  -- Get the current user
-  v_user_id := auth.uid();
+  -- Get the current user ID
+  current_user_id := auth.uid();
   
-  IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'You must be authenticated to create an organization';
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated';
   END IF;
 
-  -- Check if user already has an organization
-  IF EXISTS (
-    SELECT 1 FROM memberships 
-    WHERE user_id = v_user_id AND is_active = true
-  ) THEN
-    RAISE EXCEPTION 'User already belongs to an organization';
-  END IF;
-
-  -- Create the organization
+  -- Create the organization with proper type casting for plan
   INSERT INTO organizations (
-    name, 
-    plan, 
-    owner_id, 
-    address, 
-    phone, 
-    email, 
-    website
-  )
-  VALUES (
-    p_name,
-    p_plan,
-    v_user_id,
+    name,
+    plan,
+    owner_id,
+    address,
+    phone,
+    email,
+    website,
+    is_active
+  ) VALUES (
+    p_business_name,
+    p_plan::org_plan,  -- Cast text to org_plan enum
+    current_user_id,
     p_address,
     p_phone,
     p_email,
-    p_website
-  )
-  RETURNING id INTO v_org_id;
+    p_website,
+    true
+  ) RETURNING id INTO new_org_id;
 
   -- Create owner membership
   INSERT INTO memberships (
     org_id,
     user_id,
     role,
-    is_active,
-    hired_date
-  )
-  VALUES (
-    v_org_id,
-    v_user_id,
+    is_active
+  ) VALUES (
+    new_org_id,
+    current_user_id,
     'owner',
-    true,
-    CURRENT_DATE
+    true
   );
 
-  -- Set as default organization in profiles
+  -- Update user's default org in profiles
   UPDATE profiles 
-  SET default_org = v_org_id 
-  WHERE id = v_user_id;
-
-  -- Log the activity
-  INSERT INTO activity_log (
-    org_id, 
-    user_id, 
-    entity_type, 
-    entity_id, 
-    action, 
-    description
-  )
-  VALUES (
-    v_org_id, 
-    v_user_id, 
-    'organization', 
-    v_org_id, 
-    'created', 
-    'Organization created and user set as owner'
-  );
+  SET default_org = new_org_id 
+  WHERE id = current_user_id;
 
   -- Return the organization ID
-  RETURN v_org_id;
+  RETURN new_org_id;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.provision_first_org TO authenticated;
+GRANT EXECUTE ON FUNCTION provision_first_org TO authenticated;
