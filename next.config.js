@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -7,23 +10,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ["blob.v0.dev"],
     unoptimized: true,
-  },
-  // Optimized for Next.js 15+
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      }
-    }
-    return config
-  },
-  // Enable experimental features for better performance
-  experimental: {
-    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
   },
 }
 

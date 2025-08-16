@@ -47,7 +47,13 @@ console.debug("Supabase initialization:", {
 })
 
 // Create and export the Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+})
 
 // Export createClient as a named export for compatibility
 export { createClient }

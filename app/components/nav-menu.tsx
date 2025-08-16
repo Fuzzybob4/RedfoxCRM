@@ -1,8 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import Link from "next/link"
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -11,53 +11,30 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
-import { cn } from "@/lib/utils"
-import { forwardRef } from "react"
 
-const features = [
-  {
-    title: "Customer Management",
-    href: "/features/customers",
-    description: "Centralize customer data and communication history",
-  },
-  {
-    title: "Scheduling & Routing",
-    href: "/features/scheduling",
-    description: "Optimize routes and manage team schedules",
-  },
-  {
-    title: "Invoicing & Payments",
-    href: "/features/invoicing",
-    description: "Create invoices and process payments seamlessly",
-  },
-  {
-    title: "Analytics & Reporting",
-    href: "/features/analytics",
-    description: "Get insights into your business performance",
-  },
+const featuresLinks = [
+  { name: "Customer Management", href: "/features/customers", description: "Organize and track customer interactions" },
+  { name: "Sales Analytics", href: "/features/analytics", description: "Get insights into sales performance" },
+  { name: "Communication Hub", href: "/features/communication", description: "Streamline customer communications" },
+  { name: "Task Scheduling", href: "/features/scheduling", description: "Automated scheduling and reminders" },
+  { name: "Document Management", href: "/features/documents", description: "Store and organize documents" },
+  { name: "Data Security", href: "/features/security", description: "Enterprise-grade security features" },
 ]
 
-const industries = [
-  {
-    title: "Landscaping & Lawn Care",
-    href: "/industries/landscaping",
-    description: "Manage seasonal services and equipment tracking",
-  },
-  {
-    title: "Holiday Lighting",
-    href: "/industries/holiday-lighting",
-    description: "Track installations and seasonal inventory",
-  },
-  {
-    title: "Property Management",
-    href: "/industries/property-management",
-    description: "Coordinate properties and maintenance requests",
-  },
-  {
-    title: "Home Services",
-    href: "/industries/home-services",
-    description: "Manage service calls and technician schedules",
-  },
+const industriesLinks = [
+  { name: "Holiday Lighting", href: "/industries/holiday-lighting", description: "Seasonal lighting installations" },
+  { name: "Outdoor Lighting", href: "/industries/outdoor-lighting", description: "Year-round landscape lighting" },
+  { name: "Landscaping", href: "/industries/landscaping", description: "Lawn care and landscaping services" },
+  { name: "Irrigation", href: "/industries/irrigation", description: "Sprinkler systems and water management" },
+]
+
+const resourcesLinks = [
+  { name: "Knowledge Base", href: "/resources/knowledge-base", description: "Guides and documentation" },
+  { name: "Video Tutorials", href: "/resources/videos", description: "Step-by-step video guides" },
+  { name: "Templates & Tools", href: "/resources/templates", description: "Ready-to-use templates" },
+  { name: "Community", href: "/resources/community", description: "Connect with other users" },
+  { name: "Support Center", href: "/resources/support", description: "Get help when you need it" },
+  { name: "Downloads", href: "/resources/downloads", description: "Apps and integrations" },
 ]
 
 interface NavMenuProps {
@@ -65,23 +42,92 @@ interface NavMenuProps {
 }
 
 export function NavMenu({ mobile = false }: NavMenuProps) {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
   if (mobile) {
     return (
-      <div className="flex flex-col space-y-2">
-        <Link href="/features" className="text-gray-700 hover:text-gray-900 py-2">
-          Features
-        </Link>
-        <Link href="/pricing" className="text-gray-700 hover:text-gray-900 py-2">
+      <div className="flex flex-col space-y-4">
+        <div>
+          <button
+            className="flex items-center justify-between w-full text-white hover:text-[#F5F906] transition-colors py-2"
+            onClick={() => setOpenDropdown(openDropdown === "features" ? null : "features")}
+          >
+            Features
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${openDropdown === "features" ? "rotate-180" : ""}`}
+            />
+          </button>
+          {openDropdown === "features" && (
+            <div className="pl-4 mt-2 space-y-2">
+              {featuresLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="block text-gray-300 hover:text-[#F5F906] transition-colors py-1"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <button
+            className="flex items-center justify-between w-full text-white hover:text-[#F5F906] transition-colors py-2"
+            onClick={() => setOpenDropdown(openDropdown === "industries" ? null : "industries")}
+          >
+            Industries
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${openDropdown === "industries" ? "rotate-180" : ""}`}
+            />
+          </button>
+          {openDropdown === "industries" && (
+            <div className="pl-4 mt-2 space-y-2">
+              {industriesLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="block text-gray-300 hover:text-[#F5F906] transition-colors py-1"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Link href="/pricing" className="text-white hover:text-[#F5F906] transition-colors py-2">
           Pricing
         </Link>
-        <Link href="/industries" className="text-gray-700 hover:text-gray-900 py-2">
-          Industries
-        </Link>
-        <Link href="/resources" className="text-gray-700 hover:text-gray-900 py-2">
-          Resources
-        </Link>
-        <Link href="/contact" className="text-gray-700 hover:text-gray-900 py-2">
-          Contact
+
+        <div>
+          <button
+            className="flex items-center justify-between w-full text-white hover:text-[#F5F906] transition-colors py-2"
+            onClick={() => setOpenDropdown(openDropdown === "resources" ? null : "resources")}
+          >
+            Resources
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${openDropdown === "resources" ? "rotate-180" : ""}`}
+            />
+          </button>
+          {openDropdown === "resources" && (
+            <div className="pl-4 mt-2 space-y-2">
+              {resourcesLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="block text-gray-300 hover:text-[#F5F906] transition-colors py-1"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Link href="/contact-sales" className="text-white hover:text-[#F5F906] transition-colors py-2">
+          Contact Sales
         </Link>
       </div>
     )
@@ -89,80 +135,86 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
 
   return (
     <NavigationMenu>
-      <NavigationMenuList>
+      <NavigationMenuList className="space-x-6">
         <NavigationMenuItem>
-          <NavigationMenuTrigger>Features</NavigationMenuTrigger>
+          <NavigationMenuTrigger className="text-white hover:text-[#F5F906] bg-transparent">
+            Features
+          </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              {features.map((feature) => (
-                <ListItem key={feature.title} title={feature.title} href={feature.href}>
-                  {feature.description}
-                </ListItem>
+            <div className="grid w-[600px] gap-3 p-6 md:grid-cols-2">
+              {featuresLinks.map((link) => (
+                <NavigationMenuLink key={link.name} asChild>
+                  <Link
+                    href={link.href}
+                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <div className="text-sm font-medium leading-none">{link.name}</div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{link.description}</p>
+                  </Link>
+                </NavigationMenuLink>
               ))}
-            </ul>
+            </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <NavigationMenuTrigger>Industries</NavigationMenuTrigger>
+          <NavigationMenuTrigger className="text-white hover:text-[#F5F906] bg-transparent">
+            Industries
+          </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              {industries.map((industry) => (
-                <ListItem key={industry.title} title={industry.title} href={industry.href}>
-                  {industry.description}
-                </ListItem>
+            <div className="grid w-[500px] gap-3 p-6 md:grid-cols-2">
+              {industriesLinks.map((link) => (
+                <NavigationMenuLink key={link.name} asChild>
+                  <Link
+                    href={link.href}
+                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <div className="text-sm font-medium leading-none">{link.name}</div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{link.description}</p>
+                  </Link>
+                </NavigationMenuLink>
               ))}
-            </ul>
+            </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link href="/pricing" legacyBehavior passHref>
-            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+          <NavigationMenuLink asChild>
+            <Link href="/pricing" className="text-white hover:text-[#F5F906] transition-colors">
               Pricing
-            </NavigationMenuLink>
-          </Link>
+            </Link>
+          </NavigationMenuLink>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link href="/resources" legacyBehavior passHref>
-            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
-              Resources
-            </NavigationMenuLink>
-          </Link>
+          <NavigationMenuTrigger className="text-white hover:text-[#F5F906] bg-transparent">
+            Resources
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <div className="grid w-[600px] gap-3 p-6 md:grid-cols-2">
+              {resourcesLinks.map((link) => (
+                <NavigationMenuLink key={link.name} asChild>
+                  <Link
+                    href={link.href}
+                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <div className="text-sm font-medium leading-none">{link.name}</div>
+                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{link.description}</p>
+                  </Link>
+                </NavigationMenuLink>
+              ))}
+            </div>
+          </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link href="/contact" legacyBehavior passHref>
-            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
-              Contact
-            </NavigationMenuLink>
-          </Link>
+          <NavigationMenuLink asChild>
+            <Link href="/contact-sales" className="text-white hover:text-[#F5F906] transition-colors">
+              Contact Sales
+            </Link>
+          </NavigationMenuLink>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
   )
 }
-
-const ListItem = forwardRef<React.ElementRef<"a">, React.ComponentPropsWithoutRef<"a">>(
-  ({ className, title, children, ...props }, ref) => {
-    return (
-      <li>
-        <NavigationMenuLink asChild>
-          <a
-            ref={ref}
-            className={cn(
-              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-              className,
-            )}
-            {...props}
-          >
-            <div className="text-sm font-medium leading-none">{title}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{children}</p>
-          </a>
-        </NavigationMenuLink>
-      </li>
-    )
-  },
-)
-ListItem.displayName = "ListItem"

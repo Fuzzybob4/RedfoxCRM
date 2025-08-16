@@ -1,137 +1,134 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Users, Calendar, DollarSign, BarChart3, MessageSquare, Zap, Leaf, Home, Building, Wrench } from "lucide-react"
+import { Users, BarChart3, MessageSquare, Calendar, FileText, Shield, CheckCircle, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 const features = [
   {
     icon: Users,
     title: "Customer Management",
-    description: "Centralize all customer information, communication history, and service records in one place.",
-    badge: "Core Feature",
-  },
-  {
-    icon: Calendar,
-    title: "Smart Scheduling",
-    description: "Optimize routes, manage crew schedules, and send automated reminders to customers.",
-    badge: "Popular",
-  },
-  {
-    icon: DollarSign,
-    title: "Invoicing & Payments",
-    description: "Create professional invoices, track payments, and integrate with popular payment processors.",
-    badge: "Essential",
+    description: "Organize and track all your customer interactions in one centralized location.",
+    benefits: ["Contact organization", "Interaction history", "Custom fields", "Segmentation"],
+    color: "text-blue-500",
+    href: "/features/customers",
   },
   {
     icon: BarChart3,
-    title: "Business Analytics",
-    description: "Get insights into revenue, customer retention, and operational efficiency with detailed reports.",
-    badge: "Pro Feature",
+    title: "Sales Analytics",
+    description: "Get detailed insights into your sales performance with advanced reporting tools.",
+    benefits: ["Revenue tracking", "Performance metrics", "Custom reports", "Data visualization"],
+    color: "text-green-500",
+    href: "/features/analytics",
   },
   {
     icon: MessageSquare,
     title: "Communication Hub",
-    description: "Send SMS, emails, and push notifications. Keep customers informed every step of the way.",
-    badge: "Popular",
+    description: "Streamline all customer communications across email, phone, and social media.",
+    benefits: ["Email integration", "Call logging", "Social media sync", "Message templates"],
+    color: "text-purple-500",
+    href: "/features/communication",
   },
   {
-    icon: Zap,
-    title: "Workflow Automation",
-    description: "Automate repetitive tasks, follow-ups, and service reminders to save time and increase efficiency.",
-    badge: "Advanced",
-  },
-]
-
-const industries = [
-  {
-    icon: Leaf,
-    title: "Landscaping & Lawn Care",
-    description: "Manage seasonal services, equipment tracking, and recurring maintenance schedules.",
-    color: "from-green-500 to-emerald-600",
+    icon: Calendar,
+    title: "Task Scheduling",
+    description: "Never miss a follow-up with automated task scheduling and reminders.",
+    benefits: ["Automated reminders", "Task assignment", "Calendar sync", "Priority management"],
+    color: "text-orange-500",
+    href: "/features/scheduling",
   },
   {
-    icon: Home,
-    title: "Holiday Lighting",
-    description: "Track installations, manage seasonal inventory, and schedule takedown services.",
-    color: "from-red-500 to-orange-600",
+    icon: FileText,
+    title: "Document Management",
+    description: "Store and organize all your business documents with easy search and access.",
+    benefits: ["File storage", "Document sharing", "Version control", "Search functionality"],
+    color: "text-red-500",
+    href: "/features/documents",
   },
   {
-    icon: Building,
-    title: "Property Management",
-    description: "Coordinate multiple properties, tenant communications, and maintenance requests.",
-    color: "from-blue-500 to-cyan-600",
-  },
-  {
-    icon: Wrench,
-    title: "Home Services",
-    description: "Manage service calls, technician schedules, and customer follow-ups efficiently.",
-    color: "from-purple-500 to-pink-600",
+    icon: Shield,
+    title: "Data Security",
+    description: "Enterprise-grade security to keep your customer data safe and compliant.",
+    benefits: ["Data encryption", "Access controls", "Compliance tools", "Backup systems"],
+    color: "text-indigo-500",
+    href: "/features/security",
   },
 ]
 
 export function FeaturesSection() {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-gradient-to-b from-[#08042B] to-[#0A0B2E]">
       <div className="container mx-auto px-4">
-        {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Everything You Need to Grow Your Business
+          <Badge className="mb-4 bg-[#F67721]/20 text-[#F5F906] border-[#F67721]/30">Powerful Features</Badge>
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+            Everything You Need to{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F67721] to-[#F5F906]">
+              Grow Your Business
+            </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            RedFox CRM provides all the tools you need to manage customers, streamline operations, and scale your
-            service business efficiently.
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            RedFox CRM provides comprehensive tools to manage customers, track sales, and scale your business
+            efficiently.
           </p>
         </div>
 
-        {/* Core Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {features.map((feature, index) => (
-            <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 bg-white">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#F67721] to-[#F5F906] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{feature.title}</h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {feature.badge}
-                      </Badge>
+            <Card
+              key={index}
+              className="bg-white/5 border-[#92E138]/20 hover:bg-white/10 transition-all duration-300 group cursor-pointer"
+            >
+              <Link href={feature.href}>
+                <CardHeader>
+                  <div className="flex items-center space-x-4">
+                    <div
+                      className={`p-3 rounded-lg bg-white/10 ${feature.color} group-hover:scale-110 transition-transform`}
+                    >
+                      <feature.icon className="h-6 w-6" />
                     </div>
-                    <p className="text-gray-600">{feature.description}</p>
+                    <div>
+                      <CardTitle className="text-xl text-white group-hover:text-[#F5F906] transition-colors">
+                        {feature.title}
+                      </CardTitle>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
+                  <CardDescription className="text-gray-300 text-base leading-relaxed">
+                    {feature.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 mb-4">
+                    {feature.benefits.map((benefit, benefitIndex) => (
+                      <li key={benefitIndex} className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-[#92E138]" />
+                        <span className="text-gray-300 text-sm">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-center text-[#F67721] group-hover:text-[#F5F906] transition-colors">
+                    <span className="text-sm font-medium">Learn more</span>
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </CardContent>
+              </Link>
             </Card>
           ))}
         </div>
 
-        {/* Industry-Specific Section */}
-        <div className="text-center mb-12">
-          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Built for Service Industries</h3>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            RedFox CRM is specifically designed for service-based businesses with industry-specific features and
-            workflows.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {industries.map((industry, index) => (
-            <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 overflow-hidden">
-              <CardContent className="p-0">
-                <div className={`h-32 bg-gradient-to-br ${industry.color} flex items-center justify-center`}>
-                  <industry.icon className="w-12 h-12 text-white group-hover:scale-110 transition-transform duration-300" />
-                </div>
-                <div className="p-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">{industry.title}</h4>
-                  <p className="text-gray-600 text-sm">{industry.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="text-center mt-12">
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-[#F67721] to-[#F5F906] hover:from-[#F5F906] hover:to-[#F67721] text-white"
+            asChild
+          >
+            <Link href="/features">
+              View All Features
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>
