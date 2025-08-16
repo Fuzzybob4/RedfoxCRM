@@ -1,142 +1,110 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  Lightbulb,
-  PenTool,
-  Wrench,
-  Calendar,
-  Camera,
-  Shield,
-  CheckCircle,
-  ArrowRight,
-  Star,
-  Users,
-  DollarSign,
-} from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { Lightbulb, FileText, Wrench, Shield, Users, MapPin, DollarSign, Star, ArrowRight } from "lucide-react"
 
 const features = [
   {
-    icon: PenTool,
-    title: "Design & Proposals",
-    description: "Create professional lighting design proposals with photos, diagrams, and detailed cost breakdowns.",
+    icon: FileText,
+    title: "Design Proposals & Quotes",
+    description: "Create professional lighting design proposals with 3D renderings and detailed quotes.",
   },
   {
-    icon: Calendar,
-    title: "Installation Scheduling",
-    description: "Schedule installations, assign crews, and track project progress from start to finish.",
-  },
-  {
-    icon: Camera,
-    title: "Photo Documentation",
-    description: "Before/after photos, progress updates, and installation documentation for every project.",
+    icon: MapPin,
+    title: "Installation Project Management",
+    description: "Track installation progress, manage crews, and coordinate with electrical permits.",
   },
   {
     icon: Wrench,
-    title: "Maintenance Management",
-    description: "Schedule regular maintenance, track warranty periods, and manage service calls efficiently.",
+    title: "Maintenance Scheduling",
+    description: "Automated maintenance reminders, bulb replacements, and system diagnostics.",
   },
   {
     icon: Shield,
-    title: "Warranty Tracking",
-    description: "Track warranty periods for fixtures, bulbs, and installations with automated reminders.",
+    title: "Warranty Management",
+    description: "Track warranties on fixtures, bulbs, and installations with automated alerts.",
   },
   {
     icon: Users,
     title: "Customer Portal",
-    description: "Give customers access to their project status, maintenance schedules, and service history.",
+    description: "Give customers access to their lighting system status, maintenance history, and service requests.",
+  },
+  {
+    icon: DollarSign,
+    title: "Service Contracts",
+    description: "Manage ongoing maintenance contracts and recurring revenue streams.",
   },
 ]
 
-const projectTypes = [
+const benefits = [
   {
-    title: "Residential Landscape Lighting",
-    description: "Pathway lighting, accent lighting, and security lighting for homes",
-    features: ["Design consultations", "Installation scheduling", "Maintenance programs", "Warranty management"],
-    icon: Lightbulb,
+    stat: "35%",
+    label: "More Projects",
+    description: "Better proposal management and follow-up",
   },
   {
-    title: "Commercial Outdoor Lighting",
-    description: "Parking lot lighting, building facades, and security lighting for businesses",
-    features: ["Site surveys", "Compliance tracking", "Energy audits", "Service contracts"],
-    icon: Shield,
+    stat: "50%",
+    label: "Faster Installations",
+    description: "Streamlined project coordination",
   },
   {
-    title: "Architectural Lighting",
-    description: "Decorative and accent lighting for buildings and landscapes",
-    features: ["3D design mockups", "Custom fixtures", "Installation coordination", "Ongoing support"],
-    icon: PenTool,
+    stat: "30%",
+    label: "Higher Margins",
+    description: "Efficient maintenance and upselling",
   },
 ]
 
 const testimonials = [
   {
-    name: "Sarah Chen",
-    company: "Illuminate Outdoor Lighting",
-    location: "Austin, TX",
-    image: "/professional-woman-headshot.png",
+    name: "David Rodriguez",
+    company: "Illumination Experts",
     quote:
-      "RedFox CRM transformed our proposal process. We're closing 40% more deals with professional presentations and follow-up automation.",
-    results: "+40% close rate",
+      "RedFox CRM helped us scale from 50 to 200 outdoor lighting projects per year. The proposal system is incredible.",
     rating: 5,
   },
   {
-    name: "David Martinez",
-    company: "Nightscape Lighting Design",
-    location: "Phoenix, AZ",
-    image: "/professional-man-headshot-2.png",
-    quote:
-      "The maintenance scheduling feature keeps our customers happy and generates consistent recurring revenue throughout the year.",
-    results: "$50K+ recurring revenue",
+    name: "Jennifer Walsh",
+    company: "Landscape Lighting Solutions",
+    quote: "The maintenance scheduling feature keeps our customers happy and our recurring revenue steady.",
     rating: 5,
   },
-]
-
-const stats = [
-  { label: "Lighting Contractors", value: "800+", icon: Lightbulb },
-  { label: "Projects Managed", value: "25K+", icon: PenTool },
-  { label: "Average Project Value", value: "$8,500", icon: DollarSign },
-  { label: "Customer Satisfaction", value: "96%", icon: Star },
 ]
 
 export default function OutdoorLightingPage() {
   return (
     <div className="min-h-screen bg-[#08042B] text-white">
-      {/* Floating Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-[#F5F906]/20 to-[#92E138]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-[#F67721]/10 to-yellow-500/10 rounded-full blur-3xl"></div>
-      </div>
-
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20">
+      <section className="pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-4xl mx-auto">
-            <Badge className="mb-6 bg-yellow-500/20 text-orange-400 border-yellow-500/30 text-lg px-4 py-2">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
               Outdoor Lighting CRM
             </Badge>
-            <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
               Illuminate Your{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-orange-500">
-                Lighting Business
-              </span>
+              <span className="bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
+                Outdoor Lighting
+              </span>{" "}
+              Business
             </h1>
-            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              From design proposals to maintenance management, RedFox CRM helps outdoor lighting professionals create
-              stunning installations, manage projects, and build lasting customer relationships.
+            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+              From design proposals to ongoing maintenance, RedFox CRM provides outdoor lighting professionals with the
+              tools to create stunning landscapes and build lasting customer relationships.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-yellow-600 hover:bg-orange-600 text-white" asChild>
+              <Button
+                asChild
+                size="lg"
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-orange-500 hover:to-yellow-500 text-white"
+              >
                 <Link href="/signup">Start Free Trial</Link>
               </Button>
               <Button
-                size="lg"
-                variant="outline"
-                className="text-white border-yellow-500 hover:bg-yellow-500/10 bg-transparent"
                 asChild
+                variant="outline"
+                size="lg"
+                className="border-gray-600 text-white hover:bg-gray-800 bg-transparent"
               >
                 <Link href="/contact-sales">Schedule Demo</Link>
               </Button>
@@ -145,30 +113,13 @@ export default function OutdoorLightingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-white/5">
+      {/* Features Grid */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="h-8 w-8 text-white" />
-                </div>
-                <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
-                <div className="text-gray-300">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Complete Outdoor Lighting Management</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Complete Outdoor Lighting Management</h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Everything you need to design, install, and maintain professional outdoor lighting systems
+              Everything you need to design, install, and maintain beautiful outdoor lighting systems.
             </p>
           </div>
 
@@ -176,18 +127,16 @@ export default function OutdoorLightingPage() {
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className="bg-white/5 border-orange-500/20 hover:bg-white/10 transition-all duration-300"
+                className="bg-gray-900/50 border-gray-800 hover:border-yellow-500/50 transition-all duration-300"
               >
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="h-8 w-8 text-white" />
+                <CardHeader>
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className="text-xl text-white">{feature.title}</CardTitle>
+                  <CardTitle className="text-white">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-gray-300 text-center leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
+                  <CardDescription className="text-gray-300">{feature.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -195,83 +144,50 @@ export default function OutdoorLightingPage() {
         </div>
       </section>
 
-      {/* Project Types */}
-      <section className="py-20 bg-white/5">
+      {/* Benefits Section */}
+      <section className="py-16 bg-gray-900/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Specialized for Every Project Type</h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Whether residential, commercial, or architectural, RedFox CRM adapts to your lighting projects
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Proven Results for Lighting Professionals
+            </h2>
+            <p className="text-xl text-gray-300">See how RedFox CRM transforms outdoor lighting businesses.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {projectTypes.map((project, index) => (
-              <Card
-                key={index}
-                className="bg-white/5 border-orange-500/20 hover:bg-white/10 transition-all duration-300"
-              >
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <project.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <CardTitle className="text-xl text-white mb-2">{project.title}</CardTitle>
-                  <CardDescription className="text-gray-300 leading-relaxed">{project.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {project.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-orange-400 flex-shrink-0" />
-                        <span className="text-gray-300 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="text-center">
+                <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent mb-2">
+                  {benefit.stat}
+                </div>
+                <div className="text-xl font-semibold text-white mb-2">{benefit.label}</div>
+                <div className="text-gray-300">{benefit.description}</div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-20">
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Success Stories</h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              See how outdoor lighting professionals are growing their businesses with RedFox CRM
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">What Lighting Professionals Say</h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="bg-white/5 border-orange-500/20">
-                <CardContent className="p-8">
+              <Card key={index} className="bg-gray-900/50 border-gray-800">
+                <CardContent className="p-6">
                   <div className="flex items-center mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-[#F5F906] fill-current" />
+                      <Star key={i} className="w-5 h-5 text-yellow-500 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-300 mb-6 italic text-lg">"{testimonial.quote}"</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Image
-                        src={testimonial.image || "/placeholder.svg"}
-                        alt={testimonial.name}
-                        width={56}
-                        height={56}
-                        className="rounded-full"
-                      />
-                      <div>
-                        <div className="font-semibold text-white">{testimonial.name}</div>
-                        <div className="text-sm text-gray-400">{testimonial.company}</div>
-                        <div className="text-xs text-yellow-400">{testimonial.location}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-orange-400">{testimonial.results}</div>
-                    </div>
+                  <blockquote className="text-gray-300 mb-4 italic">"{testimonial.quote}"</blockquote>
+                  <div>
+                    <div className="font-semibold text-white">{testimonial.name}</div>
+                    <div className="text-sm text-gray-400">{testimonial.company}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -280,32 +196,66 @@ export default function OutdoorLightingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-yellow-900/20 via-[#08042B] to-orange-900/20">
+      {/* Workflow Section */}
+      <section className="py-16 bg-gray-900/30">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Brighten Your Business?</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Complete Project Lifecycle Management</h2>
+            <p className="text-xl text-gray-300">From initial consultation to ongoing maintenance.</p>
+          </div>
+
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-5 gap-6">
+              {[
+                { step: "1", title: "Consultation", desc: "Site assessment and customer needs" },
+                { step: "2", title: "Design", desc: "3D proposals and lighting plans" },
+                { step: "3", title: "Installation", desc: "Project management and crew coordination" },
+                { step: "4", title: "Testing", desc: "System commissioning and customer walkthrough" },
+                { step: "5", title: "Maintenance", desc: "Ongoing service and warranty support" },
+              ].map((item, index) => (
+                <div key={index} className="text-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-white font-bold">{item.step}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-gray-300 text-sm">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto">
+            <Lightbulb className="w-16 h-16 text-yellow-500 mx-auto mb-6" />
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Brighten Your Business?</h2>
             <p className="text-xl text-gray-300 mb-8">
-              Join over 800 outdoor lighting professionals who trust RedFox CRM to manage their projects and grow their
+              Join the outdoor lighting professionals who trust RedFox CRM to manage their projects and grow their
               business.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-yellow-600 hover:bg-orange-600 text-white" asChild>
-                <Link href="/signup">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
+              <Button
+                asChild
+                size="lg"
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-orange-500 hover:to-yellow-500 text-white"
+              >
+                <Link href="/signup" className="flex items-center space-x-2">
+                  <span>Start Free Trial</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
               <Button
-                size="lg"
-                variant="outline"
-                className="text-white border-yellow-500 hover:bg-yellow-500/10 bg-transparent"
                 asChild
+                variant="outline"
+                size="lg"
+                className="border-gray-600 text-white hover:bg-gray-800 bg-transparent"
               >
                 <Link href="/contact-sales">Contact Sales</Link>
               </Button>
             </div>
-            <p className="text-sm text-gray-400 mt-4">No credit card required • 14-day free trial • Cancel anytime</p>
           </div>
         </div>
       </section>

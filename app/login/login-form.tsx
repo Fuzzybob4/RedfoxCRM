@@ -1,56 +1,73 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react"
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [message, setMessage] = useState("")
   const router = useRouter()
+  const { toast } = useToast()
 
-  const handleSignIn = async (formData: FormData) => {
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsLoading(true)
-    setMessage("")
 
+    const formData = new FormData(e.currentTarget)
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
-        setMessage(error.message)
-      } else {
+        toast({
+          title: "Sign In Failed",
+          description: error.message,
+          variant: "destructive",
+        })
+      } else if (data.user) {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        })
         router.push("/dashboard")
       }
     } catch (error) {
-      setMessage("An unexpected error occurred")
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSignUp = async (formData: FormData) => {
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsLoading(true)
-    setMessage("")
 
+    const formData = new FormData(e.currentTarget)
     const email = formData.get("email") as string
     const password = formData.get("password") as string
     const fullName = formData.get("fullName") as string
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -61,12 +78,23 @@ export function LoginForm() {
       })
 
       if (error) {
-        setMessage(error.message)
-      } else {
-        setMessage("Check your email for the confirmation link!")
+        toast({
+          title: "Sign Up Failed",
+          description: error.message,
+          variant: "destructive",
+        })
+      } else if (data.user) {
+        toast({
+          title: "Account Created!",
+          description: "Please check your email to verify your account.",
+        })
       }
     } catch (error) {
-      setMessage("An unexpected error occurred")
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -87,7 +115,7 @@ export function LoginForm() {
             </TabsList>
 
             <TabsContent value="signin" className="space-y-4">
-              <form action={handleSignIn} className="space-y-4">
+              <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <div className="relative">
@@ -130,13 +158,20 @@ export function LoginForm() {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign In"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-4">
-              <form action={handleSignUp} className="space-y-4">
+              <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name</Label>
                   <div className="relative">
@@ -193,28 +228,22 @@ export function LoginForm() {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create Account"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-
-          {message && (
-            <div
-              className={`mt-4 p-3 rounded-md text-sm ${
-                message.includes("Check your email")
-                  ? "bg-green-50 text-green-700 border border-green-200"
-                  : "bg-red-50 text-red-700 border border-red-200"
-              }`}
-            >
-              {message}
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
   )
 }
 
-// Default export for compatibility
 export default LoginForm

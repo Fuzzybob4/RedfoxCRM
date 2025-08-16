@@ -12,7 +12,7 @@ interface SignUpParams {
   cost: number
 }
 
-async function handleSignUp({
+export async function handleSignUp({
   email,
   password,
   firstName,
@@ -26,7 +26,6 @@ async function handleSignUp({
   try {
     console.log("Starting signup process for:", email)
 
-    // Step 1: Sign up the user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -58,33 +57,6 @@ async function handleSignUp({
 
     if (data?.user) {
       console.log("User created successfully:", data.user.id)
-
-      // Step 2: Insert user data into the profiles table
-      // Only do this if the user was actually created (not just returned existing user)
-      if (!data.user.email_confirmed_at) {
-        const { error: profileError } = await supabase.from("profiles").insert([
-          {
-            id: data.user.id,
-            first_name: firstName,
-            last_name: lastName,
-            email: data.user.email,
-            phone_number: phoneNumber,
-            company_name: companyName,
-            subscription_type: subscriptionType,
-            billing_period: billingPeriod,
-            cost: cost,
-          },
-        ])
-
-        if (profileError) {
-          console.error("Error inserting profile:", profileError)
-          // Don't fail the signup if profile creation fails
-          console.warn("Profile creation failed, but user was created successfully")
-        } else {
-          console.log("Profile created successfully")
-        }
-      }
-
       return {
         success: true,
         data: data.user,
@@ -114,4 +86,34 @@ async function handleSignUp({
   }
 }
 
-export { handleSignUp }
+export async function handleSignIn(email: string, password: string) {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      return {
+        success: false,
+        error: {
+          message: error.message,
+          code: error.name || "signin_error",
+        },
+      }
+    }
+
+    return {
+      success: true,
+      data: data.user,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : "An unexpected error occurred",
+        code: "unknown_error",
+      },
+    }
+  }
+}

@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
+import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 import {
   NavigationMenu,
@@ -11,30 +11,85 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
+import { cn } from "@/lib/utils"
 
-const featuresLinks = [
-  { name: "Customer Management", href: "/features/customers", description: "Organize and track customer interactions" },
-  { name: "Sales Analytics", href: "/features/analytics", description: "Get insights into sales performance" },
-  { name: "Communication Hub", href: "/features/communication", description: "Streamline customer communications" },
-  { name: "Task Scheduling", href: "/features/scheduling", description: "Automated scheduling and reminders" },
-  { name: "Document Management", href: "/features/documents", description: "Store and organize documents" },
-  { name: "Data Security", href: "/features/security", description: "Enterprise-grade security features" },
+const features = [
+  {
+    title: "Customer Management",
+    href: "/features/customers",
+    description: "Comprehensive customer profiles and relationship tracking",
+  },
+  {
+    title: "Analytics & Reporting",
+    href: "/features/analytics",
+    description: "Data-driven insights and performance metrics",
+  },
+  {
+    title: "Communication Tools",
+    href: "/features/communication",
+    description: "Automated messaging and customer notifications",
+  },
+  {
+    title: "Scheduling & Dispatch",
+    href: "/features/scheduling",
+    description: "Smart scheduling and crew dispatch management",
+  },
+  {
+    title: "Document Management",
+    href: "/features/documents",
+    description: "Contracts, invoices, and document storage",
+  },
+  {
+    title: "Security & Compliance",
+    href: "/features/security",
+    description: "Enterprise-grade security and data protection",
+  },
 ]
 
-const industriesLinks = [
-  { name: "Holiday Lighting", href: "/industries/holiday-lighting", description: "Seasonal lighting installations" },
-  { name: "Outdoor Lighting", href: "/industries/outdoor-lighting", description: "Year-round landscape lighting" },
-  { name: "Landscaping", href: "/industries/landscaping", description: "Lawn care and landscaping services" },
-  { name: "Irrigation", href: "/industries/irrigation", description: "Sprinkler systems and water management" },
+const industries = [
+  {
+    title: "Holiday Lighting",
+    href: "/industries/holiday-lighting",
+    description: "Seasonal installation and equipment management",
+  },
+  {
+    title: "Outdoor Lighting",
+    href: "/industries/outdoor-lighting",
+    description: "Year-round landscape lighting solutions",
+  },
+  {
+    title: "Landscaping & Lawn Care",
+    href: "/industries/landscaping",
+    description: "Complete landscaping operations management",
+  },
+  {
+    title: "Irrigation & Sprinklers",
+    href: "/industries/irrigation",
+    description: "Water system diagnostics and maintenance",
+  },
 ]
 
-const resourcesLinks = [
-  { name: "Knowledge Base", href: "/resources/knowledge-base", description: "Guides and documentation" },
-  { name: "Video Tutorials", href: "/resources/videos", description: "Step-by-step video guides" },
-  { name: "Templates & Tools", href: "/resources/templates", description: "Ready-to-use templates" },
-  { name: "Community", href: "/resources/community", description: "Connect with other users" },
-  { name: "Support Center", href: "/resources/support", description: "Get help when you need it" },
-  { name: "Downloads", href: "/resources/downloads", description: "Apps and integrations" },
+const resources = [
+  {
+    title: "Help Center",
+    href: "/resources#help",
+    description: "Get answers to common questions",
+  },
+  {
+    title: "Video Tutorials",
+    href: "/resources#videos",
+    description: "Step-by-step video guides",
+  },
+  {
+    title: "Templates & Tools",
+    href: "/resources#templates",
+    description: "Downloadable business templates",
+  },
+  {
+    title: "Community Forum",
+    href: "/resources#community",
+    description: "Connect with other professionals",
+  },
 ]
 
 interface NavMenuProps {
@@ -47,87 +102,83 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
   if (mobile) {
     return (
       <div className="flex flex-col space-y-4">
+        {/* Features Dropdown */}
         <div>
           <button
-            className="flex items-center justify-between w-full text-white hover:text-[#F5F906] transition-colors py-2"
             onClick={() => setOpenDropdown(openDropdown === "features" ? null : "features")}
+            className="flex items-center justify-between w-full text-white hover:text-gray-300 transition-colors"
           >
             Features
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${openDropdown === "features" ? "rotate-180" : ""}`}
-            />
+            <ChevronDown className={cn("h-4 w-4 transition-transform", openDropdown === "features" && "rotate-180")} />
           </button>
           {openDropdown === "features" && (
-            <div className="pl-4 mt-2 space-y-2">
-              {featuresLinks.map((link) => (
+            <div className="mt-2 ml-4 space-y-2">
+              {features.map((feature) => (
                 <Link
-                  key={link.name}
-                  href={link.href}
-                  className="block text-gray-300 hover:text-[#F5F906] transition-colors py-1"
+                  key={feature.href}
+                  href={feature.href}
+                  className="block text-sm text-gray-300 hover:text-white transition-colors"
                 >
-                  {link.name}
+                  {feature.title}
                 </Link>
               ))}
             </div>
           )}
         </div>
 
+        {/* Industries Dropdown */}
         <div>
           <button
-            className="flex items-center justify-between w-full text-white hover:text-[#F5F906] transition-colors py-2"
             onClick={() => setOpenDropdown(openDropdown === "industries" ? null : "industries")}
+            className="flex items-center justify-between w-full text-white hover:text-gray-300 transition-colors"
           >
             Industries
             <ChevronDown
-              className={`h-4 w-4 transition-transform ${openDropdown === "industries" ? "rotate-180" : ""}`}
+              className={cn("h-4 w-4 transition-transform", openDropdown === "industries" && "rotate-180")}
             />
           </button>
           {openDropdown === "industries" && (
-            <div className="pl-4 mt-2 space-y-2">
-              {industriesLinks.map((link) => (
+            <div className="mt-2 ml-4 space-y-2">
+              {industries.map((industry) => (
                 <Link
-                  key={link.name}
-                  href={link.href}
-                  className="block text-gray-300 hover:text-[#F5F906] transition-colors py-1"
+                  key={industry.href}
+                  href={industry.href}
+                  className="block text-sm text-gray-300 hover:text-white transition-colors"
                 >
-                  {link.name}
+                  {industry.title}
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        <Link href="/pricing" className="text-white hover:text-[#F5F906] transition-colors py-2">
-          Pricing
-        </Link>
-
+        {/* Resources Dropdown */}
         <div>
           <button
-            className="flex items-center justify-between w-full text-white hover:text-[#F5F906] transition-colors py-2"
             onClick={() => setOpenDropdown(openDropdown === "resources" ? null : "resources")}
+            className="flex items-center justify-between w-full text-white hover:text-gray-300 transition-colors"
           >
             Resources
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${openDropdown === "resources" ? "rotate-180" : ""}`}
-            />
+            <ChevronDown className={cn("h-4 w-4 transition-transform", openDropdown === "resources" && "rotate-180")} />
           </button>
           {openDropdown === "resources" && (
-            <div className="pl-4 mt-2 space-y-2">
-              {resourcesLinks.map((link) => (
+            <div className="mt-2 ml-4 space-y-2">
+              {resources.map((resource) => (
                 <Link
-                  key={link.name}
-                  href={link.href}
-                  className="block text-gray-300 hover:text-[#F5F906] transition-colors py-1"
+                  key={resource.href}
+                  href={resource.href}
+                  className="block text-sm text-gray-300 hover:text-white transition-colors"
                 >
-                  {link.name}
+                  {resource.title}
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        <Link href="/contact-sales" className="text-white hover:text-[#F5F906] transition-colors py-2">
-          Contact Sales
+        {/* Direct Links */}
+        <Link href="/pricing" className="text-white hover:text-gray-300 transition-colors">
+          Pricing
         </Link>
       </div>
     )
@@ -135,86 +186,79 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
 
   return (
     <NavigationMenu>
-      <NavigationMenuList className="space-x-6">
+      <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-white hover:text-[#F5F906] bg-transparent">
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 data-[state=open]:bg-white/10">
             Features
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <div className="grid w-[600px] gap-3 p-6 md:grid-cols-2">
-              {featuresLinks.map((link) => (
-                <NavigationMenuLink key={link.name} asChild>
-                  <Link
-                    href={link.href}
-                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  >
-                    <div className="text-sm font-medium leading-none">{link.name}</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{link.description}</p>
-                  </Link>
-                </NavigationMenuLink>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              {features.map((feature) => (
+                <ListItem key={feature.title} title={feature.title} href={feature.href}>
+                  {feature.description}
+                </ListItem>
               ))}
-            </div>
+            </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-white hover:text-[#F5F906] bg-transparent">
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 data-[state=open]:bg-white/10">
             Industries
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <div className="grid w-[500px] gap-3 p-6 md:grid-cols-2">
-              {industriesLinks.map((link) => (
-                <NavigationMenuLink key={link.name} asChild>
-                  <Link
-                    href={link.href}
-                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  >
-                    <div className="text-sm font-medium leading-none">{link.name}</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{link.description}</p>
-                  </Link>
-                </NavigationMenuLink>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              {industries.map((industry) => (
+                <ListItem key={industry.title} title={industry.title} href={industry.href}>
+                  {industry.description}
+                </ListItem>
               ))}
-            </div>
+            </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link href="/pricing" className="text-white hover:text-[#F5F906] transition-colors">
-              Pricing
-            </Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-white hover:text-[#F5F906] bg-transparent">
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 data-[state=open]:bg-white/10">
             Resources
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <div className="grid w-[600px] gap-3 p-6 md:grid-cols-2">
-              {resourcesLinks.map((link) => (
-                <NavigationMenuLink key={link.name} asChild>
-                  <Link
-                    href={link.href}
-                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  >
-                    <div className="text-sm font-medium leading-none">{link.name}</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{link.description}</p>
-                  </Link>
-                </NavigationMenuLink>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              {resources.map((resource) => (
+                <ListItem key={resource.title} title={resource.title} href={resource.href}>
+                  {resource.description}
+                </ListItem>
               ))}
-            </div>
+            </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link href="/contact-sales" className="text-white hover:text-[#F5F906] transition-colors">
-              Contact Sales
-            </Link>
-          </NavigationMenuLink>
+          <Link href="/pricing" legacyBehavior passHref>
+            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/10 data-[state=open]:bg-white/10">
+              Pricing
+            </NavigationMenuLink>
+          </Link>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
+  )
+}
+
+const ListItem = ({ className, title, children, ...props }: any) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <a
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className,
+          )}
+          {...props}
+        >
+          <div className="text-sm font-medium leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{children}</p>
+        </a>
+      </NavigationMenuLink>
+    </li>
   )
 }

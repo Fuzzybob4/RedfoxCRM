@@ -1,148 +1,111 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  TreePine,
-  Route,
-  Calendar,
-  Scissors,
-  Truck,
-  Leaf,
-  CheckCircle,
-  ArrowRight,
-  Star,
-  Users,
-  MapPin,
-} from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { TreePine, Route, Users, Calendar, Truck, Leaf, DollarSign, Star, ArrowRight, Scissors } from "lucide-react"
 
 const features = [
   {
     icon: Route,
     title: "Route Optimization",
-    description:
-      "Optimize crew routes for maximum efficiency, reducing drive time and fuel costs while serving more customers.",
+    description: "Optimize crew routes for maximum efficiency and reduced fuel costs across all service areas.",
   },
   {
     icon: Calendar,
-    title: "Seasonal Scheduling",
-    description:
-      "Manage seasonal services like spring cleanups, fall leaf removal, and winter snow removal with automated scheduling.",
-  },
-  {
-    icon: Scissors,
-    title: "Service Tracking",
-    description:
-      "Track mowing schedules, fertilizer applications, and maintenance tasks with detailed service history.",
-  },
-  {
-    icon: Truck,
-    title: "Equipment Management",
-    description: "Monitor equipment usage, maintenance schedules, and fuel consumption across your fleet.",
-  },
-  {
-    icon: Leaf,
-    title: "Property Profiles",
-    description:
-      "Detailed property profiles with photos, service notes, and customer preferences for consistent service.",
+    title: "Seasonal Service Management",
+    description: "Manage spring cleanups, summer maintenance, fall leaf removal, and winter preparations.",
   },
   {
     icon: Users,
     title: "Crew Management",
-    description: "Assign crews to routes, track hours worked, and manage payroll with integrated time tracking.",
+    description: "Assign crews to jobs, track their progress, and manage equipment across multiple teams.",
+  },
+  {
+    icon: Truck,
+    title: "Equipment Tracking",
+    description: "Monitor mowers, trimmers, blowers, and other equipment across job sites and crews.",
+  },
+  {
+    icon: Leaf,
+    title: "Service Scheduling",
+    description: "Automated scheduling for weekly mowing, bi-weekly maintenance, and seasonal services.",
+  },
+  {
+    icon: DollarSign,
+    title: "Contract Management",
+    description: "Manage seasonal contracts, one-time services, and recurring maintenance agreements.",
   },
 ]
 
-const services = [
+const benefits = [
   {
-    title: "Lawn Care & Maintenance",
-    description: "Weekly mowing, edging, and basic lawn maintenance services",
-    features: ["Mowing schedules", "Edging & trimming", "Leaf removal", "Basic fertilization"],
-    icon: Scissors,
-    color: "from-green-500 to-emerald-600",
+    stat: "45%",
+    label: "More Efficient Routes",
+    description: "Optimized scheduling and routing",
   },
   {
-    title: "Landscape Design & Installation",
-    description: "Custom landscape design, plant installation, and hardscaping projects",
-    features: ["Design proposals", "Plant selection", "Installation tracking", "Project management"],
-    icon: TreePine,
-    color: "from-emerald-500 to-green-600",
+    stat: "30%",
+    label: "Increased Revenue",
+    description: "Better customer retention and upselling",
   },
   {
-    title: "Seasonal Services",
-    description: "Spring cleanups, fall leaf removal, and seasonal property maintenance",
-    features: ["Spring cleanups", "Fall leaf removal", "Seasonal planting", "Winter services"],
-    icon: Leaf,
-    color: "from-yellow-500 to-orange-500",
+    stat: "40%",
+    label: "Less Admin Time",
+    description: "Automated scheduling and invoicing",
   },
 ]
 
 const testimonials = [
   {
-    name: "Tom Wilson",
-    company: "Wilson Lawn & Landscape",
-    location: "Nashville, TN",
-    image: "/professional-man-headshot-2.png",
+    name: "Carlos Martinez",
+    company: "Green Thumb Landscaping",
     quote:
-      "Route optimization increased our efficiency by 40%. We're serving 30% more customers with the same crew size.",
-    results: "+40% efficiency",
+      "RedFox CRM helped us grow from 2 crews to 8 crews in 18 months. The route optimization alone saved us hours every day.",
     rating: 5,
   },
   {
-    name: "Maria Gonzalez",
-    company: "Green Thumb Landscaping",
-    location: "San Antonio, TX",
-    image: "/professional-woman-headshot-2.png",
-    quote: "The seasonal scheduling feature keeps us organized year-round. Our customers love the consistent service.",
-    results: "200+ properties managed",
+    name: "Amanda Foster",
+    company: "Premier Lawn Care",
+    quote:
+      "Managing 400+ weekly customers used to be a nightmare. Now it's completely automated and our customers love the service.",
     rating: 5,
   },
-]
-
-const stats = [
-  { label: "Landscaping Companies", value: "1,500+", icon: TreePine },
-  { label: "Properties Managed", value: "100K+", icon: MapPin },
-  { label: "Average Route Efficiency", value: "+35%", icon: Route },
-  { label: "Customer Retention", value: "89%", icon: Users },
 ]
 
 export default function LandscapingPage() {
   return (
     <div className="min-h-screen bg-[#08042B] text-white">
-      {/* Floating Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-[#F5F906]/20 to-[#92E138]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-[#F67721]/10 to-green-500/10 rounded-full blur-3xl"></div>
-      </div>
-
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20">
+      <section className="pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-4xl mx-auto">
-            <Badge className="mb-6 bg-green-500/20 text-emerald-400 border-green-500/30 text-lg px-4 py-2">
-              Landscaping CRM
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+              Landscaping & Lawn Care CRM
             </Badge>
-            <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
               Grow Your{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">
-                Landscaping Business
-              </span>
+              <span className="bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent">
+                Landscaping
+              </span>{" "}
+              Business
             </h1>
-            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              From route optimization to seasonal scheduling, RedFox CRM helps landscaping and lawn care professionals
-              streamline operations, manage crews, and deliver consistent service to every property.
+            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+              From route optimization to crew management, RedFox CRM helps landscaping and lawn care professionals
+              streamline operations, manage seasonal services, and grow their customer base.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-green-600 hover:bg-emerald-600 text-white" asChild>
+              <Button
+                asChild
+                size="lg"
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-emerald-600 hover:to-green-500 text-white"
+              >
                 <Link href="/signup">Start Free Trial</Link>
               </Button>
               <Button
-                size="lg"
-                variant="outline"
-                className="text-white border-green-500 hover:bg-green-500/10 bg-transparent"
                 asChild
+                variant="outline"
+                size="lg"
+                className="border-gray-600 text-white hover:bg-gray-800 bg-transparent"
               >
                 <Link href="/contact-sales">Schedule Demo</Link>
               </Button>
@@ -151,30 +114,15 @@ export default function LandscapingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-white/5">
+      {/* Features Grid */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="h-8 w-8 text-white" />
-                </div>
-                <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
-                <div className="text-gray-300">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Complete Landscaping Management</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Complete Landscaping Operations Management
+            </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Everything you need to manage routes, crews, and customers for your landscaping business
+              Everything you need to manage crews, routes, equipment, and customers efficiently.
             </p>
           </div>
 
@@ -182,18 +130,16 @@ export default function LandscapingPage() {
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className="bg-white/5 border-emerald-500/20 hover:bg-white/10 transition-all duration-300"
+                className="bg-gray-900/50 border-gray-800 hover:border-green-500/50 transition-all duration-300"
               >
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="h-8 w-8 text-white" />
+                <CardHeader>
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className="text-xl text-white">{feature.title}</CardTitle>
+                  <CardTitle className="text-white">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-gray-300 text-center leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
+                  <CardDescription className="text-gray-300">{feature.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -201,85 +147,50 @@ export default function LandscapingPage() {
         </div>
       </section>
 
-      {/* Service Types */}
-      <section className="py-20 bg-white/5">
+      {/* Benefits Section */}
+      <section className="py-16 bg-gray-900/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Manage All Your Services</h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              From basic lawn care to complex landscape installations, RedFox CRM handles it all
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Proven Results for Landscaping Professionals
+            </h2>
+            <p className="text-xl text-gray-300">See how RedFox CRM transforms landscaping and lawn care businesses.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {services.map((service, index) => (
-              <Card
-                key={index}
-                className="bg-white/5 border-emerald-500/20 hover:bg-white/10 transition-all duration-300"
-              >
-                <CardHeader className="text-center">
-                  <div
-                    className={`w-16 h-16 bg-gradient-to-r ${service.color} rounded-full flex items-center justify-center mx-auto mb-4`}
-                  >
-                    <service.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <CardTitle className="text-xl text-white mb-2">{service.title}</CardTitle>
-                  <CardDescription className="text-gray-300 leading-relaxed">{service.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {service.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                        <span className="text-gray-300 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="text-center">
+                <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent mb-2">
+                  {benefit.stat}
+                </div>
+                <div className="text-xl font-semibold text-white mb-2">{benefit.label}</div>
+                <div className="text-gray-300">{benefit.description}</div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-20">
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Success Stories</h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              See how landscaping professionals are growing their businesses with RedFox CRM
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">What Landscaping Professionals Say</h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="bg-white/5 border-emerald-500/20">
-                <CardContent className="p-8">
+              <Card key={index} className="bg-gray-900/50 border-gray-800">
+                <CardContent className="p-6">
                   <div className="flex items-center mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-[#F5F906] fill-current" />
+                      <Star key={i} className="w-5 h-5 text-yellow-500 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-300 mb-6 italic text-lg">"{testimonial.quote}"</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Image
-                        src={testimonial.image || "/placeholder.svg"}
-                        alt={testimonial.name}
-                        width={56}
-                        height={56}
-                        className="rounded-full"
-                      />
-                      <div>
-                        <div className="font-semibold text-white">{testimonial.name}</div>
-                        <div className="text-sm text-gray-400">{testimonial.company}</div>
-                        <div className="text-xs text-green-400">{testimonial.location}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-emerald-400">{testimonial.results}</div>
-                    </div>
+                  <blockquote className="text-gray-300 mb-4 italic">"{testimonial.quote}"</blockquote>
+                  <div>
+                    <div className="font-semibold text-white">{testimonial.name}</div>
+                    <div className="text-sm text-gray-400">{testimonial.company}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -288,32 +199,94 @@ export default function LandscapingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-green-900/20 via-[#08042B] to-emerald-900/20">
+      {/* Seasonal Services Section */}
+      <section className="py-16 bg-gray-900/30">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Grow Your Landscaping Business?</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Manage All Seasonal Services</h2>
+            <p className="text-xl text-gray-300">
+              From spring cleanups to winter preparations, stay organized year-round.
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-8">
+              {[
+                {
+                  season: "Spring",
+                  title: "Spring Cleanup",
+                  desc: "Debris removal, bed preparation, first cuts",
+                  color: "from-green-400 to-green-600",
+                },
+                {
+                  season: "Summer",
+                  title: "Weekly Maintenance",
+                  desc: "Mowing, trimming, weeding, irrigation",
+                  color: "from-yellow-400 to-orange-500",
+                },
+                {
+                  season: "Fall",
+                  title: "Leaf Removal",
+                  desc: "Leaf cleanup, winterization, final cuts",
+                  color: "from-orange-500 to-red-500",
+                },
+                {
+                  season: "Winter",
+                  title: "Snow Services",
+                  desc: "Snow removal, salt application, planning",
+                  color: "from-blue-400 to-blue-600",
+                },
+              ].map((item, index) => (
+                <Card key={index} className="bg-gray-900/50 border-gray-800">
+                  <CardHeader>
+                    <div
+                      className={`w-12 h-12 bg-gradient-to-r ${item.color} rounded-lg flex items-center justify-center mb-4`}
+                    >
+                      <Scissors className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-white">{item.title}</CardTitle>
+                    <CardDescription className="text-gray-400">{item.season}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-300 text-sm">{item.desc}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto">
+            <TreePine className="w-16 h-16 text-green-500 mx-auto mb-6" />
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Grow Your Landscaping Business?</h2>
             <p className="text-xl text-gray-300 mb-8">
-              Join over 1,500 landscaping professionals who trust RedFox CRM to manage their operations and grow their
-              business.
+              Join thousands of landscaping professionals who trust RedFox CRM to streamline their operations and grow
+              their business.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-green-600 hover:bg-emerald-600 text-white" asChild>
-                <Link href="/signup">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
+              <Button
+                asChild
+                size="lg"
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-emerald-600 hover:to-green-500 text-white"
+              >
+                <Link href="/signup" className="flex items-center space-x-2">
+                  <span>Start Free Trial</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
               <Button
-                size="lg"
-                variant="outline"
-                className="text-white border-green-500 hover:bg-green-500/10 bg-transparent"
                 asChild
+                variant="outline"
+                size="lg"
+                className="border-gray-600 text-white hover:bg-gray-800 bg-transparent"
               >
                 <Link href="/contact-sales">Contact Sales</Link>
               </Button>
             </div>
-            <p className="text-sm text-gray-400 mt-4">No credit card required • 14-day free trial • Cancel anytime</p>
           </div>
         </div>
       </section>

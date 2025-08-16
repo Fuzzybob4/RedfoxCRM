@@ -18,19 +18,10 @@ export async function middleware(req: NextRequest) {
     // Create a Supabase client specific to this middleware request
     const supabase = createMiddlewareClient({ req, res })
 
-    // Wrap session check in try-catch
-    let session = null
-    try {
-      const { data, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error("Session retrieval error:", error)
-      } else {
-        session = data.session
-      }
-    } catch (sessionError) {
-      console.error("Failed to get session:", sessionError)
-      // Continue without session
-    }
+    // Refresh session if expired - required for Server Components
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
     // Protected routes that require authentication
     const protectedRoutes = ["/dashboard", "/sales", "/customers", "/profile", "/invoices", "/estimates", "/projects"]
