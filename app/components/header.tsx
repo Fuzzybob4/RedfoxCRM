@@ -4,10 +4,18 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User, LogOut } from "lucide-react"
 import { NavMenu } from "./nav-menu"
 import { LoginDialog } from "./login-dialog"
 import { useAuth } from "./auth-provider"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -15,17 +23,23 @@ export function Header() {
   const { user, signOut } = useAuth()
 
   const handleSignOut = async () => {
-    await signOut()
+    try {
+      await signOut()
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
   }
 
   return (
-    <header className="bg-[#08042B] border-b border-white/10 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#08042B]/95 backdrop-blur-md border-b border-white/10">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
-            <Image src="/redfox-logo-light.png" alt="RedFox CRM" width={40} height={40} className="w-10 h-10" />
-            <span className="text-2xl font-bold text-white">RedFox CRM</span>
+            <div className="relative w-10 h-10">
+              <Image src="/redfox-logo-light.png" alt="RedFox CRM Logo" fill className="object-contain" priority />
+            </div>
+            <span className="text-xl font-bold text-white">RedFox CRM</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -33,88 +47,98 @@ export function Header() {
             <NavMenu />
           </div>
 
-          {/* Desktop Auth Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
+          {/* Auth Section */}
+          <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-4">
-                <Link href="/dashboard">
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 bg-transparent">
-                    Dashboard
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-gradient-to-r from-[#F67721] to-[#F5F906] text-white">
+                        {user.email?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
-                </Link>
-                <Button
-                  onClick={handleSignOut}
-                  variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10 bg-transparent"
-                >
-                  Sign Out
-                </Button>
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium leading-none">{user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.user_metadata?.full_name || "User"}
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <>
+              <div className="hidden lg:flex items-center space-x-4">
                 <Button
                   onClick={() => setIsLoginOpen(true)}
                   variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="border-white/20 text-white hover:bg-white/10 bg-transparent"
                 >
                   Sign In
                 </Button>
-                <Link href="/signup">
-                  <Button className="bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white">
-                    Get Started
-                  </Button>
-                </Link>
-              </>
+                <Button
+                  asChild
+                  className="bg-gradient-to-r from-[#F67721] to-[#F5F906] hover:from-[#F5F906] hover:to-[#F67721] text-white border-0"
+                >
+                  <Link href="/signup">Get Started</Link>
+                </Button>
+              </div>
             )}
-          </div>
 
-          {/* Mobile Menu Button */}
-          <button className="lg:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-white hover:bg-white/10"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-white/10 pt-4">
+          <div className="lg:hidden py-4 border-t border-white/10">
             <div className="flex flex-col space-y-4">
               <NavMenu mobile />
-              <div className="flex flex-col space-y-2 pt-4 border-t border-white/10">
-                {user ? (
-                  <>
-                    <Link href="/dashboard">
-                      <Button
-                        variant="outline"
-                        className="w-full border-white/20 text-white hover:bg-white/10 bg-transparent"
-                      >
-                        Dashboard
-                      </Button>
-                    </Link>
-                    <Button
-                      onClick={handleSignOut}
-                      variant="outline"
-                      className="w-full border-white/20 text-white hover:bg-white/10 bg-transparent"
-                    >
-                      Sign Out
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => setIsLoginOpen(true)}
-                      variant="outline"
-                      className="w-full border-white/20 text-white hover:bg-white/10"
-                    >
-                      Sign In
-                    </Button>
-                    <Link href="/signup">
-                      <Button className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white">
-                        Get Started
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
+              {!user && (
+                <div className="flex flex-col space-y-2 pt-4 border-t border-white/10">
+                  <Button
+                    onClick={() => setIsLoginOpen(true)}
+                    variant="outline"
+                    className="border-white/20 text-white hover:bg-white/10 bg-transparent justify-start"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    asChild
+                    className="bg-gradient-to-r from-[#F67721] to-[#F5F906] hover:from-[#F5F906] hover:to-[#F67721] text-white justify-start"
+                  >
+                    <Link href="/signup">Get Started</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
