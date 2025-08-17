@@ -12,12 +12,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Client-side auth helpers
-export const signUp = async (email: string, password: string) => {
+export const signUp = async (email: string, password: string, fullName?: string) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      data: {
+        full_name: fullName,
+      },
     },
   })
   return { data, error }

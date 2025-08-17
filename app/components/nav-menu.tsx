@@ -1,8 +1,6 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { ChevronDown } from "lucide-react"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -11,174 +9,60 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
-import { cn } from "@/lib/utils"
-
-const features = [
-  {
-    title: "Customer Management",
-    href: "/features/customers",
-    description: "Comprehensive customer profiles and relationship tracking",
-  },
-  {
-    title: "Analytics & Reporting",
-    href: "/features/analytics",
-    description: "Data-driven insights and performance metrics",
-  },
-  {
-    title: "Communication Tools",
-    href: "/features/communication",
-    description: "Automated messaging and customer notifications",
-  },
-  {
-    title: "Scheduling & Dispatch",
-    href: "/features/scheduling",
-    description: "Smart scheduling and crew dispatch management",
-  },
-  {
-    title: "Document Management",
-    href: "/features/documents",
-    description: "Contracts, invoices, and document storage",
-  },
-  {
-    title: "Security & Compliance",
-    href: "/features/security",
-    description: "Enterprise-grade security and data protection",
-  },
-]
-
-const industries = [
-  {
-    title: "Holiday Lighting",
-    href: "/industries/holiday-lighting",
-    description: "Seasonal installation and equipment management",
-  },
-  {
-    title: "Outdoor Lighting",
-    href: "/industries/outdoor-lighting",
-    description: "Year-round landscape lighting solutions",
-  },
-  {
-    title: "Landscaping & Lawn Care",
-    href: "/industries/landscaping",
-    description: "Complete landscaping operations management",
-  },
-  {
-    title: "Irrigation & Sprinklers",
-    href: "/industries/irrigation",
-    description: "Water system diagnostics and maintenance",
-  },
-]
-
-const resources = [
-  {
-    title: "Help Center",
-    href: "/resources#help",
-    description: "Get answers to common questions",
-  },
-  {
-    title: "Video Tutorials",
-    href: "/resources#videos",
-    description: "Step-by-step video guides",
-  },
-  {
-    title: "Templates & Tools",
-    href: "/resources#templates",
-    description: "Downloadable business templates",
-  },
-  {
-    title: "Community Forum",
-    href: "/resources#community",
-    description: "Connect with other professionals",
-  },
-]
 
 interface NavMenuProps {
   mobile?: boolean
 }
 
 export function NavMenu({ mobile = false }: NavMenuProps) {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-
   if (mobile) {
     return (
       <div className="flex flex-col space-y-4">
-        {/* Features Dropdown */}
-        <div>
-          <button
-            onClick={() => setOpenDropdown(openDropdown === "features" ? null : "features")}
-            className="flex items-center justify-between w-full text-white hover:text-gray-300 transition-colors"
-          >
-            Features
-            <ChevronDown className={cn("h-4 w-4 transition-transform", openDropdown === "features" && "rotate-180")} />
-          </button>
-          {openDropdown === "features" && (
-            <div className="mt-2 ml-4 space-y-2">
-              {features.map((feature) => (
-                <Link
-                  key={feature.href}
-                  href={feature.href}
-                  className="block text-sm text-gray-300 hover:text-white transition-colors"
-                >
-                  {feature.title}
-                </Link>
-              ))}
-            </div>
-          )}
+        <div className="space-y-2">
+          <div className="text-white font-medium">Features</div>
+          <div className="pl-4 space-y-2">
+            <Link href="/features/customers" className="block text-white/80 hover:text-white text-sm">
+              Customer Management
+            </Link>
+            <Link href="/features/scheduling" className="block text-white/80 hover:text-white text-sm">
+              Scheduling & Dispatch
+            </Link>
+            <Link href="/features/analytics" className="block text-white/80 hover:text-white text-sm">
+              Analytics & Reports
+            </Link>
+            <Link href="/features/communication" className="block text-white/80 hover:text-white text-sm">
+              Communication Tools
+            </Link>
+            <Link href="/features/documents" className="block text-white/80 hover:text-white text-sm">
+              Document Management
+            </Link>
+            <Link href="/features/security" className="block text-white/80 hover:text-white text-sm">
+              Security & Compliance
+            </Link>
+          </div>
         </div>
-
-        {/* Industries Dropdown */}
-        <div>
-          <button
-            onClick={() => setOpenDropdown(openDropdown === "industries" ? null : "industries")}
-            className="flex items-center justify-between w-full text-white hover:text-gray-300 transition-colors"
-          >
-            Industries
-            <ChevronDown
-              className={cn("h-4 w-4 transition-transform", openDropdown === "industries" && "rotate-180")}
-            />
-          </button>
-          {openDropdown === "industries" && (
-            <div className="mt-2 ml-4 space-y-2">
-              {industries.map((industry) => (
-                <Link
-                  key={industry.href}
-                  href={industry.href}
-                  className="block text-sm text-gray-300 hover:text-white transition-colors"
-                >
-                  {industry.title}
-                </Link>
-              ))}
-            </div>
-          )}
+        <div className="space-y-2">
+          <div className="text-white font-medium">Industries</div>
+          <div className="pl-4 space-y-2">
+            <Link href="/industries/holiday-lighting" className="block text-white/80 hover:text-white text-sm">
+              Holiday Lighting
+            </Link>
+            <Link href="/industries/outdoor-lighting" className="block text-white/80 hover:text-white text-sm">
+              Outdoor Lighting
+            </Link>
+            <Link href="/industries/landscaping" className="block text-white/80 hover:text-white text-sm">
+              Landscaping
+            </Link>
+            <Link href="/industries/irrigation" className="block text-white/80 hover:text-white text-sm">
+              Irrigation
+            </Link>
+          </div>
         </div>
-
-        {/* Resources Dropdown */}
-        <div>
-          <button
-            onClick={() => setOpenDropdown(openDropdown === "resources" ? null : "resources")}
-            className="flex items-center justify-between w-full text-white hover:text-gray-300 transition-colors"
-          >
-            Resources
-            <ChevronDown className={cn("h-4 w-4 transition-transform", openDropdown === "resources" && "rotate-180")} />
-          </button>
-          {openDropdown === "resources" && (
-            <div className="mt-2 ml-4 space-y-2">
-              {resources.map((resource) => (
-                <Link
-                  key={resource.href}
-                  href={resource.href}
-                  className="block text-sm text-gray-300 hover:text-white transition-colors"
-                >
-                  {resource.title}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Direct Links */}
-        <Link href="/pricing" className="text-white hover:text-gray-300 transition-colors">
+        <Link href="/pricing" className="text-white hover:text-white/80">
           Pricing
+        </Link>
+        <Link href="/resources" className="text-white hover:text-white/80">
+          Resources
         </Link>
       </div>
     )
@@ -188,77 +72,151 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 data-[state=open]:bg-white/10">
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10">
             Features
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              {features.map((feature) => (
-                <ListItem key={feature.title} title={feature.title} href={feature.href}>
-                  {feature.description}
-                </ListItem>
-              ))}
-            </ul>
+            <div className="grid gap-3 p-6 w-[400px] lg:w-[500px] lg:grid-cols-2">
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/features/customers"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Customer Management</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Comprehensive customer profiles and relationship tracking
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/features/scheduling"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Scheduling & Dispatch</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Smart scheduling and crew dispatch optimization
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/features/analytics"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Analytics & Reports</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Business insights and performance analytics
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/features/communication"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Communication Tools</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Automated messaging and customer communication
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/features/documents"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Document Management</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Digital contracts, invoices, and document storage
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/features/security"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Security & Compliance</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Enterprise-grade security and compliance features
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+            </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 data-[state=open]:bg-white/10">
+          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10">
             Industries
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              {industries.map((industry) => (
-                <ListItem key={industry.title} title={industry.title} href={industry.href}>
-                  {industry.description}
-                </ListItem>
-              ))}
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 data-[state=open]:bg-white/10">
-            Resources
-          </NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              {resources.map((resource) => (
-                <ListItem key={resource.title} title={resource.title} href={resource.href}>
-                  {resource.description}
-                </ListItem>
-              ))}
-            </ul>
+            <div className="grid gap-3 p-6 w-[400px] lg:w-[500px] lg:grid-cols-2">
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/industries/holiday-lighting"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Holiday Lighting</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Seasonal installation, maintenance, and takedown management
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/industries/outdoor-lighting"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Outdoor Lighting</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Permanent lighting design, installation, and maintenance
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/industries/landscaping"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Landscaping</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Complete landscaping and lawn care service management
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/industries/irrigation"
+                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <div className="text-sm font-medium leading-none">Irrigation</div>
+                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                    Sprinkler system installation, maintenance, and monitoring
+                  </p>
+                </Link>
+              </NavigationMenuLink>
+            </div>
           </NavigationMenuContent>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
           <Link href="/pricing" legacyBehavior passHref>
-            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/10 data-[state=open]:bg-white/10">
+            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50">
               Pricing
+            </NavigationMenuLink>
+          </Link>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <Link href="/resources" legacyBehavior passHref>
+            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+              Resources
             </NavigationMenuLink>
           </Link>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
-  )
-}
-
-const ListItem = ({ className, title, children, ...props }: any) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className,
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{children}</p>
-        </a>
-      </NavigationMenuLink>
-    </li>
   )
 }

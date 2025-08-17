@@ -2,10 +2,10 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { Header } from "./components/header"
-import { Footer } from "./components/footer"
-import { AuthProvider } from "./components/auth-provider"
+import { AuthProvider } from "@/app/components/auth-provider"
 import { Toaster } from "@/components/ui/toaster"
+import Header from "@/app/components/header"
+import Footer from "@/app/components/footer"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,14 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="icon" href="/favicon.png" sizes="any" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
-      </head>
       <body className={inter.className}>
         <AuthProvider>
           <Header />
-          {children}
+          <main>{children}</main>
           <Footer />
           <Toaster />
         </AuthProvider>

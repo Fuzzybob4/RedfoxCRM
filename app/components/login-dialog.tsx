@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { supabase } from "@/lib/supabase"
+import { useToast } from "@/hooks/use-toast"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { signIn } from "@/lib/supabase"
-import { useToast } from "@/components/ui/use-toast"
-import Link from "next/link"
 
 interface LoginDialogProps {
   open: boolean
@@ -29,7 +28,10 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setLoading(true)
 
     try {
-      const { error } = await signIn(email, password)
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
       if (error) {
         toast({
@@ -62,7 +64,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Sign In</DialogTitle>
-          <DialogDescription>Enter your email and password to access your account.</DialogDescription>
+          <DialogDescription>Enter your email and password to sign in to your account.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -103,12 +105,6 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             Sign In
           </Button>
         </form>
-        <div className="text-center text-sm">
-          <span className="text-muted-foreground">Don't have an account? </span>
-          <Link href="/signup" className="text-primary hover:underline" onClick={() => onOpenChange(false)}>
-            Sign up
-          </Link>
-        </div>
       </DialogContent>
     </Dialog>
   )
