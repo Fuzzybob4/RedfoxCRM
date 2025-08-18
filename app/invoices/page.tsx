@@ -1,13 +1,29 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { FileText, Plus, DollarSign, ExternalLink } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import {
+  MoreVertical,
+  Download,
+  LayoutDashboard,
+  ScrollText,
+  Users,
+  BarChart,
+  Settings,
+  UserPlus,
+  FileText,
+  DollarSign,
+  Briefcase,
+} from "lucide-react"
+import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
+import type { User } from "@supabase/supabase-js"
 
 interface Invoice {
   id: string
@@ -25,124 +41,92 @@ interface Invoice {
   }
 }
 
+const navItems = [
+  { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", href: "/dashboard" },
+  { icon: <DollarSign className="h-5 w-5" />, label: "Sales", href: "/sales" },
+  { icon: <ScrollText className="h-5 w-5" />, label: "Invoices", href: "/invoices", active: true },
+  { icon: <FileText className="h-5 w-5" />, label: "Estimates", href: "/estimates" },
+  { icon: <Briefcase className="h-5 w-5" />, label: "Projects", href: "/projects" },
+  { icon: <Users className="h-5 w-5" />, label: "Customers", href: "/customers" },
+  { icon: <BarChart className="h-5 w-5" />, label: "Reports", href: "/reports" },
+  { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/settings" },
+]
+
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [invoiceCount, setInvoiceCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [companyName, setCompanyName] = useState("Company name")
+  const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
-    loadInvoices()
-  }, [])
+    async function checkAuthAndLoadData() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-  async function loadInvoices() {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(`
-          *,
-          customers (
-            first_name,
-            last_name
-          )
-        `)
-        .order("created_at", { ascending: false })
-
-      if (error) {
-        console.error("Error loading invoices:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load invoices",
-          variant: "destructive",
-        })
-      } else {
-        setInvoices(data || [])
-      }
-    } catch (error) {
-      console.error("Error loading invoices:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load invoices",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function createSampleInvoice() {
-    try {
-      setCreating(true)
-
-      // Get the first customer for demo
-      const { data: customers, error: customerError } = await supabase.from("customers").select("id").limit(1)
-
-      if (customerError || !customers || customers.length === 0) {
-        toast({
-          title: "Error",
-          description: "No customers found. Please add a customer first.",
-          variant: "destructive",
-        })
+      if (!user) {
+        router.push("/login")
         return
       }
 
-      const response = await fetch("/api/invoices/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customerId: customers[0].id,
-          lineItems: [
-            { name: "Professional Service", quantity: 1, unit_price: 200.0 },
-            { name: "Materials", quantity: 2, unit_price: 50.0 },
-          ],
-        }),
-      })
+      fetchCompanyName(user)
+      fetchInvoices(user)
+    }
 
-      const result = await response.json()
+    checkAuthAndLoadData()
+  }, [router])
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to create invoice")
-      }
+  async function fetchCompanyName(user: User) {
+    if (!user) return
 
-      toast({
-        title: "Success",
-        description: "Invoice created successfully!",
-      })
+    const { data, error } = await supabase
+      .from("company_profiles")
+      .select("company_name")
+      .eq("owner_id", user.id)
+      .single()
 
-      loadInvoices()
-
-      // Open payment URL if available
-      if (result.paymentUrl) {
-        window.open(result.paymentUrl, "_blank")
-      }
-    } catch (error) {
-      console.error("Error creating invoice:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create invoice",
-        variant: "destructive",
-      })
-    } finally {
-      setCreating(false)
+    if (error) {
+      console.error("Error fetching company name:", error)
+    } else if (data && data.company_name) {
+      setCompanyName(data.company_name)
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "paid":
-        return "bg-green-100 text-green-800"
-      case "sent":
-        return "bg-blue-100 text-blue-800"
-      case "overdue":
-        return "bg-red-100 text-red-800"
-      case "draft":
-        return "bg-gray-100 text-gray-800"
-      default:
-        return "bg-yellow-100 text-yellow-800"
+  async function fetchInvoices(user: User) {
+    if (!user) {
+      console.error("No user found")
+      setLoading(false)
+      return
     }
+
+    const { data, error } = await supabase
+      .from("invoices")
+      .select(`
+        *,
+        customers (
+          first_name,
+          last_name
+        )
+      `)
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching invoices:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch invoices. Please try again.",
+        variant: "destructive",
+      })
+    } else {
+      setInvoices(data || [])
+      setInvoiceCount(data?.length || 0)
+    }
+
+    setLoading(false)
   }
 
   const formatCurrency = (amount: number) => {
@@ -152,150 +136,155 @@ export default function InvoicesPage() {
     }).format(amount)
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#1a1f2c]">
+        <div className="text-white">Loading...</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="h-8 w-8" />
-            Invoices
-          </h1>
-          <p className="text-slate-600 mt-2">Create and manage your invoices with integrated payment processing</p>
+    <div className="flex h-screen bg-[#1a1f2c]">
+      {/* Left Sidebar */}
+      <div className="w-64 bg-[#272e3f] text-gray-300">
+        <div className="p-4 border-b border-gray-700">
+          <h1 className="text-xl font-semibold text-white">{companyName}</h1>
         </div>
-        <Button onClick={createSampleInvoice} disabled={creating} className="bg-orange-500 hover:bg-orange-600">
-          <Plus className="h-4 w-4 mr-2" />
-          {creating ? "Creating..." : "Create Invoice"}
-        </Button>
+        <nav className="p-4 space-y-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors
+                ${item.active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white"}`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total Invoices</CardTitle>
-            <FileText className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{invoices.length}</div>
-          </CardContent>
-        </Card>
+      <div className="flex-1 flex flex-col">
+        {/* Top Search Bar */}
+        <div className="h-16 bg-[#272e3f] flex items-center px-4 border-b border-gray-700">
+          <div className="flex-1 flex items-center space-x-4">
+            <Input
+              type="search"
+              placeholder="Search invoices"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-[#1a1f2c] border-gray-700 text-white w-full max-w-md"
+            />
+            <Button className="bg-[#e85d3d] hover:bg-[#d54e2f] text-white">
+              <UserPlus className="h-4 w-4 mr-2" />
+              New Invoice
+            </Button>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {formatCurrency(
-                invoices.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + (inv.total_amount || 0), 0),
-              )}
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto p-6">
+          <div className="grid gap-6">
+            {/* Stats Cards */}
+            <div className="flex gap-6 mb-8">
+              <Card className="w-[300px] bg-[#4CAF50] text-white">
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">TOTAL INVOICES</p>
+                      <h2 className="text-4xl font-bold">{invoiceCount}</h2>
+                    </div>
+                    <ScrollText className="h-6 w-6" />
+                  </div>
+                </div>
+              </Card>
+              <Card className="w-[300px] bg-[#2196F3] text-white">
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">TOTAL REVENUE</p>
+                      <h2 className="text-4xl font-bold">
+                        {formatCurrency(
+                          invoices
+                            .filter((inv) => inv.status === "paid")
+                            .reduce((sum, inv) => sum + (inv.total_amount || 0), 0),
+                        )}
+                      </h2>
+                    </div>
+                    <DollarSign className="h-6 w-6" />
+                  </div>
+                </div>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Pending</CardTitle>
-            <FileText className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {invoices.filter((inv) => inv.status === "sent").length}
-            </div>
-          </CardContent>
-        </Card>
+            {/* Invoices Table */}
+            <div className="bg-[#272e3f] rounded-lg p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-semibold text-white">Invoices</h2>
+                  <span className="text-gray-400 text-sm">| {invoiceCount} Invoices</span>
+                </div>
+                <Button variant="ghost" size="icon" className="text-white">
+                  <Download className="h-5 w-5" />
+                </Button>
+              </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Overdue</CardTitle>
-            <FileText className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {invoices.filter((inv) => inv.status === "overdue").length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Invoices Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoice List</CardTitle>
-          <CardDescription>All your invoices and their current status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-slate-500">Loading invoices...</div>
-            </div>
-          ) : invoices.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No invoices yet</h3>
-              <p className="text-slate-500 mb-4">Create your first invoice to start getting paid</p>
-              <Button onClick={createSampleInvoice} disabled={creating} className="bg-orange-500 hover:bg-orange-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Invoice
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className="border-gray-700">
+                    <TableHead className="text-gray-400">Invoice #</TableHead>
+                    <TableHead className="text-gray-400">Customer</TableHead>
+                    <TableHead className="text-gray-400">Amount</TableHead>
+                    <TableHead className="text-gray-400">Status</TableHead>
+                    <TableHead className="text-gray-400">Due Date</TableHead>
+                    <TableHead className="text-gray-400">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">#{invoice.id}</TableCell>
-                      <TableCell>
-                        {invoice.customers
-                          ? `${invoice.customers.first_name} ${invoice.customers.last_name}`
-                          : "Unknown Customer"}
-                      </TableCell>
-                      <TableCell className="font-medium">{formatCurrency(invoice.total_amount || 0)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(invoice.status)}>{invoice.status || "Draft"}</Badge>
-                      </TableCell>
-                      <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell>{new Date(invoice.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        {invoice.stripe_invoice_id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // This would open the Stripe payment link
-                              toast({
-                                title: "Payment Link",
-                                description: "Payment link functionality would open here",
-                              })
-                            }}
-                          >
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {invoices
+                    .filter(
+                      (invoice) =>
+                        invoice.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        invoice.customers?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        invoice.customers?.last_name?.toLowerCase().includes(searchQuery.toLowerCase()),
+                    )
+                    .map((invoice) => (
+                      <TableRow key={invoice.id} className="border-gray-700">
+                        <TableCell className="font-medium text-white">INV-{invoice.id}</TableCell>
+                        <TableCell className="text-white">
+                          {invoice.customers
+                            ? `${invoice.customers.first_name} ${invoice.customers.last_name}`
+                            : "Unknown Customer"}
+                        </TableCell>
+                        <TableCell className="text-white">{formatCurrency(invoice.total_amount || 0)}</TableCell>
+                        <TableCell className="text-white">{invoice.status || "Draft"}</TableCell>
+                        <TableCell className="text-white">
+                          {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4 text-gray-400" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[160px]">
+                              <DropdownMenuItem>Edit</DropdownMenuItem>
+                              <DropdownMenuItem>View Details</DropdownMenuItem>
+                              <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
