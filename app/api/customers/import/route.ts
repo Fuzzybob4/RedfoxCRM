@@ -5,6 +5,7 @@ async function parseCsv(file: File): Promise<any[]> {
   const text = await file.text()
   const lines = text.trim().split("\n")
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
+
   return lines.slice(1).map((line) => {
     const cols = line.split(",").map((c) => c.trim())
     const record: Record<string, any> = {}
@@ -14,24 +15,31 @@ async function parseCsv(file: File): Promise<any[]> {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ req })
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-  const form = await req.formData()
-  const file = form.get("file") as File
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 })
-  }
-
-  const { data: profile } = await supabase.from("profiles").select("default_org").eq("id", user.id).single()
-  const orgId = profile?.default_org
-  if (!orgId) return NextResponse.json({ error: "User has no organization" }, { status: 400 })
-
   try {
+    const supabase = createRouteHandlerClient({ req })
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const form = await req.formData()
+    const file = form.get("file") as File
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+    }
+
+    const { data: profile } = await supabase.from("profiles").select("default_org").eq("id", user.id).single()
+
+    const orgId = profile?.default_org
+    if (!orgId) {
+      return NextResponse.json({ error: "User has no organization" }, { status: 400 })
+    }
+
     const records = await parseCsv(file)
+
     // Map CSV fields to your customers table columns
     const rows = records.map((r) => ({
       org_id: orgId,
@@ -42,16 +50,22 @@ export async function POST(req: NextRequest) {
       address: r.address || "",
       city: r.city || "",
       state: r.state || "",
-      zip: r.zip || r.zipcode || "",
+      zip: r.zip || r.zipcode || r["zip code"] || "",
       lead_status: r.lead_status || r.status || "new",
       customer_type: r.customer_type || r.type || "residential",
       created_by: user.id,
     }))
 
     const { error, count } = await supabase.from("customers").insert(rows).select("id", { count: "exact" })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    if (error) {
+      console.error("Insert error:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
     return NextResponse.json({ inserted: count ?? rows.length }, { status: 200 })
   } catch (error) {
-    return NextResponse.json({ error: "Failed to parse CSV file" }, { status: 400 })
+    console.error("API error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

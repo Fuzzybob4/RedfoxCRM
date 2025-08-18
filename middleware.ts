@@ -4,14 +4,23 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
 
   try {
+    const supabase = createMiddlewareClient({ req, res })
+
     const {
       data: { session },
+      error,
     } = await supabase.auth.getSession()
 
-    const protectedRoutes = [
+    if (error) {
+      console.error("Middleware session error:", error)
+    }
+
+    const path = req.nextUrl.pathname
+    const isAuthPage = path === "/login" || path === "/signup" || path.startsWith("/auth/callback")
+
+    const protectedPrefixes = [
       "/dashboard",
       "/customers",
       "/invoices",
@@ -25,19 +34,24 @@ export async function middleware(req: NextRequest) {
       "/sales",
     ]
 
-    const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
+    const isProtectedRoute = protectedPrefixes.some((prefix) => path.startsWith(prefix))
 
     // If accessing protected route without session, redirect to login
     if (isProtectedRoute && !session) {
-      const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = "/login"
-      redirectUrl.searchParams.set("redirectedFrom", req.nextUrl.pathname)
-      return NextResponse.redirect(redirectUrl)
+      const url = req.nextUrl.clone()
+      url.pathname = "/login"
+      url.searchParams.set("redirectedFrom", path)
+      console.log("Redirecting to login from:", path)
+      return NextResponse.redirect(url)
     }
 
-    // If accessing auth pages while logged in, redirect to dashboard
-    if (["/login", "/signup"].includes(req.nextUrl.pathname) && session) {
-      return NextResponse.redirect(new URL("/dashboard", req.url))
+    // If accessing auth pages while logged in, redirect to dashboard (except callback)
+    if (session && isAuthPage && !path.startsWith("/auth/callback")) {
+      const url = req.nextUrl.clone()
+      url.pathname = "/dashboard"
+      url.searchParams.delete("redirectedFrom")
+      console.log("Redirecting to dashboard from:", path)
+      return NextResponse.redirect(url)
     }
 
     return res
@@ -49,6 +63,9 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/login",
+    "/signup",
+    "/auth/callback",
     "/dashboard/:path*",
     "/customers/:path*",
     "/invoices/:path*",
@@ -60,7 +77,5 @@ export const config = {
     "/scheduling/:path*",
     "/products/:path*",
     "/sales/:path*",
-    "/login",
-    "/signup",
   ],
 }

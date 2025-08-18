@@ -8,11 +8,9 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "RedFox CRM - Home Services Management",
-  description: "Complete CRM solution for holiday lighting, outdoor lighting, landscaping, and irrigation businesses",
-  icons: {
-    icon: "/favicon.png",
-  },
+  title: "RedFox CRM - Customer Relationship Management",
+  description: "Professional CRM solution for managing customers, invoices, and business operations",
+  keywords: "CRM, customer management, invoices, business software",
     generator: 'v0.app'
 }
 

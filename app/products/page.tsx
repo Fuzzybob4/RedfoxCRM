@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -20,6 +19,8 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabase"
 import { Package, Plus, LayoutDashboard, ScrollText, Users, BarChart, Settings, DollarSign } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { WarehouseIcon as Inventory } from "lucide-react"
 
 interface Product {
   id: string
@@ -225,14 +226,55 @@ export default function ProductsPage() {
         <div className="flex-1 overflow-auto p-6">
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold">Products</h1>
-              <p className="text-muted-foreground">Manage your product catalog and inventory</p>
+              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                <Package className="h-8 w-8" />
+                Products
+              </h1>
+              <p className="text-slate-600 mt-2">Product catalog and inventory management</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <h2 className="text-xl font-semibold mb-2">Coming Soon</h2>
-              <p className="text-muted-foreground">
-                Product catalog management and inventory tracking features will be available soon.
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-blue-600" />
+                    Product Catalog
+                  </CardTitle>
+                  <CardDescription>Manage your product and service offerings</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600">
+                    Coming soon - Complete product catalog with pricing and descriptions
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Inventory className="h-5 w-5 text-green-600" />
+                    Inventory Tracking
+                  </CardTitle>
+                  <CardDescription>Track stock levels and manage inventory</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600">
+                    Coming soon - Real-time inventory tracking with low stock alerts
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-orange-600" />
+                    Pricing Management
+                  </CardTitle>
+                  <CardDescription>Manage pricing tiers and special offers</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600">Coming soon - Dynamic pricing with customer-specific rates</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
