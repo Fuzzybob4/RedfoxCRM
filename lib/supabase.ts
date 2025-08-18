@@ -3,31 +3,71 @@ import { createClient } from "@supabase/supabase-js"
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Create Supabase client with enhanced configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: "pkce",
-  },
-  global: {
-    headers: {
-      "X-Client-Info": "redfox-crm",
-    },
-  },
-  db: {
-    schema: "public",
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 2,
-    },
   },
 })
 
-// Enhanced auth helpers with better error handling
-export const signUp = async (email: string, password: string, fullName?: string) => {
+// Enhanced getCurrentUser function with better error handling
+export async function getCurrentUser() {
+  try {
+    // Use getSession instead of getUser for better session handling
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession()
+
+    if (error) {
+      console.error("Session error:", error)
+      return { user: null, error }
+    }
+
+    if (!session) {
+      // No session is not an error, just return null user
+      return { user: null, error: null }
+    }
+
+    return { user: session.user, error: null }
+  } catch (error) {
+    console.error("GetUser error:", error)
+    return { user: null, error }
+  }
+}
+
+// Enhanced signIn function with timeout
+export async function signIn(email: string, password: string) {
+  try {
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Request timeout")), 10000))
+
+    const signInPromise = supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    const { data, error } = (await Promise.race([signInPromise, timeoutPromise])) as any
+
+    if (error) {
+      console.error("Sign in error:", error)
+      return { data: null, error }
+    }
+
+    return { data, error: null }
+  } catch (error) {
+    console.error("Sign in timeout or network error:", error)
+    return {
+      data: null,
+      error: {
+        message: "Connection timeout. Please check your internet connection and try again.",
+      },
+    }
+  }
+}
+
+// Enhanced signUp function
+export async function signUp(email: string, password: string, fullName?: string) {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -57,37 +97,13 @@ export const signUp = async (email: string, password: string, fullName?: string)
   }
 }
 
-export const signIn = async (email: string, password: string) => {
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      console.error("SignIn error:", error)
-      return { data: null, error }
-    }
-
-    return { data, error: null }
-  } catch (err) {
-    console.error("SignIn catch error:", err)
-    return {
-      data: null,
-      error: {
-        message: "Network error. Please check your connection and try again.",
-        name: "NetworkError",
-      },
-    }
-  }
-}
-
-export const signInWithGoogle = async () => {
+// Google OAuth sign in function
+export async function signInWithGoogle() {
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback?next=/dashboard`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     })
 
@@ -109,53 +125,14 @@ export const signInWithGoogle = async () => {
   }
 }
 
-export const signOut = async () => {
+// Enhanced signOut function
+export async function signOut() {
   try {
     const { error } = await supabase.auth.signOut()
-    if (error) {
-      console.error("SignOut error:", error)
-    }
     return { error }
-  } catch (err) {
-    console.error("SignOut catch error:", err)
-    return {
-      error: {
-        message: "Network error during sign out.",
-        name: "NetworkError",
-      },
-    }
-  }
-}
-
-export const getCurrentUser = async () => {
-  try {
-    // First try to get the session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
-
-    if (sessionError) {
-      console.error("Session error:", sessionError)
-      return { user: null, error: sessionError }
-    }
-
-    if (!session) {
-      // No session found, but this is not an error
-      return { user: null, error: null }
-    }
-
-    // If we have a session, return the user
-    return { user: session.user, error: null }
-  } catch (err) {
-    console.error("GetUser catch error:", err)
-    return {
-      user: null,
-      error: {
-        message: "Network error getting user.",
-        name: "NetworkError",
-      },
-    }
+  } catch (error) {
+    console.error("Sign out error:", error)
+    return { error }
   }
 }
 
