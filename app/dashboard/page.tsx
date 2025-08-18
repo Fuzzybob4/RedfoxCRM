@@ -1,11 +1,31 @@
 "use client"
 
-import { useAuth } from "../components/auth-provider"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/app/components/auth-provider"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, FileText, DollarSign, TrendingUp, Calendar, AlertCircle } from "lucide-react"
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        // Redirect to login if not authenticated
+        router.replace("/login?message=Please sign in to access your dashboard.")
+      }
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#08042B]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+      </div>
+    )
+  }
 
   const stats = [
     {
