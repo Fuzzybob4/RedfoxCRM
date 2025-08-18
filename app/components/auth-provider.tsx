@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
 interface AuthContextType {
   user: User | null
@@ -21,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     // Get initial session
@@ -33,12 +34,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.email)
       setUser(session?.user ?? null)
       setLoading(false)
+
+      // Redirect to dashboard on sign in
+      if (event === "SIGNED_IN" && session) {
+        router.push("/dashboard")
+      }
+
+      // Redirect to home on sign out
+      if (event === "SIGNED_OUT") {
+        router.push("/")
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router])
 
   const signOut = async () => {
     await supabase.auth.signOut()

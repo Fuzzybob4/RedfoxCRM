@@ -1,218 +1,189 @@
 "use client"
-
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Filter, MoreHorizontal, Download, Eye } from "lucide-react"
-
-const invoices = [
-  {
-    id: "INV-001",
-    customer: "Acme Corp",
-    amount: "$5,000.00",
-    status: "paid",
-    dueDate: "2024-01-15",
-    issueDate: "2024-01-01",
-    description: "Monthly subscription - January 2024",
-  },
-  {
-    id: "INV-002",
-    customer: "TechStart Inc",
-    amount: "$2,500.00",
-    status: "pending",
-    dueDate: "2024-02-01",
-    issueDate: "2024-01-15",
-    description: "Setup and configuration services",
-  },
-  {
-    id: "INV-003",
-    customer: "Global Solutions",
-    amount: "$12,000.00",
-    status: "overdue",
-    dueDate: "2024-01-10",
-    issueDate: "2023-12-25",
-    description: "Annual license renewal",
-  },
-  {
-    id: "INV-004",
-    customer: "InnovateTech",
-    amount: "$1,800.00",
-    status: "draft",
-    dueDate: "2024-02-15",
-    issueDate: "2024-01-20",
-    description: "Consulting services - Q1 2024",
-  },
-]
-
-const statusColors = {
-  paid: "default",
-  pending: "secondary",
-  overdue: "destructive",
-  draft: "outline",
-} as const
 
 export default function InvoicesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedStatus, setSelectedStatus] = useState("all")
+  const [invoices, setInvoices] = useState<any[]>([])
+  const [customers, setCustomers] = useState<any[]>([])
+  const [creating, setCreating] = useState(false)
+  const { toast } = useToast()
 
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch =
-      invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = selectedStatus === "all" || invoice.status === selectedStatus
-    return matchesSearch && matchesStatus
-  })
+  useEffect(() => {
+    loadInvoices()
+    loadCustomers()
+  }, [])
 
-  const totalAmount = filteredInvoices.reduce(
-    (sum, invoice) => sum + Number.parseFloat(invoice.amount.replace(/[$,]/g, "")),
-    0,
-  )
+  async function loadInvoices() {
+    const { data, error } = await supabase
+      .from("invoices")
+      .select("*, customers ( first_name, last_name )")
+      .order("created_at", { ascending: false })
+    if (!error) setInvoices(data ?? [])
+  }
+
+  async function loadCustomers() {
+    const { data, error } = await supabase.from("customers").select("id, first_name, last_name").limit(10)
+    if (!error) setCustomers(data ?? [])
+  }
+
+  async function createSampleInvoice() {
+    if (customers.length === 0) {
+      toast({
+        title: "Error",
+        description: "No customers found. Please add customers first.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setCreating(true)
+    try {
+      const res = await fetch("/api/invoices/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: customers[0].id,
+          lineItems: [
+            { name: "Holiday Lighting Installation", quantity: 1, unit_price: 500.0 },
+            { name: "LED Light Strings", quantity: 10, unit_price: 25.0 },
+          ],
+        }),
+      })
+      const json = await res.json()
+
+      if (!res.ok) {
+        toast({
+          title: "Error",
+          description: json.error,
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Success",
+          description: "Invoice created successfully",
+        })
+        loadInvoices()
+        if (json.paymentUrl) {
+          window.open(json.paymentUrl, "_blank")
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create invoice",
+        variant: "destructive",
+      })
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "paid":
+        return "bg-green-100 text-green-800"
+      case "sent":
+        return "bg-blue-100 text-blue-800"
+      case "draft":
+        return "bg-gray-100 text-gray-800"
+      case "overdue":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Invoices</h1>
-          <p className="text-muted-foreground">Manage your invoices and billing</p>
+          <p className="text-muted-foreground">Create and manage your invoices</p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Invoice
+        <Button onClick={createSampleInvoice} disabled={creating}>
+          {creating ? "Creating..." : "Create Sample Invoice"}
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Amount</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalAmount.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{invoices.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Paid</CardTitle>
+            <CardTitle className="text-sm font-medium">Draft</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {filteredInvoices.filter((i) => i.status === "paid").length}
-            </div>
+            <div className="text-2xl font-bold">{invoices.filter((i) => i.status === "draft").length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium">Sent</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {filteredInvoices.filter((i) => i.status === "pending").length}
-            </div>
+            <div className="text-2xl font-bold">{invoices.filter((i) => i.status === "sent").length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Overdue</CardTitle>
+            <CardTitle className="text-sm font-medium">Paid</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {filteredInvoices.filter((i) => i.status === "overdue").length}
-            </div>
+            <div className="text-2xl font-bold">{invoices.filter((i) => i.status === "paid").length}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search invoices, customers, or descriptions..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="outline">
-          <Filter className="w-4 h-4 mr-2" />
-          More Filters
-        </Button>
-      </div>
-
-      {/* Invoices List */}
-      <div className="space-y-4">
-        {filteredInvoices.map((invoice) => (
-          <Card key={invoice.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">{invoice.id}</h3>
-                    <Badge variant={statusColors[invoice.status as keyof typeof statusColors]}>{invoice.status}</Badge>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-2">
-                    <div>
-                      <span className="font-medium">Customer:</span> {invoice.customer}
-                    </div>
-                    <div>
-                      <span className="font-medium">Amount:</span> {invoice.amount}
-                    </div>
-                    <div>
-                      <span className="font-medium">Issue Date:</span> {invoice.issueDate}
-                    </div>
-                    <div>
-                      <span className="font-medium">Due Date:</span> {invoice.dueDate}
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{invoice.description}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 mr-2" />
-                    View
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Invoices</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="pb-2">Invoice #</th>
+                  <th className="pb-2">Customer</th>
+                  <th className="pb-2">Total</th>
+                  <th className="pb-2">Status</th>
+                  <th className="pb-2">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map((inv) => (
+                  <tr key={inv.id} className="border-b">
+                    <td className="py-2">#{inv.id}</td>
+                    <td className="py-2">
+                      {inv.customers?.first_name} {inv.customers?.last_name}
+                    </td>
+                    <td className="py-2">${inv.total_amount?.toFixed(2)}</td>
+                    <td className="py-2">
+                      <Badge className={getStatusColor(inv.status)}>{inv.status}</Badge>
+                    </td>
+                    <td className="py-2">{new Date(inv.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {invoices.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No invoices found. Create your first invoice to get started.
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredInvoices.length === 0 && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <p className="text-muted-foreground">No invoices found matching your criteria.</p>
-            <Button className="mt-4">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Your First Invoice
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

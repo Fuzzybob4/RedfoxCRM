@@ -63,15 +63,17 @@ export default function SalesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Sales Pipeline</h1>
-          <p className="text-muted-foreground">Manage your deals and track sales progress</p>
+          <h1 className="text-3xl font-bold">Sales</h1>
+          <p className="text-muted-foreground">Track leads, opportunities, and sales performance</p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Deal
-        </Button>
+        <div className="bg-gray-50 rounded-lg p-8 text-center">
+          <h2 className="text-xl font-semibold mb-2">Coming Soon</h2>
+          <p className="text-muted-foreground">
+            Sales pipeline management and performance tracking features will be available soon.
+          </p>
+        </div>
       </div>
 
       {/* Stats Cards */}

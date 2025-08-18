@@ -5,12 +5,10 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -225,26 +223,18 @@ export default function ProductsPage() {
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-6">
-          <Card className="bg-[#272e3f] text-white p-6">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-400">Name</TableHead>
-                  <TableHead className="text-gray-400">Description</TableHead>
-                  <TableHead className="text-gray-400">Price</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id} className="border-gray-700">
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.description}</TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold">Products</h1>
+              <p className="text-muted-foreground">Manage your product catalog and inventory</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-8 text-center">
+              <h2 className="text-xl font-semibold mb-2">Coming Soon</h2>
+              <p className="text-muted-foreground">
+                Product catalog management and inventory tracking features will be available soon.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

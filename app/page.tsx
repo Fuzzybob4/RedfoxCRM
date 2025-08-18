@@ -1,19 +1,23 @@
-import { HeroSection } from "@/app/components/hero-section"
-import { FeaturesSection } from "@/app/components/features-section"
-import { TestimonialsSection } from "@/app/components/testimonials-section"
-import { PricingSection } from "@/app/components/pricing-section"
-import { CTASection } from "@/app/components/cta-section"
+import { Header } from "./components/header"
+import { HeroSection } from "./components/hero-section"
+import { FeaturesSection } from "./components/features-section"
+import { TestimonialsSection } from "./components/testimonials-section"
+import { PricingSection } from "./components/pricing-section"
+import { CTASection } from "./components/cta-section"
+import { Footer } from "./components/footer"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#08042B]">
-      <div className="pt-16">
+    <div className="min-h-screen">
+      <Header />
+      <main>
         <HeroSection />
         <FeaturesSection />
         <TestimonialsSection />
         <PricingSection />
         <CTASection />
-      </div>
+      </main>
+      <Footer />
     </div>
   )
 }
