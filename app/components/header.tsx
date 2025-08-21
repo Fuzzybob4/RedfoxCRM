@@ -25,13 +25,17 @@ export function Header() {
     await signOut()
   }
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2" onClick={scrollToTop}>
               <Image src="/image/logo/redfox-logo.png" alt="RedFox CRM" width={40} height={40} className="w-10 h-10" />
               <span className="text-xl font-bold text-white">RedFox CRM</span>
             </Link>
@@ -64,10 +68,14 @@ export function Header() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href="/dashboard" onClick={scrollToTop}>
+                      Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">Profile</Link>
+                    <Link href="/profile" onClick={scrollToTop}>
+                      Profile
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>Sign Out</DropdownMenuItem>
@@ -80,7 +88,9 @@ export function Header() {
                   asChild
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
-                  <Link href="/signup">Get Started</Link>
+                  <Link href="/signup" onClick={scrollToTop}>
+                    Get Started
+                  </Link>
                 </Button>
               </>
             )}
@@ -109,10 +119,14 @@ export function Header() {
                       <p className="text-xs text-gray-400">{user.email}</p>
                     </div>
                     <Button asChild variant="ghost" className="w-full justify-start text-white">
-                      <Link href="/dashboard">Dashboard</Link>
+                      <Link href="/dashboard" onClick={scrollToTop}>
+                        Dashboard
+                      </Link>
                     </Button>
                     <Button asChild variant="ghost" className="w-full justify-start text-white">
-                      <Link href="/profile">Profile</Link>
+                      <Link href="/profile" onClick={scrollToTop}>
+                        Profile
+                      </Link>
                     </Button>
                     <Button onClick={handleSignOut} variant="ghost" className="w-full justify-start text-white">
                       Sign Out
@@ -122,7 +136,9 @@ export function Header() {
                   <div className="space-y-2">
                     <LoginDialog />
                     <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
-                      <Link href="/signup">Get Started</Link>
+                      <Link href="/signup" onClick={scrollToTop}>
+                        Get Started
+                      </Link>
                     </Button>
                   </div>
                 )}

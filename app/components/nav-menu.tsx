@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
-
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -10,45 +9,53 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import { cn } from "@/lib/utils"
-import { forwardRef } from "react"
 
 interface NavMenuProps {
   mobile?: boolean
 }
 
 export function NavMenu({ mobile = false }: NavMenuProps) {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   if (mobile) {
     return (
-      <div className="space-y-1">
+      <div className="flex flex-col space-y-2">
         <Link
           href="/features"
-          className="block px-3 py-2 text-base font-medium text-white hover:text-blue-400 hover:bg-gray-700 rounded-md"
+          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          onClick={scrollToTop}
         >
           Features
         </Link>
         <Link
-          href="/industries"
-          className="block px-3 py-2 text-base font-medium text-white hover:text-blue-400 hover:bg-gray-700 rounded-md"
-        >
-          Industries
-        </Link>
-        <Link
           href="/pricing"
-          className="block px-3 py-2 text-base font-medium text-white hover:text-blue-400 hover:bg-gray-700 rounded-md"
+          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          onClick={scrollToTop}
         >
           Pricing
         </Link>
         <Link
+          href="/industries"
+          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          onClick={scrollToTop}
+        >
+          Industries
+        </Link>
+        <Link
           href="/resources"
-          className="block px-3 py-2 text-base font-medium text-white hover:text-blue-400 hover:bg-gray-700 rounded-md"
+          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          onClick={scrollToTop}
         >
           Resources
         </Link>
         <Link
           href="/contact-sales"
-          className="block px-3 py-2 text-base font-medium text-white hover:text-blue-400 hover:bg-gray-700 rounded-md"
+          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          onClick={scrollToTop}
         >
           Contact Sales
         </Link>
@@ -60,7 +67,7 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent text-white hover:text-blue-400 data-[state=open]:text-blue-400">
+          <NavigationMenuTrigger className="bg-transparent text-gray-300 hover:text-white hover:bg-gray-800">
             Features
           </NavigationMenuTrigger>
           <NavigationMenuContent>
@@ -68,46 +75,25 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
               <li className="row-span-3">
                 <NavigationMenuLink asChild>
                   <Link
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-blue-500/50 to-blue-700/50 p-6 no-underline outline-none focus:shadow-md"
+                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
                     href="/features"
+                    onClick={scrollToTop}
                   >
-                    <div className="mb-2 mt-4 text-lg font-medium text-white">All Features</div>
-                    <p className="text-sm leading-tight text-blue-100">
-                      Comprehensive CRM solution with customer management, invoicing, and analytics.
+                    <div className="mb-2 mt-4 text-lg font-medium">All Features</div>
+                    <p className="text-sm leading-tight text-muted-foreground">
+                      Discover all the powerful features that make RedFox CRM the perfect choice for your business.
                     </p>
                   </Link>
                 </NavigationMenuLink>
               </li>
-              <ListItem href="/features/customers" title="Customer Management">
-                Organize and track customer information, interactions, and history.
+              <ListItem href="/features/customers" title="Customer Management" onClick={scrollToTop}>
+                Organize and track all your customer information in one place.
               </ListItem>
-              <ListItem href="/features/analytics" title="Analytics & Reports">
-                Gain insights with detailed analytics and customizable reports.
+              <ListItem href="/features/analytics" title="Analytics & Reports" onClick={scrollToTop}>
+                Get insights into your business performance with detailed analytics.
               </ListItem>
-              <ListItem href="/features/communication" title="Communication Tools">
-                Integrated email, SMS, and notification systems.
-              </ListItem>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent text-white hover:text-blue-400 data-[state=open]:text-blue-400">
-            Industries
-          </NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              <ListItem href="/industries/holiday-lighting" title="Holiday Lighting">
-                Seasonal lighting installation and maintenance services.
-              </ListItem>
-              <ListItem href="/industries/outdoor-lighting" title="Outdoor Lighting">
-                Landscape and architectural lighting solutions.
-              </ListItem>
-              <ListItem href="/industries/landscaping" title="Landscaping">
-                Complete landscape design and maintenance services.
-              </ListItem>
-              <ListItem href="/industries/irrigation" title="Irrigation">
-                Smart irrigation systems and water management.
+              <ListItem href="/features/communication" title="Communication Tools" onClick={scrollToTop}>
+                Stay connected with customers through integrated communication tools.
               </ListItem>
             </ul>
           </NavigationMenuContent>
@@ -115,15 +101,49 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
 
         <NavigationMenuItem>
           <Link href="/pricing" legacyBehavior passHref>
-            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:text-blue-400 focus:text-blue-400 focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+            <NavigationMenuLink
+              className={cn(
+                navigationMenuTriggerStyle(),
+                "bg-transparent text-gray-300 hover:text-white hover:bg-gray-800",
+              )}
+              onClick={scrollToTop}
+            >
               Pricing
             </NavigationMenuLink>
           </Link>
         </NavigationMenuItem>
 
         <NavigationMenuItem>
+          <NavigationMenuTrigger className="bg-transparent text-gray-300 hover:text-white hover:bg-gray-800">
+            Industries
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              <ListItem href="/industries/holiday-lighting" title="Holiday Lighting" onClick={scrollToTop}>
+                Specialized CRM features for holiday lighting businesses.
+              </ListItem>
+              <ListItem href="/industries/outdoor-lighting" title="Outdoor Lighting" onClick={scrollToTop}>
+                Manage outdoor lighting projects and customers efficiently.
+              </ListItem>
+              <ListItem href="/industries/landscaping" title="Landscaping" onClick={scrollToTop}>
+                Complete solution for landscaping and lawn care businesses.
+              </ListItem>
+              <ListItem href="/industries/irrigation" title="Irrigation" onClick={scrollToTop}>
+                Streamline irrigation system installations and maintenance.
+              </ListItem>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
           <Link href="/resources" legacyBehavior passHref>
-            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:text-blue-400 focus:text-blue-400 focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+            <NavigationMenuLink
+              className={cn(
+                navigationMenuTriggerStyle(),
+                "bg-transparent text-gray-300 hover:text-white hover:bg-gray-800",
+              )}
+              onClick={scrollToTop}
+            >
               Resources
             </NavigationMenuLink>
           </Link>
@@ -131,7 +151,13 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
 
         <NavigationMenuItem>
           <Link href="/contact-sales" legacyBehavior passHref>
-            <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:text-blue-400 focus:text-blue-400 focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+            <NavigationMenuLink
+              className={cn(
+                navigationMenuTriggerStyle(),
+                "bg-transparent text-gray-300 hover:text-white hover:bg-gray-800",
+              )}
+              onClick={scrollToTop}
+            >
               Contact Sales
             </NavigationMenuLink>
           </Link>
@@ -141,25 +167,23 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
   )
 }
 
-const ListItem = forwardRef<React.ElementRef<"a">, React.ComponentPropsWithoutRef<"a">>(
-  ({ className, title, children, ...props }, ref) => {
-    return (
-      <li>
-        <NavigationMenuLink asChild>
-          <a
-            ref={ref}
-            className={cn(
-              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-              className,
-            )}
-            {...props}
-          >
-            <div className="text-sm font-medium leading-none">{title}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{children}</p>
-          </a>
-        </NavigationMenuLink>
-      </li>
-    )
-  },
-)
-ListItem.displayName = "ListItem"
+const ListItem = ({ className, title, children, href, onClick, ...props }: any) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <Link
+          href={href}
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className,
+          )}
+          onClick={onClick}
+          {...props}
+        >
+          <div className="text-sm font-medium leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">{children}</p>
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  )
+}

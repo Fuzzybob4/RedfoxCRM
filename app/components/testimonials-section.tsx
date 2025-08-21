@@ -1,67 +1,88 @@
+"use client"
+
 import { Card, CardContent } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Star } from "lucide-react"
-import Image from "next/image"
 
 const testimonials = [
   {
     name: "Sarah Johnson",
-    company: "Bright Lights Holiday Services",
+    role: "CEO, GreenScape Solutions",
+    content:
+      "RedFox CRM has transformed how we manage our landscaping business. The customer tracking and project management features are exactly what we needed.",
+    rating: 5,
+    avatar: "SJ",
     image: "/image/home/professional-woman-headshot.png",
-    rating: 5,
-    text: "RedFox CRM transformed our holiday lighting business. We increased our customer retention by 40% and streamlined our entire operation.",
   },
   {
-    name: "Mike Rodriguez",
-    company: "Elite Outdoor Lighting",
+    name: "Mike Chen",
+    role: "Owner, Bright Lights Co.",
+    content:
+      "The scheduling and invoicing features have saved us countless hours. Our holiday lighting business has never been more organized.",
+    rating: 5,
+    avatar: "MC",
     image: "/image/home/professional-man-headshot.png",
-    rating: 5,
-    text: "The scheduling and customer management features are incredible. We've cut our administrative time in half and our customers love the communication tools.",
   },
   {
-    name: "Jennifer Chen",
-    company: "GreenScape Landscaping",
-    image: "/image/home/professional-woman-headshot-2.png",
+    name: "Emily Rodriguez",
+    role: "Operations Manager, AquaFlow Systems",
+    content:
+      "Customer communication has improved dramatically since switching to RedFox CRM. Our irrigation clients love the automated updates.",
     rating: 5,
-    text: "Finally, a CRM built for home services! The route optimization and customer tracking features have been game-changers for our landscaping business.",
+    avatar: "ER",
+    image: "/image/home/professional-woman-headshot-2.png",
+  },
+  {
+    name: "David Thompson",
+    role: "Founder, Elite Outdoor Lighting",
+    content:
+      "The analytics dashboard gives us insights we never had before. We've increased our revenue by 40% in just six months.",
+    rating: 5,
+    avatar: "DT",
+    image: "/image/home/professional-man-headshot-2.png",
   },
 ]
 
 export function TestimonialsSection() {
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Trusted by Home Service Professionals</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            See how businesses like yours are growing with RedFox CRM
+    <section className="py-24 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Trusted by Industry Leaders</h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            See how businesses like yours are transforming their operations with RedFox CRM
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="border-0 shadow-lg">
+            <Card key={index} className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-600 mb-6 italic">"{testimonial.text}"</p>
+
+                <p className="text-gray-700 mb-6 leading-relaxed">"{testimonial.content}"</p>
+
                 <div className="flex items-center">
-                  <Image
-                    src={testimonial.image || "/placeholder.svg"}
-                    alt={testimonial.name}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 rounded-full mr-4 object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = "/image/avatar/default.png"
-                    }}
-                  />
+                  <Avatar className="h-12 w-12 mr-4">
+                    <AvatarImage
+                      src={testimonial.image || "/placeholder.svg"}
+                      alt={testimonial.name}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = "none"
+                      }}
+                    />
+                    <AvatarFallback className="bg-orange-500 text-white font-semibold">
+                      {testimonial.avatar}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                    <div className="text-sm text-gray-600">{testimonial.company}</div>
+                    <div className="text-sm text-gray-600">{testimonial.role}</div>
                   </div>
                 </div>
               </CardContent>
