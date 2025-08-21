@@ -32,7 +32,7 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <Image src="/redfox-logo-light.png" alt="RedFox CRM" width={32} height={32} className="w-8 h-8" />
+              <Image src="/image/logo/redfox-logo.png" alt="RedFox CRM" width={40} height={40} className="w-10 h-10" />
               <span className="text-xl font-bold text-white">RedFox CRM</span>
             </Link>
           </div>

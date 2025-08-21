@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Check, X } from "lucide-react"
+import { Header } from "@/app/components/header"
+import { Footer } from "@/app/components/footer"
 
 const plans = [
   {
@@ -83,86 +85,95 @@ const faqs = [
 
 export default function PricingPage() {
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="text-center mb-16">
-        <Badge variant="secondary" className="mb-4">
-          Pricing
-        </Badge>
-        <h1 className="text-4xl font-bold mb-4">Simple, transparent pricing</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Choose the perfect plan for your business. All plans include a 14-day free trial with no credit card required.
-        </p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <Header />
 
-      {/* Pricing Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
-        {plans.map((plan, index) => (
-          <Card key={index} className={`relative ${plan.popular ? "border-primary shadow-lg scale-105" : ""}`}>
-            {plan.popular && (
-              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">Most Popular</Badge>
-            )}
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              <div className="mt-4">
-                <span className="text-4xl font-bold">{plan.price}</span>
-                <span className="text-muted-foreground">/month</span>
-              </div>
-              <CardDescription className="mt-2">{plan.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-center">
-                    {feature.included ? (
-                      <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    ) : (
-                      <X className="w-5 h-5 text-muted-foreground mr-3 flex-shrink-0" />
-                    )}
-                    <span className={`text-sm ${!feature.included ? "text-muted-foreground" : ""}`}>
-                      {feature.name}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
-                {plan.cta}
+      <main className="pt-16">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4">
+              Pricing
+            </Badge>
+            <h1 className="text-4xl font-bold mb-4">Simple, transparent pricing</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Choose the perfect plan for your business. All plans include a 14-day free trial with no credit card
+              required.
+            </p>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
+            {plans.map((plan, index) => (
+              <Card key={index} className={`relative ${plan.popular ? "border-primary shadow-lg scale-105" : ""}`}>
+                {plan.popular && (
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">Most Popular</Badge>
+                )}
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                  <CardDescription className="mt-2">{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center">
+                        {feature.included ? (
+                          <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        ) : (
+                          <X className="w-5 h-5 text-muted-foreground mr-3 flex-shrink-0" />
+                        )}
+                        <span className={`text-sm ${!feature.included ? "text-muted-foreground" : ""}`}>
+                          {feature.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
+                    {plan.cta}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* FAQ Section */}
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <div className="space-y-6">
+              {faqs.map((faq, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{faq.question}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{faq.answer}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA Section */}
+          <div className="text-center mt-16">
+            <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
+            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Join thousands of businesses already using RedFox CRM to grow their sales and manage customer
+              relationships more effectively.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg">Start Free Trial</Button>
+              <Button variant="outline" size="lg">
+                Contact Sales
               </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* FAQ Section */}
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-        <div className="space-y-6">
-          {faqs.map((faq, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-lg">{faq.question}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{faq.answer}</p>
-              </CardContent>
-            </Card>
-          ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
 
-      {/* CTA Section */}
-      <div className="text-center mt-16">
-        <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-        <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of businesses already using RedFox CRM to grow their sales and manage customer relationships
-          more effectively.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg">Start Free Trial</Button>
-          <Button variant="outline" size="lg">
-            Contact Sales
-          </Button>
-        </div>
-      </div>
+      <Footer />
     </div>
   )
 }

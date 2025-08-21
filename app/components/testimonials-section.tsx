@@ -6,21 +6,21 @@ const testimonials = [
   {
     name: "Sarah Johnson",
     company: "Bright Lights Holiday Services",
-    image: "/professional-woman-headshot.png",
+    image: "/image/home/professional-woman-headshot.png",
     rating: 5,
     text: "RedFox CRM transformed our holiday lighting business. We increased our customer retention by 40% and streamlined our entire operation.",
   },
   {
     name: "Mike Rodriguez",
     company: "Elite Outdoor Lighting",
-    image: "/professional-man-headshot.png",
+    image: "/image/home/professional-man-headshot.png",
     rating: 5,
     text: "The scheduling and customer management features are incredible. We've cut our administrative time in half and our customers love the communication tools.",
   },
   {
     name: "Jennifer Chen",
     company: "GreenScape Landscaping",
-    image: "/professional-woman-headshot-2.png",
+    image: "/image/home/professional-woman-headshot-2.png",
     rating: 5,
     text: "Finally, a CRM built for home services! The route optimization and customer tracking features have been game-changers for our landscaping business.",
   },
@@ -53,7 +53,11 @@ export function TestimonialsSection() {
                     alt={testimonial.name}
                     width={48}
                     height={48}
-                    className="w-12 h-12 rounded-full mr-4"
+                    className="w-12 h-12 rounded-full mr-4 object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = "/image/avatar/default.png"
+                    }}
                   />
                   <div>
                     <div className="font-semibold text-gray-900">{testimonial.name}</div>
