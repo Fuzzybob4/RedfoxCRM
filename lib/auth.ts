@@ -1,39 +1,10 @@
-import { supabase } from "./supabase"
-import type { User } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
+import type { Database } from "./database.types"
 
-export async function getUser(): Promise<User | null> {
-  try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
-    if (error) {
-      console.error("Error getting user:", error)
-      return null
-    }
-    return user
-  } catch (error) {
-    console.error("Error in getUser:", error)
-    return null
-  }
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export async function getSession() {
-  try {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession()
-    if (error) {
-      console.error("Error getting session:", error)
-      return null
-    }
-    return session
-  } catch (error) {
-    console.error("Error in getSession:", error)
-    return null
-  }
-}
+const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
 export async function handleSignUp(email: string, password: string, fullName?: string) {
   try {
@@ -47,12 +18,7 @@ export async function handleSignUp(email: string, password: string, fullName?: s
       },
     })
 
-    if (error) {
-      console.error("Sign up error:", error)
-      return { data: null, error }
-    }
-
-    return { data, error: null }
+    return { data, error }
   } catch (error) {
     console.error("Error in handleSignUp:", error)
     return { data: null, error }
@@ -66,12 +32,7 @@ export async function handleSignIn(email: string, password: string) {
       password,
     })
 
-    if (error) {
-      console.error("Sign in error:", error)
-      return { data: null, error }
-    }
-
-    return { data, error: null }
+    return { data, error }
   } catch (error) {
     console.error("Error in handleSignIn:", error)
     return { data: null, error }
@@ -81,31 +42,35 @@ export async function handleSignIn(email: string, password: string) {
 export async function handleSignOut() {
   try {
     const { error } = await supabase.auth.signOut()
-    if (error) {
-      console.error("Sign out error:", error)
-      return { error }
-    }
-    return { error: null }
+    return { error }
   } catch (error) {
     console.error("Error in handleSignOut:", error)
     return { error }
   }
 }
 
-export async function handlePasswordReset(email: string) {
+export async function getSession() {
   try {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-
-    if (error) {
-      console.error("Password reset error:", error)
-      return { data: null, error }
-    }
-
-    return { data, error: null }
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession()
+    return { session, error }
   } catch (error) {
-    console.error("Error in handlePasswordReset:", error)
-    return { data: null, error }
+    console.error("Error getting session:", error)
+    return { session: null, error }
+  }
+}
+
+export async function getCurrentUser() {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+    return { user, error }
+  } catch (error) {
+    console.error("Error getting current user:", error)
+    return { user: null, error }
   }
 }
