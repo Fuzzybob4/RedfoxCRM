@@ -6,13 +6,47 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
-// Auth functions
+// Cookie utilities for session management
+export const setCookie = (name: string, value: string, days = 7) => {
+  if (typeof document !== "undefined") {
+    const expires = new Date()
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`
+  }
+}
+
+export const getCookie = (name: string): string | null => {
+  if (typeof document !== "undefined") {
+    const nameEQ = name + "="
+    const ca = document.cookie.split(";")
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i]
+      while (c.charAt(0) === " ") c = c.substring(1, c.length)
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
+    }
+  }
+  return null
+}
+
+export const deleteCookie = (name: string) => {
+  if (typeof document !== "undefined") {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
+  }
+}
+
+// Auth functions with cookie management
 export async function signUp(email: string, password: string) {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
+
+    if (data.session?.access_token) {
+      setCookie("sb-access-token", data.session.access_token)
+      setCookie("sb-refresh-token", data.session.refresh_token)
+    }
+
     return { data, error }
   } catch (error) {
     console.error("Error signing up:", error)
@@ -26,6 +60,12 @@ export async function signIn(email: string, password: string) {
       email,
       password,
     })
+
+    if (data.session?.access_token) {
+      setCookie("sb-access-token", data.session.access_token)
+      setCookie("sb-refresh-token", data.session.refresh_token)
+    }
+
     return { data, error }
   } catch (error) {
     console.error("Error signing in:", error)
@@ -36,6 +76,11 @@ export async function signIn(email: string, password: string) {
 export async function signOut() {
   try {
     const { error } = await supabase.auth.signOut()
+
+    // Clear cookies
+    deleteCookie("sb-access-token")
+    deleteCookie("sb-refresh-token")
+
     return { error }
   } catch (error) {
     console.error("Error signing out:", error)

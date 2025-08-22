@@ -2,6 +2,7 @@
 const nextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react"],
+    serverComponentsExternalPackages: ["@supabase/supabase-js"],
   },
   eslint: {
     ignoreDuringBuilds: true,
