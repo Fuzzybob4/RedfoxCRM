@@ -6,192 +6,294 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          updated_at: string | null
-          username: string | null
+          email: string
           full_name: string | null
           avatar_url: string | null
-          website: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id: string
-          updated_at?: string | null
-          username?: string | null
+          email: string
           full_name?: string | null
           avatar_url?: string | null
-          website?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          updated_at?: string | null
-          username?: string | null
+          email?: string
           full_name?: string | null
           avatar_url?: string | null
-          website?: string | null
+          created_at?: string
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+      }
+      organizations: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          created_at: string
+          updated_at: string
+          owner_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+          owner_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+          owner_id?: string
+        }
+      }
+      customers: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          phone: string | null
+          address: string | null
+          city: string | null
+          state: string | null
+          zip_code: string | null
+          company: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+          organization_id: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          phone?: string | null
+          address?: string | null
+          city?: string | null
+          state?: string | null
+          zip_code?: string | null
+          company?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          phone?: string | null
+          address?: string | null
+          city?: string | null
+          state?: string | null
+          zip_code?: string | null
+          company?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
+      }
+      invoices: {
+        Row: {
+          id: string
+          customer_id: string
+          amount: number
+          due_date: string
+          description: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          organization_id: string | null
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          amount: number
+          due_date: string
+          description?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          amount?: number
+          due_date?: string
+          description?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
+      }
+      invoice_items: {
+        Row: {
+          id: string
+          invoice_id: string
+          description: string
+          quantity: number
+          unit_price: number
+          total: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          invoice_id: string
+          description: string
+          quantity?: number
+          unit_price: number
+          total: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          invoice_id?: string
+          description?: string
+          quantity?: number
+          unit_price?: number
+          total?: number
+          created_at?: string
+        }
+      }
+      estimates: {
+        Row: {
+          id: string
+          customer_id: string
+          amount: number
+          description: string | null
+          status: string
+          valid_until: string | null
+          created_at: string
+          updated_at: string
+          organization_id: string | null
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          amount: number
+          description?: string | null
+          status?: string
+          valid_until?: string | null
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          amount?: number
+          description?: string | null
+          status?: string
+          valid_until?: string | null
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
+      }
+      projects: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          customer_id: string | null
+          status: string
+          priority: string
+          budget: number | null
+          progress: number
+          start_date: string | null
+          end_date: string | null
+          created_at: string
+          updated_at: string
+          organization_id: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          customer_id?: string | null
+          status?: string
+          priority?: string
+          budget?: number | null
+          progress?: number
+          start_date?: string | null
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          customer_id?: string | null
+          status?: string
+          priority?: string
+          budget?: number | null
+          progress?: number
+          start_date?: string | null
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          organization_id?: string | null
+        }
       }
       company_profiles: {
         Row: {
           id: string
-          owner_id: string
-          company_name: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          owner_id: string
-          company_name?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          owner_id?: string
-          company_name?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_profiles_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customers: {
-        Row: {
-          id: number
-          owner_id: string
-          name: string
-          email: string | null
-          phone: string | null
+          user_id: string
+          company_name: string
+          business_type: string | null
+          company_size: string | null
+          phone_number: string | null
           address: string | null
+          city: string | null
+          state: string | null
+          zip_code: string | null
+          website: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
-          id?: number
-          owner_id: string
-          name: string
-          email?: string | null
-          phone?: string | null
+          id?: string
+          user_id: string
+          company_name: string
+          business_type?: string | null
+          company_size?: string | null
+          phone_number?: string | null
           address?: string | null
+          city?: string | null
+          state?: string | null
+          zip_code?: string | null
+          website?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: number
-          owner_id?: string
-          name?: string
-          email?: string | null
-          phone?: string | null
+          id?: string
+          user_id?: string
+          company_name?: string
+          business_type?: string | null
+          company_size?: string | null
+          phone_number?: string | null
           address?: string | null
+          city?: string | null
+          state?: string | null
+          zip_code?: string | null
+          website?: string | null
           created_at?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "customers_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      estimates: {
-        Row: {
-          id: number
-          owner_id: string
-          customer_name: string
-          amount: number
-          status: string
-          expiry_date: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: number
-          owner_id: string
-          customer_name: string
-          amount: number
-          status: string
-          expiry_date: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: number
-          owner_id?: string
-          customer_name?: string
-          amount?: number
-          status?: string
-          expiry_date?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "estimates_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      projects: {
-        Row: {
-          id: number
-          owner_id: string
-          name: string
-          client: string
-          status: string
-          deadline: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: number
-          owner_id: string
-          name: string
-          client: string
-          status: string
-          deadline: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: number
-          owner_id?: string
-          name?: string
-          client?: string
-          status?: string
-          deadline?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {

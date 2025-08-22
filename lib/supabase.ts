@@ -4,11 +4,17 @@ import type { Database } from "./database.types"
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+})
 
 // Cookie utilities for session management
 export const setCookie = (name: string, value: string, days = 7) => {
-  if (typeof document !== "undefined") {
+  if (typeof window !== "undefined") {
     const expires = new Date()
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`
@@ -16,7 +22,7 @@ export const setCookie = (name: string, value: string, days = 7) => {
 }
 
 export const getCookie = (name: string): string | null => {
-  if (typeof document !== "undefined") {
+  if (typeof window !== "undefined") {
     const nameEQ = name + "="
     const ca = document.cookie.split(";")
     for (let i = 0; i < ca.length; i++) {
@@ -29,17 +35,22 @@ export const getCookie = (name: string): string | null => {
 }
 
 export const deleteCookie = (name: string) => {
-  if (typeof document !== "undefined") {
+  if (typeof window !== "undefined") {
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
   }
 }
 
 // Auth functions with cookie management
-export async function signUp(email: string, password: string) {
+export async function signUp(email: string, password: string, fullName?: string) {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
     })
 
     if (data.session?.access_token) {
@@ -143,9 +154,20 @@ export async function getCurrentUser() {
 export async function testConnection() {
   try {
     const { data, error } = await supabase.from("profiles").select("id").limit(1)
-    return { data, error }
+    return { connected: !error, data, error }
   } catch (error) {
     console.error("Error testing connection:", error)
-    return { data: null, error }
+    return { connected: false, data: null, error }
   }
 }
+
+// Auth state change listener
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_IN" && session) {
+    setCookie("sb-access-token", session.access_token)
+    setCookie("sb-refresh-token", session.refresh_token)
+  } else if (event === "SIGNED_OUT") {
+    deleteCookie("sb-access-token")
+    deleteCookie("sb-refresh-token")
+  }
+})

@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    optimizePackageImports: ["lucide-react"],
-    serverComponentsExternalPackages: ["@supabase/supabase-js"],
+    // Enable experimental features if needed
   },
+  serverExternalPackages: ["@supabase/supabase-js"],
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -11,7 +11,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ["blob.v0.dev"],
+    domains: ["localhost"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
     unoptimized: true,
   },
 }
