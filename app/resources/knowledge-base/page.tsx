@@ -1,31 +1,16 @@
-"use client"
-
-import { useState } from "react"
-import Link from "next/link"
-import { Header } from "../../components/header"
-import { Footer } from "../../components/footer"
-import { useScrollToTop } from "../../hooks/useScrollToTop"
-import { Button } from "@/components/ui/button"
+import type { Metadata } from "next"
+import { Search, BookOpen, Users, Settings, HelpCircle, FileText, Video, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  Search,
-  BookOpen,
-  Users,
-  Route,
-  Settings,
-  MessageSquare,
-  FileText,
-  Video,
-  Download,
-  HelpCircle,
-} from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Knowledge Base - RedFox CRM",
+  description: "Find answers, tutorials, and resources to help you get the most out of RedFox CRM.",
+}
 
 export default function KnowledgeBasePage() {
-  useScrollToTop()
-  const [searchQuery, setSearchQuery] = useState("")
-
   const categories = [
     {
       title: "Getting Started",
@@ -35,177 +20,136 @@ export default function KnowledgeBasePage() {
       color: "bg-blue-500",
     },
     {
-      title: "Customer Management",
-      description: "Manage your customer relationships effectively",
+      title: "User Management",
+      description: "Manage users and permissions",
       icon: Users,
-      articles: 18,
+      articles: 8,
       color: "bg-green-500",
     },
     {
-      title: "Route Optimization",
-      description: "Optimize your service routes and scheduling",
-      icon: Route,
-      articles: 8,
-      color: "bg-orange-500",
-    },
-    {
-      title: "System Settings",
-      description: "Configure your CRM settings",
+      title: "Settings & Configuration",
+      description: "Customize your CRM experience",
       icon: Settings,
       articles: 15,
       color: "bg-purple-500",
     },
     {
-      title: "Communication Tools",
-      description: "Use messaging and notification features",
-      icon: MessageSquare,
-      articles: 10,
-      color: "bg-pink-500",
-    },
-    {
-      title: "Reports & Analytics",
-      description: "Generate insights from your data",
-      icon: FileText,
-      articles: 14,
-      color: "bg-indigo-500",
+      title: "Troubleshooting",
+      description: "Common issues and solutions",
+      icon: HelpCircle,
+      articles: 6,
+      color: "bg-red-500",
     },
   ]
 
   const popularArticles = [
     {
-      title: "How to Import Your Customer List",
+      title: "How to Import Your Customer Data",
       category: "Getting Started",
       readTime: "5 min read",
       views: "2.1k views",
     },
     {
-      title: "Setting Up Route Optimization",
-      category: "Route Optimization",
+      title: "Setting Up Email Integration",
+      category: "Settings & Configuration",
       readTime: "8 min read",
       views: "1.8k views",
     },
     {
-      title: "Creating Professional Estimates",
-      category: "Customer Management",
+      title: "Creating Custom Fields",
+      category: "Settings & Configuration",
       readTime: "6 min read",
       views: "1.5k views",
     },
     {
-      title: "Understanding Your Dashboard",
-      category: "Getting Started",
+      title: "Managing User Permissions",
+      category: "User Management",
       readTime: "4 min read",
-      views: "1.3k views",
+      views: "1.2k views",
     },
     {
-      title: "Managing Seasonal Workflows",
-      category: "System Settings",
-      readTime: "7 min read",
-      views: "1.1k views",
+      title: "Troubleshooting Login Issues",
+      category: "Troubleshooting",
+      readTime: "3 min read",
+      views: "980 views",
     },
   ]
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
+  const quickLinks = [
+    { title: "Video Tutorials", icon: Video, href: "/resources/videos" },
+    { title: "API Documentation", icon: FileText, href: "/resources/api" },
+    { title: "Download Resources", icon: Download, href: "/resources/downloads" },
+  ]
 
   return (
-    <>
-      <Header />
-      <main className="pt-16">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-[#08042B] via-[#1a0f4a] to-[#2d1b69] text-white py-20">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">Knowledge Base</h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Find answers, learn best practices, and get the most out of RedFox CRM
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="container mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Knowledge Base</h1>
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
+            Find answers, tutorials, and resources to help you get the most out of RedFox CRM
+          </p>
 
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Search for articles, guides, and tutorials..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-4 py-4 text-lg bg-white/10 border-white/20 text-white placeholder-gray-400 focus:bg-white/20"
-              />
-              <Button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 hover:bg-orange-600">
-                Search
-              </Button>
-            </div>
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+            <Input
+              type="text"
+              placeholder="Search for articles, tutorials, or topics..."
+              className="pl-12 pr-4 py-4 text-lg rounded-lg border-2 border-slate-200 focus:border-orange-500 focus:ring-orange-500"
+            />
+            <Button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 hover:bg-orange-600">
+              Search
+            </Button>
           </div>
-        </section>
+        </div>
 
-        {/* Categories Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Browse by Category</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Explore our comprehensive guides organized by topic
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {categories.map((category, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer group">
-                  <CardHeader>
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-3 rounded-lg ${category.color}`}>
-                        <category.icon className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="group-hover:text-orange-500 transition-colors">
-                          {category.title}
-                        </CardTitle>
-                        <Badge variant="secondary" className="mt-1">
-                          {category.articles} articles
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">{category.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+        {/* Categories */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Browse by Category</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {categories.map((category, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer group">
+                <CardHeader className="text-center">
+                  <div
+                    className={`w-16 h-16 ${category.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}
+                  >
+                    <category.icon className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-lg">{category.title}</CardTitle>
+                  <CardDescription>{category.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <Badge variant="secondary">{category.articles} articles</Badge>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </section>
+        </div>
 
-        {/* Popular Articles Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Popular Articles</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Most viewed guides and tutorials from our community
-              </p>
-            </div>
-
-            <div className="max-w-4xl mx-auto space-y-6">
+        {/* Popular Articles */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Popular Articles</h2>
+          <div className="max-w-4xl mx-auto">
+            <div className="space-y-4">
               {popularArticles.map((article, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer group">
+                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 group-hover:text-orange-500 transition-colors mb-2">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2 hover:text-orange-600 transition-colors">
                           {article.title}
                         </h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
                           <Badge variant="outline">{article.category}</Badge>
                           <span>{article.readTime}</span>
                           <span>{article.views}</span>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="group-hover:bg-orange-50 group-hover:text-orange-600"
-                        >
-                          Read More
+                      <div className="mt-4 sm:mt-0">
+                        <Button variant="ghost" size="sm" className="text-orange-600 hover:text-orange-700">
+                          Read Article →
                         </Button>
                       </div>
                     </div>
@@ -213,107 +157,39 @@ export default function KnowledgeBasePage() {
                 </Card>
               ))}
             </div>
-
-            <div className="text-center mt-12">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-orange-500 text-orange-500 hover:bg-orange-50 bg-transparent"
-              >
-                View All Articles
-              </Button>
-            </div>
           </div>
-        </section>
+        </div>
 
-        {/* Quick Links Section */}
-        <section className="py-20 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Quick Access</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">Jump directly to the resources you need</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Link href="/resources/videos" onClick={scrollToTop}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer group text-center">
-                  <CardContent className="p-8">
-                    <Video className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-500 transition-colors mb-2">
-                      Video Tutorials
-                    </h3>
-                    <p className="text-gray-600 text-sm">Step-by-step video guides</p>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/resources/templates" onClick={scrollToTop}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer group text-center">
-                  <CardContent className="p-8">
-                    <FileText className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-500 transition-colors mb-2">
-                      Templates
-                    </h3>
-                    <p className="text-gray-600 text-sm">Ready-to-use templates</p>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/resources/downloads" onClick={scrollToTop}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer group text-center">
-                  <CardContent className="p-8">
-                    <Download className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-500 transition-colors mb-2">
-                      Downloads
-                    </h3>
-                    <p className="text-gray-600 text-sm">Tools and resources</p>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/resources/support" onClick={scrollToTop}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer group text-center">
-                  <CardContent className="p-8">
-                    <HelpCircle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-500 transition-colors mb-2">
-                      Get Support
-                    </h3>
-                    <p className="text-gray-600 text-sm">Contact our team</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
+        {/* Quick Links */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Quick Links</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {quickLinks.map((link, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer group">
+                <CardContent className="p-8 text-center">
+                  <link.icon className="h-12 w-12 text-orange-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{link.title}</h3>
+                  <Button variant="outline" className="mt-4 bg-transparent">
+                    Explore →
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </section>
+        </div>
 
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-orange-500 to-red-600 text-white">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Still Need Help?</h2>
-            <p className="text-xl mb-8 max-w-2xl mx-auto">
-              Our support team is here to help you succeed with RedFox CRM
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/contact-sales" onClick={scrollToTop}>
-                  Contact Support
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-orange-500 bg-transparent"
-                asChild
-              >
-                <Link href="/resources/community" onClick={scrollToTop}>
-                  Join Community
-                </Link>
-              </Button>
-            </div>
+        {/* Contact Support */}
+        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Still Need Help?</h2>
+          <p className="text-slate-600 mb-6">
+            Can't find what you're looking for? Our support team is here to help you succeed.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button className="bg-orange-500 hover:bg-orange-600">Contact Support</Button>
+            <Button variant="outline">Schedule a Demo</Button>
           </div>
-        </section>
-      </main>
-      <Footer />
-    </>
+        </div>
+      </div>
+    </div>
   )
 }
