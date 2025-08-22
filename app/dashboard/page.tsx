@@ -127,16 +127,16 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-3">
               <button className="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-                <div className="font-medium text-slate-900">Add New Customer</div>
-                <div className="text-sm text-slate-500">Create a new customer profile</div>
+                <div className="font-medium text-slate-200">Add New Customer</div>
+                <div className="text-sm text-slate-300">Create a new customer profile</div>
               </button>
               <button className="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-                <div className="font-medium text-slate-900">Create Invoice</div>
-                <div className="text-sm text-slate-500">Generate a new invoice</div>
+                <div className="font-medium text-slate-200">Create Invoice</div>
+                <div className="text-sm text-slate-300">Generate a new invoice</div>
               </button>
               <button className="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-                <div className="font-medium text-slate-900">Schedule Appointment</div>
-                <div className="text-sm text-slate-500">Book a new appointment</div>
+                <div className="font-medium text-slate-200">Schedule Appointment</div>
+                <div className="text-sm text-slate-300">Book a new appointment</div>
               </button>
             </div>
           </CardContent>

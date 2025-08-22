@@ -19,29 +19,72 @@ function LoginFormContent() {
   const sp = useSearchParams()
   const message = sp.get("message")
 
+  // Improved test mode bypass - simple local auth for testing
+  const handleTestLogin = (email: string, password: string): boolean => {
+    const testCredentials = [
+      { email: "demo@example.com", password: "demo123", userId: "demo-user-123", name: "Demo User" },
+      { email: "john@example.com", password: "john123", userId: "john-doe-456", name: "John Doe" },
+      { email: "jane@example.com", password: "jane123", userId: "jane-smith-789", name: "Jane Smith" },
+      { email: "test@example.com", password: "test123", userId: "test-user-001", name: "Test User" },
+    ]
+
+    const validCredential = testCredentials.find((cred) => cred.email === email && cred.password === password)
+
+    if (validCredential) {
+      const testSession = {
+        userId: validCredential.userId,
+        email: validCredential.email,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      }
+
+      // Set test session in localStorage
+      localStorage.setItem("test-auth-session", JSON.stringify(testSession))
+
+      // Set test session as cookie for middleware
+      const cookieValue = encodeURIComponent(JSON.stringify(testSession))
+      document.cookie = `test-auth-session=${cookieValue}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`
+
+      console.log("Test session created for:", validCredential.email)
+      return true
+    }
+
+    return false
+  }
+
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setErrorMsg("")
 
     try {
-      // Sign in with email and password
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        setErrorMsg(error.message)
+      // Try test login first
+      if (handleTestLogin(email, password)) {
+        // Force a full page navigation to ensure auth state is properly set
+        const redirectTo = sp.get("redirectedFrom") || "/dashboard"
+        console.log("Redirecting to:", redirectTo)
+        window.location.href = redirectTo
         return
       }
 
-      // Make sure the cookie is written (prevents loop)
-      await supabase.auth.getSession()
+      // If test login fails, try Supabase
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
 
-      // Redirect to the intended page or dashboard
-      router.replace(sp.get("redirectedFrom") || "/dashboard")
-      router.refresh()
+        if (error) {
+          setErrorMsg(error.message)
+          return
+        }
+
+        await supabase.auth.getSession()
+        const redirectTo = sp.get("redirectedFrom") || "/dashboard"
+        window.location.href = redirectTo
+      } catch (err) {
+        console.error("Supabase login error:", err)
+        setErrorMsg("Invalid credentials. Please check your email and password.")
+      }
     } catch (err) {
       console.error("Login error:", err)
       setErrorMsg("An unexpected error occurred")
@@ -66,7 +109,6 @@ function LoginFormContent() {
         setErrorMsg(error.message || "Failed to sign in with Google")
         setLoading(false)
       }
-      // Don't set loading to false here as we're redirecting
     } catch (err) {
       console.error("Google sign in error:", err)
       setErrorMsg("An unexpected error occurred")
@@ -107,7 +149,7 @@ function LoginFormContent() {
           />
           <path
             fill="#FBBC05"
-            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66 2.84.81-.62z"
           />
           <path
             fill="#EA4335"
@@ -132,12 +174,14 @@ function LoginFormContent() {
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
+            name="email"
             type="email"
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
+            autoComplete="email"
           />
         </div>
 
@@ -145,12 +189,14 @@ function LoginFormContent() {
           <Label htmlFor="password">Password</Label>
           <Input
             id="password"
+            name="password"
             type="password"
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading}
+            autoComplete="current-password"
           />
         </div>
 
