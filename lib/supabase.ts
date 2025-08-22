@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "./database.types"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -71,12 +71,6 @@ export async function signIn(email: string, password: string) {
       email,
       password,
     })
-
-    if (data.session?.access_token) {
-      setCookie("sb-access-token", data.session.access_token)
-      setCookie("sb-refresh-token", data.session.refresh_token)
-    }
-
     return { data, error }
   } catch (error) {
     console.error("Error signing in:", error)
@@ -87,11 +81,6 @@ export async function signIn(email: string, password: string) {
 export async function signOut() {
   try {
     const { error } = await supabase.auth.signOut()
-
-    // Clear cookies
-    deleteCookie("sb-access-token")
-    deleteCookie("sb-refresh-token")
-
     return { error }
   } catch (error) {
     console.error("Error signing out:", error)
