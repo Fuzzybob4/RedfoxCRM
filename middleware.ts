@@ -1,58 +1,71 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 
-export function middleware(request: NextRequest) {
-  // Get the pathname of the request (e.g. /, /dashboard, /login)
-  const path = request.nextUrl.pathname
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
 
-  // Define public paths that don't require authentication
-  const publicPaths = [
-    "/",
-    "/login",
-    "/signup",
-    "/auth/callback",
-    "/reset-password",
-    "/features",
-    "/pricing",
-    "/industries",
-    "/resources",
-    "/contact-sales",
-    "/upgrade",
-    "/test-auth",
-    "/admin/login",
-  ]
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-  // Check if the current path is public
-  const isPublicPath = publicPaths.some((publicPath) => path === publicPath || path.startsWith(`${publicPath}/`))
+    const path = req.nextUrl.pathname
+    const isAuthPage = path === "/login" || path === "/signup" || path.startsWith("/auth/callback")
 
-  // Allow public paths and static files
-  if (isPublicPath || path.startsWith("/_next") || path.startsWith("/api") || path.includes(".")) {
-    return NextResponse.next()
+    const protectedPrefixes = [
+      "/dashboard",
+      "/customers",
+      "/invoices",
+      "/estimates",
+      "/projects",
+      "/reports",
+      "/profile",
+      "/mapping",
+      "/scheduling",
+      "/products",
+      "/sales",
+    ]
+
+    // Redirect to login if accessing protected route without session
+    if (protectedPrefixes.some((p) => path.startsWith(p)) && !session) {
+      const url = req.nextUrl.clone()
+      url.pathname = "/login"
+      url.searchParams.set("redirectedFrom", path)
+      return NextResponse.redirect(url)
+    }
+
+    // Redirect to dashboard if accessing auth pages with session
+    if (session && isAuthPage && !path.startsWith("/auth/callback")) {
+      const url = req.nextUrl.clone()
+      url.pathname = "/dashboard"
+      url.searchParams.delete("redirectedFrom")
+      return NextResponse.redirect(url)
+    }
+
+    return res
+  } catch (error) {
+    console.error("Middleware error:", error)
+    return res
   }
-
-  // Check for authentication token in cookies
-  const token = request.cookies.get("sb-access-token")?.value
-
-  // If no token and trying to access protected route, redirect to login
-  if (!token) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("redirectedFrom", path)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // Allow the request to continue
-  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/login",
+    "/signup",
+    "/auth/callback",
+    "/dashboard/:path*",
+    "/customers/:path*",
+    "/invoices/:path*",
+    "/estimates/:path*",
+    "/projects/:path*",
+    "/reports/:path*",
+    "/profile/:path*",
+    "/mapping/:path*",
+    "/scheduling/:path*",
+    "/products/:path*",
+    "/sales/:path*",
   ],
 }
