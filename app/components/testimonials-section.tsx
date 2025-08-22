@@ -12,7 +12,7 @@ const testimonials = [
       "RedFox CRM has transformed how we manage our landscaping business. The customer tracking and project management features are exactly what we needed.",
     rating: 5,
     avatar: "SJ",
-    image: "/image/home/professional-woman-headshot.png",
+    image: "/professional-woman-headshot.png",
   },
   {
     name: "Mike Chen",
@@ -21,7 +21,7 @@ const testimonials = [
       "The scheduling and invoicing features have saved us countless hours. Our holiday lighting business has never been more organized.",
     rating: 5,
     avatar: "MC",
-    image: "/image/home/professional-man-headshot.png",
+    image: "/professional-man-headshot.png",
   },
   {
     name: "Emily Rodriguez",
@@ -30,7 +30,7 @@ const testimonials = [
       "Customer communication has improved dramatically since switching to RedFox CRM. Our irrigation clients love the automated updates.",
     rating: 5,
     avatar: "ER",
-    image: "/image/home/professional-woman-headshot-2.png",
+    image: "/professional-woman-headshot-2.png",
   },
   {
     name: "David Thompson",
@@ -39,7 +39,7 @@ const testimonials = [
       "The analytics dashboard gives us insights we never had before. We've increased our revenue by 40% in just six months.",
     rating: 5,
     avatar: "DT",
-    image: "/image/home/professional-man-headshot-2.png",
+    image: "/professional-man-headshot-2.png",
   },
 ]
 
