@@ -289,12 +289,16 @@ export function LoginDialog({ mobile = false, onClose }: LoginDialogProps) {
                 <Label htmlFor="signin-email">Email</Label>
                 <Input
                   id="signin-email"
+                  name="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
                   required
                   disabled={loading || connectionStatus === "disconnected"}
+                  autoComplete="email"
+                  tabIndex={0}
                 />
               </div>
               <div className="space-y-2">
@@ -302,12 +306,16 @@ export function LoginDialog({ mobile = false, onClose }: LoginDialogProps) {
                 <div className="relative">
                   <Input
                     id="signin-password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
                     required
                     disabled={loading || connectionStatus === "disconnected"}
+                    autoComplete="current-password"
+                    tabIndex={0}
                   />
                   <Button
                     type="button"
@@ -316,6 +324,7 @@ export function LoginDialog({ mobile = false, onClose }: LoginDialogProps) {
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
+                    tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -334,24 +343,32 @@ export function LoginDialog({ mobile = false, onClose }: LoginDialogProps) {
                 <Label htmlFor="signup-fullname">Full Name</Label>
                 <Input
                   id="signup-fullname"
+                  name="fullname"
                   type="text"
                   placeholder="Enter your full name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  onInput={(e) => setFullName((e.target as HTMLInputElement).value)}
                   required
                   disabled={loading || connectionStatus === "disconnected"}
+                  autoComplete="name"
+                  tabIndex={0}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
                 <Input
                   id="signup-email"
+                  name="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
                   required
                   disabled={loading || connectionStatus === "disconnected"}
+                  autoComplete="email"
+                  tabIndex={0}
                 />
               </div>
               <div className="space-y-2">
@@ -359,12 +376,16 @@ export function LoginDialog({ mobile = false, onClose }: LoginDialogProps) {
                 <div className="relative">
                   <Input
                     id="signup-password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
                     required
                     disabled={loading || connectionStatus === "disconnected"}
+                    autoComplete="new-password"
+                    tabIndex={0}
                   />
                   <Button
                     type="button"
@@ -373,6 +394,7 @@ export function LoginDialog({ mobile = false, onClose }: LoginDialogProps) {
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
+                    tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>

@@ -1,47 +1,58 @@
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-export function middleware(request: NextRequest) {
-  // Get the pathname of the request
-  const path = request.nextUrl.pathname
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
 
-  // Define public paths that don't require authentication
-  const publicPaths = [
-    "/",
-    "/login",
-    "/signup",
-    "/auth/callback",
-    "/reset-password",
-    "/features",
-    "/pricing",
-    "/industries",
-    "/resources",
-    "/contact-sales",
-    "/upgrade",
-    "/test-auth",
-    "/admin/login",
+  // Refresh session if expired - required for Server Components
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  // Protected routes that require authentication
+  const protectedRoutes = [
+    "/dashboard",
+    "/customers",
+    "/invoices",
+    "/projects",
+    "/estimates",
+    "/settings",
+    "/sales",
+    "/mapping",
+    "/scheduling",
+    "/products",
+    "/reports",
   ]
 
-  // Check if the current path is public
-  const isPublicPath = publicPaths.some((publicPath) => path === publicPath || path.startsWith(`${publicPath}/`))
+  // Admin routes
+  const adminRoutes = ["/admin"]
 
-  // Allow public paths and static files
-  if (isPublicPath || path.startsWith("/_next") || path.startsWith("/api") || path.includes(".")) {
-    return NextResponse.next()
+  const { pathname } = req.nextUrl
+
+  // Check if the current path is a protected route
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+
+  // Check if the current path is an admin route
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route))
+
+  // If it's a protected route and user is not authenticated, redirect to login
+  if (isProtectedRoute && !session) {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = "/login"
+    redirectUrl.searchParams.set("redirectedFrom", pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
-  // Check for authentication token in cookies
-  const token = request.cookies.get("sb-access-token")?.value
-
-  // If no token and trying to access protected route, redirect to login
-  if (!token) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("redirectedFrom", path)
-    return NextResponse.redirect(loginUrl)
+  // Handle admin routes separately (they have their own auth system)
+  if (isAdminRoute && pathname !== "/admin/login") {
+    // Admin routes use their own authentication system
+    // Allow access for now, admin pages will handle their own auth
+    return res
   }
 
-  // Allow the request to continue
-  return NextResponse.next()
+  return res
 }
 
 export const config = {
@@ -52,7 +63,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 }

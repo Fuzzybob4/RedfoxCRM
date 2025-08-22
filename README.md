@@ -1,234 +1,345 @@
-# RedFox CRM - Customer Relationship Management System
+# RedFox CRM - Complete Business Management Solution
 
-A modern CRM system built with Next.js 15, React 19, and Supabase for outdoor lighting, landscaping, and irrigation businesses.
+A comprehensive Customer Relationship Management (CRM) system built with Next.js 15, React 19, and Supabase. Designed specifically for outdoor lighting, landscaping, and irrigation businesses.
 
-## 🚀 Features
+## 🔐 Login Credentials
 
-- **Customer Management**: Track and manage customer information, contacts, and communication history
-- **Project Management**: Create, track, and manage projects with progress monitoring
-- **Invoice Management**: Generate and manage invoices with automated calculations
-- **Dashboard Analytics**: Real-time insights and reporting
-- **Mobile Responsive**: Fully responsive design for all devices
-- **Authentication**: Secure login with Google OAuth and email/password
-- **Admin Panel**: Administrative dashboard for system management
+### Admin Access
+- **URL**: `/admin/login`
+- **Username**: `admin`
+- **Password**: `redfox2024!`
+- **Capabilities**: Full system access, can view and edit all user dashboards, manage system settings
 
-## 🔧 Tech Stack
+### Demo User Accounts
+Test the system with these pre-configured accounts:
 
-- **Frontend**: Next.js 15.2.4, React 19, TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui components
-- **Backend**: Supabase (PostgreSQL, Auth, Storage)
-- **Deployment**: Vercel
-- **Package Manager**: pnpm
+1. **Demo User**
+   - **Email**: `demo@example.com`
+   - **Password**: `demo123`
+   - **Profile**: Basic user with sample data
 
-## 🏃‍♂️ Quick Start
+2. **John Doe**
+   - **Email**: `john@example.com`
+   - **Password**: `john123`
+   - **Profile**: Business owner with customer data
+
+3. **Jane Smith**
+   - **Email**: `jane@example.com`
+   - **Password**: `jane123`
+   - **Profile**: Manager with project data
+
+## 🚀 Quick Start
 
 ### Prerequisites
-
-- Node.js 18.18.0 or higher
+- Node.js 18.17 or later
 - pnpm (recommended) or npm
 - Supabase account
+- Git
 
 ### Installation
 
-1. Clone the repository:
-\`\`\`bash
-git clone https://github.com/Fuzzybob4/RedfoxCRM.git
-cd RedfoxCRM
-\`\`\`
+1. **Clone the repository**
+   \`\`\`bash
+   git clone https://github.com/your-username/redfox-crm.git
+   cd redfox-crm
+   \`\`\`
 
-2. Install dependencies:
-\`\`\`bash
-pnpm install
-\`\`\`
+2. **Install dependencies**
+   \`\`\`bash
+   pnpm install
+   # or
+   npm install
+   \`\`\`
 
-3. Set up environment variables:
-\`\`\`bash
-cp .env.example .env.local
-\`\`\`
+3. **Environment Setup**
+   Create a `.env.local` file in the root directory:
+   \`\`\`env
+   # Supabase Configuration
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   
+   # Site Configuration
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   NEXT_PUBLIC_DOMAIN=localhost:3000
+   
+   # Email Configuration (Optional)
+   SENDGRID_API_KEY=your_sendgrid_api_key
+   EMAIL_FROM=noreply@yoursite.com
+   
+   # SMTP Configuration (Alternative to SendGrid)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USERNAME=your_email@gmail.com
+   SMTP_PASSWORD=your_app_password
+   SMTP_SECURE=false
+   \`\`\`
 
-4. Configure your `.env.local` file with your Supabase credentials:
-\`\`\`env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-\`\`\`
+4. **Database Setup**
+   Run the SQL scripts in the `scripts/` folder in your Supabase SQL editor:
+   \`\`\`bash
+   # Execute in order:
+   scripts/create-complete-schema.sql
+   scripts/create-onboarding-tables.sql
+   scripts/create-provision-function.sql
+   scripts/fix-rls-policies.sql
+   \`\`\`
 
-5. Run the development server:
-\`\`\`bash
-pnpm dev
-\`\`\`
+5. **Start Development Server**
+   \`\`\`bash
+   pnpm dev
+   # or
+   npm run dev
+   \`\`\`
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. **Open your browser**
+   Navigate to `http://localhost:3000`
 
-## 🔐 Login Information
-
-### Admin Access
-
-**Admin Dashboard**: `/admin/login`
-
-- **Username**: `admin`
-- **Password**: `redfox2024!`
-
-The admin panel allows you to:
-- View system statistics and health
-- Manage users and view their dashboards
-- Access system settings
-- Monitor recent activities
-- View and edit any user's dashboard
-
-### Demo User Accounts
-
-For testing and demonstration purposes, you can use these demo accounts:
-
-#### Demo User 1
-- **Email**: `demo@example.com`
-- **Password**: `demo123`
-- **Dashboard**: `/dashboard/demo-user-123`
-- **Features**: Full customer management, project tracking, invoice generation
-
-#### Demo User 2 (John Doe)
-- **Email**: `john@example.com`
-- **Password**: `john123`
-- **Dashboard**: `/dashboard/john-doe-456`
-- **Features**: Active projects, customer base, revenue tracking
-
-#### Demo User 3 (Jane Smith)
-- **Email**: `jane@example.com`
-- **Password**: `jane123`
-- **Dashboard**: `/dashboard/jane-smith-789`
-- **Features**: Landscape design projects, irrigation systems
-
-### Google OAuth
-
-You can also sign in using Google OAuth. The system will automatically create a user account and redirect to the appropriate dashboard.
-
-## 📊 Admin Features
-
-As an admin, you can:
-
-1. **View User Dashboards**: Click "View Dashboard" next to any user in the admin panel
-2. **Edit Pages**: Access any protected page or dashboard for editing
-3. **System Monitoring**: Monitor user activities, system health, and performance
-4. **User Management**: View user statistics and manage accounts
-
-## 🏗️ Project Structure
+## 📁 Project Structure
 
 \`\`\`
-├── app/                    # Next.js App Router
-│   ├── admin/             # Admin panel pages
-│   ├── components/        # Shared components
-│   ├── dashboard/         # User dashboards
-│   ├── features/          # Feature pages
-│   ├── industries/        # Industry-specific pages
-│   └── api/              # API routes
-├── components/            # UI components
-│   └── ui/               # shadcn/ui components
-├── lib/                  # Utility functions
-├── public/               # Static assets
-└── scripts/              # Database scripts
+redfox-crm/
+├── app/                          # Next.js App Router
+│   ├── components/              # Shared components
+│   │   ├── auth-provider.tsx    # Authentication context
+│   │   ├── header.tsx           # Main navigation
+│   │   ├── login-dialog.tsx     # Login/signup modal
+│   │   └── ...
+│   ├── dashboard/               # Protected dashboard pages
+│   ├── features/                # Feature showcase pages
+│   ├── industries/              # Industry-specific pages
+│   ├── api/                     # API routes
+│   └── globals.css              # Global styles
+├── components/ui/               # Reusable UI components
+├── lib/                         # Utility functions
+│   ├── supabase.ts             # Supabase client
+│   ├── auth.ts                 # Authentication utilities
+│   └── database.types.ts       # TypeScript definitions
+├── scripts/                     # Database scripts
+├── public/                      # Static assets
+└── middleware.ts               # Route protection
 \`\`\`
 
-## 🎨 Key Pages
+## 🛠 Technology Stack
 
-- **Home**: `/` - Landing page with features and pricing
-- **Features**: `/features` - Detailed feature showcase
-- **Industries**: `/industries` - Industry-specific solutions
-- **Pricing**: `/pricing` - Pricing plans and packages
-- **Login**: `/login` - User authentication
-- **Dashboard**: `/dashboard` - User dashboard (protected)
-- **Admin**: `/admin` - Administrative panel
+### Frontend
+- **Next.js 15.2.4** - React framework with App Router
+- **React 19.0.0** - UI library with latest features
+- **TypeScript** - Type safety and developer experience
+- **Tailwind CSS** - Utility-first CSS framework
+- **Radix UI** - Accessible component primitives
+- **Lucide React** - Beautiful icons
 
-## 🔒 Authentication Flow
+### Backend & Database
+- **Supabase** - Backend-as-a-Service
+  - PostgreSQL database
+  - Real-time subscriptions
+  - Row Level Security (RLS)
+  - Authentication & authorization
+- **Supabase Auth Helpers** - Next.js integration
 
-1. **Public Access**: Home, features, industries, pricing pages
-2. **Protected Routes**: Dashboard, customer management, projects, invoices
-3. **Admin Routes**: Admin panel, user management, system settings
-4. **Middleware**: Automatic redirection based on authentication status
+### Development Tools
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
+- **pnpm** - Fast package manager
 
-## 🛠️ Development
+## 🔒 Security Features
 
-### Available Scripts
+### Authentication
+- **Email/Password** authentication
+- **Google OAuth** integration
+- **Session management** with secure cookies
+- **Password reset** functionality
+- **Email verification**
 
-\`\`\`bash
-# Development server
-pnpm dev
+### Authorization
+- **Role-based access control** (RBAC)
+- **Row Level Security** (RLS) policies
+- **Protected routes** with middleware
+- **Admin panel** access control
 
-# Build for production
-pnpm build
+### Data Protection
+- **Environment variables** for sensitive data
+- **HTTPS enforcement** in production
+- **CSRF protection**
+- **SQL injection prevention**
 
-# Start production server
-pnpm start
+## 📱 Features
 
-# Run linting
-pnpm lint
+### Core CRM Features
+- **Customer Management** - Complete customer database
+- **Project Tracking** - Job management and progress tracking
+- **Invoice Generation** - Professional invoicing system
+- **Scheduling** - Calendar integration and appointment booking
+- **Estimates** - Quote generation and management
+- **Reporting** - Business analytics and insights
 
-# Type checking
-pnpm type-check
-\`\`\`
+### Industry-Specific Features
+- **Outdoor Lighting** - Specialized tools and templates
+- **Landscaping** - Project planning and resource management
+- **Irrigation** - System design and maintenance tracking
 
-### Database Setup
-
-The project includes SQL scripts in the `scripts/` directory:
-
-- `create-complete-schema.sql` - Complete database schema
-- `create-onboarding-tables.sql` - Onboarding flow tables
-- `fix-rls-policies.sql` - Row Level Security policies
+### User Experience
+- **Responsive Design** - Mobile-first approach
+- **Dark/Light Mode** - Theme switching
+- **Real-time Updates** - Live data synchronization
+- **Offline Support** - Progressive Web App features
+- **Search & Filtering** - Advanced data discovery
 
 ## 🚀 Deployment
 
-The project is configured for deployment on Vercel:
+### Vercel (Recommended)
+1. **Connect your repository** to Vercel
+2. **Set environment variables** in Vercel dashboard
+3. **Deploy** - Automatic deployments on push
 
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
+### Manual Deployment
+1. **Build the project**
+   \`\`\`bash
+   pnpm build
+   \`\`\`
 
-## 📝 Environment Variables
+2. **Start production server**
+   \`\`\`bash
+   pnpm start
+   \`\`\`
 
-Required environment variables:
+### Environment Variables for Production
+Ensure all environment variables are set in your deployment platform:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SITE_URL`
+- Email service credentials (if using)
 
-\`\`\`env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+## 🔧 Development
 
-# Site Configuration
-NEXT_PUBLIC_SITE_URL=
-NEXT_PUBLIC_DOMAIN=
+### Available Scripts
+\`\`\`bash
+# Development
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+pnpm type-check   # Run TypeScript checks
 
-# Email (Optional)
-EMAIL_SERVER=
-EMAIL_FROM=
-SENDGRID_API_KEY=
+# Database
+pnpm db:types     # Generate TypeScript types from Supabase
+pnpm db:reset     # Reset database (development only)
 \`\`\`
+
+### Code Style
+- **ESLint** configuration for Next.js and React
+- **Prettier** for consistent formatting
+- **TypeScript** strict mode enabled
+- **Conventional commits** recommended
+
+### Testing
+\`\`\`bash
+pnpm test         # Run tests
+pnpm test:watch   # Run tests in watch mode
+pnpm test:coverage # Generate coverage report
+\`\`\`
+
+## 📊 Performance
+
+### Optimization Features
+- **Server-side rendering** (SSR)
+- **Static site generation** (SSG) where applicable
+- **Image optimization** with Next.js Image component
+- **Code splitting** and lazy loading
+- **Bundle analysis** tools
+
+### Performance Monitoring
+- **Web Vitals** tracking
+- **Real User Monitoring** (RUM)
+- **Error tracking** with Sentry (optional)
+- **Analytics** integration ready
+
+## 🎨 Customization
+
+### Theming
+- **Tailwind CSS** configuration in `tailwind.config.js`
+- **CSS custom properties** for dynamic theming
+- **Dark/light mode** toggle
+- **Brand colors** easily customizable
+
+### Components
+- **Radix UI** primitives for accessibility
+- **Custom components** in `components/ui/`
+- **Consistent design system**
+- **Responsive breakpoints**
+
+### Content Management
+- **Static content** in components
+- **Dynamic content** from Supabase
+- **Internationalization** ready (i18n)
+- **SEO optimization** built-in
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
-5. Submit a pull request
+### Getting Started
+1. **Fork the repository**
+2. **Create a feature branch**
+   \`\`\`bash
+   git checkout -b feature/amazing-feature
+   \`\`\`
+3. **Make your changes**
+4. **Run tests and linting**
+   \`\`\`bash
+   pnpm lint
+   pnpm type-check
+   pnpm test
+   \`\`\`
+5. **Commit your changes**
+   \`\`\`bash
+   git commit -m 'Add amazing feature'
+   \`\`\`
+6. **Push to your branch**
+   \`\`\`bash
+   git push origin feature/amazing-feature
+   \`\`\`
+7. **Open a Pull Request**
+
+### Code Guidelines
+- Follow existing code style
+- Add tests for new features
+- Update documentation
+- Use TypeScript for type safety
+- Follow accessibility best practices
+
+## 📞 Support
+
+### Documentation
+- **API Documentation** - Available in `/docs/api`
+- **Component Library** - Storybook integration
+- **Database Schema** - ERD diagrams in `/docs/database`
+
+### Getting Help
+- **GitHub Issues** - Bug reports and feature requests
+- **Discussions** - Community support and questions
+- **Email Support** - contact@redfoxcrm.com
+
+### Resources
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Radix UI Documentation](https://www.radix-ui.com/docs)
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🙏 Acknowledgments
 
-For support and questions:
-
-- Create an issue on GitHub
-- Contact: support@redfoxcrm.com
-- Documentation: [docs.redfoxcrm.com](https://docs.redfoxcrm.com)
-
-## 🔄 Version History
-
-- **v1.0.0** - Initial release with core CRM features
-- **v1.1.0** - Added admin panel and user management
-- **v1.2.0** - Enhanced dashboard analytics and reporting
-- **v1.3.0** - Mobile responsiveness improvements
+- **Next.js Team** - Amazing React framework
+- **Supabase Team** - Excellent backend-as-a-service
+- **Vercel Team** - Seamless deployment platform
+- **Radix UI Team** - Accessible component primitives
+- **Tailwind CSS Team** - Utility-first CSS framework
 
 ---
 
-**RedFox CRM** - Streamlining customer relationships for outdoor service businesses.
+**RedFox CRM** - Empowering outdoor service businesses with modern technology.
+
+For more information, visit our [website](https://redfoxcrm.com) or contact us at [support@redfoxcrm.com](mailto:support@redfoxcrm.com).
