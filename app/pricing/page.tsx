@@ -85,17 +85,15 @@ const faqs = [
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#08042B] text-white">
       <Header />
 
       <main className="pt-16">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">
-              Pricing
-            </Badge>
-            <h1 className="text-4xl font-bold mb-4">Simple, transparent pricing</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <Badge className="mb-4 bg-[#F67721]/20 text-[#F5F906] border-[#F67721]/30">Pricing</Badge>
+            <h1 className="text-4xl font-bold mb-4 text-white">Simple, transparent pricing</h1>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               Choose the perfect plan for your business. All plans include a 14-day free trial with no credit card
               required.
             </p>
@@ -104,34 +102,41 @@ export default function PricingPage() {
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
             {plans.map((plan, index) => (
-              <Card key={index} className={`relative ${plan.popular ? "border-primary shadow-lg scale-105" : ""}`}>
+              <Card
+                key={index}
+                className={`relative bg-white/5 border-[#92E138]/20 hover:bg-white/10 transition-all duration-300 ${plan.popular ? "ring-2 ring-[#F67721]/50 scale-105" : ""}`}
+              >
                 {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">Most Popular</Badge>
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#F67721] text-white">
+                    Most Popular
+                  </Badge>
                 )}
                 <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <CardTitle className="text-2xl text-white">{plan.name}</CardTitle>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">/month</span>
+                    <span className="text-4xl font-bold text-white">{plan.price}</span>
+                    <span className="text-gray-300">/month</span>
                   </div>
-                  <CardDescription className="mt-2">{plan.description}</CardDescription>
+                  <CardDescription className="mt-2 text-gray-300">{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3 mb-8">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
                         {feature.included ? (
-                          <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                          <Check className="w-5 h-5 text-[#92E138] mr-3 flex-shrink-0" />
                         ) : (
-                          <X className="w-5 h-5 text-muted-foreground mr-3 flex-shrink-0" />
+                          <X className="w-5 h-5 text-gray-500 mr-3 flex-shrink-0" />
                         )}
-                        <span className={`text-sm ${!feature.included ? "text-muted-foreground" : ""}`}>
+                        <span className={`text-sm ${!feature.included ? "text-gray-500" : "text-gray-300"}`}>
                           {feature.name}
                         </span>
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
+                  <Button
+                    className={`w-full ${plan.popular ? "bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white" : "bg-white/10 border border-[#F67721] text-white hover:bg-[#F67721]/10"}`}
+                  >
                     {plan.cta}
                   </Button>
                 </CardContent>
@@ -141,15 +146,15 @@ export default function PricingPage() {
 
           {/* FAQ Section */}
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-bold text-center mb-12 text-white">Frequently Asked Questions</h2>
             <div className="space-y-6">
               {faqs.map((faq, index) => (
-                <Card key={index}>
+                <Card key={index} className="bg-white/5 border-[#92E138]/20">
                   <CardHeader>
-                    <CardTitle className="text-lg">{faq.question}</CardTitle>
+                    <CardTitle className="text-lg text-white">{faq.question}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{faq.answer}</p>
+                    <p className="text-gray-300">{faq.answer}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -158,14 +163,16 @@ export default function PricingPage() {
 
           {/* CTA Section */}
           <div className="text-center mt-16">
-            <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold mb-4 text-white">Ready to get started?</h2>
+            <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
               Join thousands of businesses already using RedFox CRM to grow their sales and manage customer
               relationships more effectively.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg">Start Free Trial</Button>
-              <Button variant="outline" size="lg">
+              <Button size="lg" className="bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white">
+                Start Free Trial
+              </Button>
+              <Button size="lg" className="bg-white/10 border border-[#F67721] text-white hover:bg-[#F67721]/10">
                 Contact Sales
               </Button>
             </div>
