@@ -39,7 +39,7 @@
     "next-themes": "latest",
     "path": "latest",
     "react": "latest",
-    "react-dom": "^19.0.0",
+    "react-dom": "19.0.0",
     "react-hook-form": "^7.49.3",
     "stripe": "latest",
     "tailwind-merge": "^2.5.5",
