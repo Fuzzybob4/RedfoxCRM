@@ -1,9 +1,7 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
-import { mockAuth } from "@/lib/supabase"
 
 interface User {
   id: string
@@ -36,13 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check for existing session
-    const mockUser = mockAuth.getUser()
-    setUser(mockUser)
+    const mockUser = localStorage.getItem("mock_user")
+    const mockSession = localStorage.getItem("mock_session")
+
+    if (mockUser && mockSession) {
+      setUser(JSON.parse(mockUser))
+    }
     setLoading(false)
   }, [])
 
   const signOut = async () => {
-    await mockAuth.signOut()
+    localStorage.removeItem("mock_user")
+    localStorage.removeItem("mock_session")
     setUser(null)
     window.location.href = "/"
   }

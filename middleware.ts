@@ -1,4 +1,3 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -10,13 +9,10 @@ function getTestAuthFromCookies(req: NextRequest) {
       const decoded = decodeURIComponent(testAuthCookie)
       const parsed = JSON.parse(decoded)
       if (parsed.expiresAt && parsed.expiresAt > Date.now()) {
-        console.log("Valid test session found in middleware for:", parsed.email)
         return { id: parsed.userId, email: parsed.email }
-      } else {
-        console.log("Test session expired in middleware")
       }
     } catch (e) {
-      console.error("Error parsing test auth cookie:", e)
+      console.error("[v0] Error parsing test auth cookie:", e)
     }
   }
   return null
@@ -57,31 +53,37 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
+  if (pathname === "/signup" || pathname === "/login") {
+    return res
+  }
+
   if (isProtectedRoute) {
-    // First check for test auth
+    // Check for test auth
     const testUser = getTestAuthFromCookies(req)
     if (testUser) {
-      console.log("Test auth found for user:", testUser.email)
       return res
     }
 
-    // Then check Supabase auth
-    try {
-      const supabase = createMiddlewareClient({ req, res })
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-      if (session) {
-        console.log("Supabase auth found for user:", session.user.email)
-        return res
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const { createMiddlewareClient } = await import("@supabase/auth-helpers-nextjs")
+        const supabase = createMiddlewareClient({ req, res })
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (session) {
+          return res
+        }
+      } catch (error) {
+        console.error("[v0] Middleware Supabase auth error:", error)
       }
-    } catch (error) {
-      console.error("Middleware Supabase auth error:", error)
     }
 
     // No valid auth found, redirect to login
-    console.log("No valid auth found, redirecting to login")
     const redirectUrl = req.nextUrl.clone()
     redirectUrl.pathname = "/login"
     redirectUrl.searchParams.set("redirectedFrom", pathname)

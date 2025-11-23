@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const { user, loading, signOut } = useAuth()
 
   const handleSignOut = async () => {
@@ -63,7 +64,7 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <div className="flex flex-col space-y-1 p-2">
-                    <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || "User"}</p>
+                    <p className="text-sm font-medium leading-none">User</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
@@ -83,7 +84,13 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <>
-                <LoginDialog />
+                <Button
+                  variant="ghost"
+                  className="text-white hover:text-orange-400"
+                  onClick={() => setLoginDialogOpen(true)}
+                >
+                  Sign In
+                </Button>
                 <Button
                   asChild
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -115,7 +122,7 @@ export function Header() {
                 ) : user ? (
                   <div className="space-y-2">
                     <div className="px-3 py-2">
-                      <p className="text-sm font-medium text-white">{user.user_metadata?.full_name || "User"}</p>
+                      <p className="text-sm font-medium text-white">User</p>
                       <p className="text-xs text-gray-400">{user.email}</p>
                     </div>
                     <Button asChild variant="ghost" className="w-full justify-start text-white">
@@ -134,7 +141,13 @@ export function Header() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <LoginDialog />
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-white hover:text-orange-400"
+                      onClick={() => setLoginDialogOpen(true)}
+                    >
+                      Sign In
+                    </Button>
                     <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
                       <Link href="/signup" onClick={scrollToTop}>
                         Get Started
@@ -147,6 +160,9 @@ export function Header() {
           </div>
         )}
       </div>
+
+      {/* Login Dialog */}
+      <LoginDialog isOpen={loginDialogOpen} onClose={() => setLoginDialogOpen(false)} />
     </header>
   )
 }

@@ -1,14 +1,20 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { mockAuth } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
+
+// Mock authentication for testing
+const mockUsers = [
+  { id: "demo-user-123", email: "demo@example.com", password: "demo123" },
+  { id: "john-doe-456", email: "john@example.com", password: "john123" },
+  { id: "jane-smith-789", email: "jane@example.com", password: "jane123" },
+  { id: "test-user-001", email: "test@example.com", password: "test123" },
+]
 
 interface LoginDialogProps {
   isOpen: boolean
@@ -26,28 +32,31 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
     setIsLoading(true)
 
     try {
-      const { data, error } = await mockAuth.signIn(email, password)
+      // Mock authentication
+      const user = mockUsers.find((u) => u.email === email && u.password === password)
 
-      if (error) {
+      if (!user) {
         toast({
           title: "Error",
-          description: error.message,
+          description: "Invalid email or password",
           variant: "destructive",
         })
+        setIsLoading(false)
         return
       }
 
-      if (data.user) {
-        toast({
-          title: "Success",
-          description: "Signed in successfully!",
-        })
+      // Store mock session
+      localStorage.setItem("mock_user", JSON.stringify(user))
+      localStorage.setItem("mock_session", "true")
 
-        // Redirect to user-specific dashboard
-        const userId = data.user.id
-        window.location.href = `/dashboard/${userId}`
-        onClose()
-      }
+      toast({
+        title: "Success",
+        description: "Signed in successfully!",
+      })
+
+      // Redirect to user-specific dashboard
+      window.location.href = `/dashboard/${user.id}`
+      onClose()
     } catch (error) {
       toast({
         title: "Error",
@@ -83,7 +92,7 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
               onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
               required
               tabIndex={0}
-              className="bg-white/50 border-gray-300 focus:border-[#F67721] focus:ring-[#F67721]"
+              className="bg-white/50 border-gray-300 focus:border-[#F67721] focus:ring-[#F67721] text-[#08042B] placeholder:text-gray-400"
             />
           </div>
           <div className="space-y-2">
@@ -100,7 +109,7 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
               onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
               required
               tabIndex={0}
-              className="bg-white/50 border-gray-300 focus:border-[#F67721] focus:ring-[#F67721]"
+              className="bg-white/50 border-gray-300 focus:border-[#F67721] focus:ring-[#F67721] text-[#08042B] placeholder:text-gray-400"
             />
           </div>
           <Button
