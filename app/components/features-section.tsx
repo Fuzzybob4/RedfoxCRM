@@ -41,13 +41,13 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Everything You Need to Grow Your Business
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Powerful features designed specifically for home service professionals
           </p>
         </div>
@@ -56,13 +56,13 @@ export function FeaturesSection() {
           {features.map((feature, index) => (
             <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
               <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-r from-[#F67721] to-[#F5F906] rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-brand-orange to-brand-yellow rounded-lg flex items-center justify-center mb-4">
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-gray-600">{feature.description}</CardDescription>
+                <CardDescription className="text-muted-foreground">{feature.description}</CardDescription>
               </CardContent>
             </Card>
           ))}

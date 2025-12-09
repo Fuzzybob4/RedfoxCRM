@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabase"
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle } from "lucide-react"
 import { Header } from "@/app/components/header"
 import { Footer } from "@/app/components/footer"
 
@@ -55,21 +55,23 @@ export default function ContactSalesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#08042B] to-[#1A1F2C]">
+    <div className="min-h-screen bg-gradient-to-br from-brand-dark to-brand-dark/80">
       <Header />
 
       <main className="pt-16">
         <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8 min-h-screen">
-          <div className="max-w-md w-full space-y-8 bg-white/10 p-8 rounded-xl backdrop-blur-lg shadow-xl">
+          <div className="max-w-md w-full space-y-8 bg-card/10 p-8 rounded-xl backdrop-blur-lg shadow-xl border border-border/20">
             <div className="text-center">
-              <MessageCircle className="mx-auto h-12 w-12 text-[#F67721]" />
-              <h2 className="mt-6 text-3xl font-extrabold text-white">Contact Sales</h2>
-              <p className="mt-2 text-sm text-gray-300">Fill out the form below and we'll get back to you soon.</p>
+              <MessageCircle className="mx-auto h-12 w-12 text-brand-orange" />
+              <h2 className="mt-6 text-3xl font-extrabold text-foreground">Contact Sales</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Fill out the form below and we'll get back to you soon.
+              </p>
             </div>
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
               <div className="rounded-md shadow-sm -space-y-px">
                 <div className="mb-4">
-                  <Label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                  <Label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-1">
                     Name
                   </Label>
                   <Input
@@ -77,14 +79,14 @@ export default function ContactSalesPage() {
                     name="name"
                     type="text"
                     required
-                    className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-[#F67721] focus:border-[#F67721]"
+                    className="bg-background/10 border-border/20 text-foreground placeholder:text-muted-foreground focus:ring-brand-orange focus:border-brand-orange"
                     placeholder="Your Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div className="mb-4">
-                  <Label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                  <Label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-1">
                     Email address
                   </Label>
                   <Input
@@ -93,21 +95,21 @@ export default function ContactSalesPage() {
                     type="email"
                     autoComplete="email"
                     required
-                    className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-[#F67721] focus:border-[#F67721]"
+                    className="bg-background/10 border-border/20 text-foreground placeholder:text-muted-foreground focus:ring-brand-orange focus:border-brand-orange"
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-1">
+                  <Label htmlFor="message" className="block text-sm font-medium text-muted-foreground mb-1">
                     Message
                   </Label>
                   <Textarea
                     id="message"
                     name="message"
                     required
-                    className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-[#F67721] focus:border-[#F67721]"
+                    className="bg-background/10 border-border/20 text-foreground placeholder:text-muted-foreground focus:ring-brand-orange focus:border-brand-orange"
                     placeholder="Your message"
                     rows={4}
                     value={message}
@@ -119,7 +121,7 @@ export default function ContactSalesPage() {
               <div>
                 <Button
                   type="submit"
-                  className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white transition-colors duration-300 ease-in-out transform hover:scale-105"
+                  className="w-full bg-brand-orange hover:bg-accent hover:text-accent-foreground text-white transition-colors duration-300 ease-in-out transform hover:scale-105"
                   disabled={isLoading}
                 >
                   {isLoading ? "Sending..." : "Send Message"}

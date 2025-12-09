@@ -39,8 +39,8 @@ export function Sidebar() {
     <>
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
+        <div className="fixed inset-0 bg-background/75 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-background">
           <div className="flex h-16 items-center justify-between px-4">
             <img className="h-8 w-auto" src="/image/logo/redfox-logo.png" alt="RedFox CRM" />
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
@@ -56,13 +56,15 @@ export function Sidebar() {
                     key={item.name}
                     href={item.href}
                     className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                      isActive ? "bg-orange-100 text-orange-900" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      isActive
+                        ? "bg-brand-orange/10 text-brand-orange"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
                     <item.icon
                       className={`mr-3 h-6 w-6 ${
-                        isActive ? "text-orange-500" : "text-gray-400 group-hover:text-gray-500"
+                        isActive ? "text-brand-orange" : "text-muted-foreground group-hover:text-accent-foreground"
                       }`}
                     />
                     {item.name}
@@ -76,7 +78,7 @@ export function Sidebar() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+        <div className="flex flex-col flex-grow bg-background border-r border-border">
           <div className="flex items-center h-16 px-4">
             <img className="h-8 w-auto" src="/image/logo/redfox-logo.png" alt="RedFox CRM" />
           </div>
@@ -89,12 +91,14 @@ export function Sidebar() {
                     key={item.name}
                     href={item.href}
                     className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                      isActive ? "bg-orange-100 text-orange-900" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      isActive
+                        ? "bg-brand-orange/10 text-brand-orange"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
                     <item.icon
                       className={`mr-3 h-6 w-6 ${
-                        isActive ? "text-orange-500" : "text-gray-400 group-hover:text-gray-500"
+                        isActive ? "text-brand-orange" : "text-muted-foreground group-hover:text-accent-foreground"
                       }`}
                     />
                     {item.name}
@@ -108,7 +112,7 @@ export function Sidebar() {
 
       {/* Mobile menu button */}
       <div className="lg:hidden">
-        <div className="flex items-center justify-between h-16 px-4 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between h-16 px-4 bg-background border-b border-border">
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-6 w-6" />
           </Button>

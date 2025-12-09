@@ -113,18 +113,18 @@ export default function EstimatesPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#1a1f2c]">
-        <div className="text-white">Loading...</div>
+      <div className="flex justify-center items-center h-screen bg-background">
+        <div className="text-foreground">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-[#1a1f2c]">
+    <div className="flex h-screen bg-background">
       {/* Left Sidebar */}
-      <div className="w-64 bg-[#272e3f] text-gray-300">
-        <div className="p-4 border-b border-gray-700">
-          <h1 className="text-xl font-semibold text-white">{companyName}</h1>
+      <div className="w-64 bg-card text-muted-foreground border-r border-border">
+        <div className="p-4 border-b border-border">
+          <h1 className="text-xl font-semibold text-foreground">{companyName}</h1>
         </div>
         <nav className="p-4 space-y-2">
           {navItems.map((item) => (
@@ -132,7 +132,7 @@ export default function EstimatesPage() {
               key={item.label}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors
-                ${item.active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white"}`}
+                ${item.active ? "bg-accent text-foreground" : "hover:bg-accent/50 hover:text-foreground"}`}
             >
               {item.icon}
               {item.label}
@@ -143,16 +143,16 @@ export default function EstimatesPage() {
 
       <div className="flex-1 flex flex-col">
         {/* Top Search Bar */}
-        <div className="h-16 bg-[#272e3f] flex items-center px-4 border-b border-gray-700">
+        <div className="h-16 bg-card flex items-center px-4 border-b border-border">
           <div className="flex-1 flex items-center space-x-4">
             <Input
               type="search"
               placeholder="Search estimates"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-[#1a1f2c] border-gray-700 text-white w-full max-w-md"
+              className="bg-background border-border text-foreground w-full max-w-md"
             />
-            <Button className="bg-[#e85d3d] hover:bg-[#d54e2f] text-white">
+            <Button className="bg-brand-orange hover:bg-brand-orange/90 text-white">
               <UserPlus className="h-4 w-4 mr-2" />
               New Estimate
             </Button>
@@ -164,7 +164,7 @@ export default function EstimatesPage() {
           <div className="grid gap-6">
             {/* Stats Cards */}
             <div className="flex gap-6 mb-8">
-              <Card className="w-[300px] bg-[#4CAF50] text-white">
+              <Card className="w-[300px] bg-success text-white">
                 <div className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
@@ -178,47 +178,47 @@ export default function EstimatesPage() {
             </div>
 
             {/* Estimates Table */}
-            <div className="bg-[#272e3f] rounded-lg p-6">
+            <div className="bg-card rounded-lg p-6 border border-border">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-semibold text-white">Estimates</h2>
-                  <span className="text-gray-400 text-sm">| {estimateCount} Estimates</span>
+                  <h2 className="text-2xl font-semibold text-foreground">Estimates</h2>
+                  <span className="text-muted-foreground text-sm">| {estimateCount} Estimates</span>
                 </div>
-                <Button variant="ghost" size="icon" className="text-white">
+                <Button variant="ghost" size="icon" className="text-foreground">
                   <Download className="h-5 w-5" />
                 </Button>
               </div>
 
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-400">Estimate ID</TableHead>
-                    <TableHead className="text-gray-400">Customer</TableHead>
-                    <TableHead className="text-gray-400">Amount</TableHead>
-                    <TableHead className="text-gray-400">Status</TableHead>
-                    <TableHead className="text-gray-400">Expiry Date</TableHead>
-                    <TableHead className="text-gray-400">Actions</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground">Estimate ID</TableHead>
+                    <TableHead className="text-muted-foreground">Customer</TableHead>
+                    <TableHead className="text-muted-foreground">Amount</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-muted-foreground">Expiry Date</TableHead>
+                    <TableHead className="text-muted-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {estimates.map((estimate) => (
-                    <TableRow key={estimate.id} className="border-gray-700">
-                      <TableCell className="font-medium text-white">EST-{estimate.id}</TableCell>
-                      <TableCell className="text-white">{estimate.customer_name}</TableCell>
-                      <TableCell className="text-white">${estimate.amount.toFixed(2)}</TableCell>
-                      <TableCell className="text-white">{estimate.status}</TableCell>
-                      <TableCell className="text-white">{estimate.expiry_date}</TableCell>
+                    <TableRow key={estimate.id} className="border-border">
+                      <TableCell className="font-medium text-foreground">EST-{estimate.id}</TableCell>
+                      <TableCell className="text-foreground">{estimate.customer_name}</TableCell>
+                      <TableCell className="text-foreground">${estimate.amount.toFixed(2)}</TableCell>
+                      <TableCell className="text-foreground">{estimate.status}</TableCell>
+                      <TableCell className="text-foreground">{estimate.expiry_date}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4 text-gray-400" />
+                              <MoreVertical className="h-4 w-4 text-muted-foreground" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-[160px]">
                             <DropdownMenuItem>Edit</DropdownMenuItem>
                             <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

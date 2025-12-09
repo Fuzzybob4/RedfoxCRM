@@ -78,10 +78,10 @@ export default function DemoUserDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Admin Banner */}
       {isAdminViewing && (
-        <div className="bg-orange-500 text-white px-6 py-3 flex items-center justify-between">
+        <div className="bg-brand-orange text-white px-6 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Eye className="w-5 h-5" />
             <span className="font-medium">Admin View: Viewing Demo User Dashboard</span>
@@ -89,7 +89,7 @@ export default function DemoUserDashboard() {
           <Button
             variant="outline"
             size="sm"
-            className="bg-white text-orange-500 hover:bg-orange-50"
+            className="bg-white text-brand-orange hover:bg-accent"
             onClick={() => router.push("/admin/dashboard")}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -99,12 +99,12 @@ export default function DemoUserDashboard() {
       )}
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Welcome back, Demo User</p>
+              <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+              <p className="text-muted-foreground">Welcome back, Demo User</p>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
@@ -128,12 +128,12 @@ export default function DemoUserDashboard() {
           {stats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                <p className="text-xs text-green-600 mt-1">{stat.change} from last month</p>
+                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                <p className="text-xs text-success mt-1">{stat.change} from last month</p>
               </CardContent>
             </Card>
           ))}
@@ -158,17 +158,20 @@ export default function DemoUserDashboard() {
             <CardContent>
               <div className="space-y-4">
                 {recentCustomers.map((customer) => (
-                  <div key={customer.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={customer.id}
+                    className="flex items-center justify-between p-3 border border-border rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-medium">
+                      <div className="w-10 h-10 bg-brand-orange rounded-full flex items-center justify-center text-white font-medium">
                         {customer.name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{customer.name}</p>
-                        <p className="text-sm text-gray-500">{customer.email}</p>
+                        <p className="font-medium text-foreground">{customer.name}</p>
+                        <p className="text-sm text-muted-foreground">{customer.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -183,7 +186,7 @@ export default function DemoUserDashboard() {
                       >
                         {customer.status}
                       </Badge>
-                      <span className="text-sm font-medium text-gray-900">{customer.value}</span>
+                      <span className="text-sm font-medium text-foreground">{customer.value}</span>
                       <Button variant="ghost" size="sm">
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
@@ -211,11 +214,11 @@ export default function DemoUserDashboard() {
             <CardContent>
               <div className="space-y-4">
                 {recentProjects.map((project) => (
-                  <div key={project.id} className="p-3 border rounded-lg">
+                  <div key={project.id} className="p-3 border border-border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="font-medium text-gray-900">{project.name}</p>
-                        <p className="text-sm text-gray-500">{project.customer}</p>
+                        <p className="font-medium text-foreground">{project.name}</p>
+                        <p className="text-sm text-muted-foreground">{project.customer}</p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Badge
@@ -236,8 +239,8 @@ export default function DemoUserDashboard() {
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Progress</span>
-                        <span className="text-gray-900">{project.progress}%</span>
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="text-foreground">{project.progress}%</span>
                       </div>
                       <Progress value={project.progress} className="h-2" />
                     </div>

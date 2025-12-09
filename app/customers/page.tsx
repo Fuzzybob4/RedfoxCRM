@@ -156,71 +156,71 @@ export default function CustomersPage() {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      new: "bg-blue-500",
-      contacted: "bg-yellow-500",
-      qualified: "bg-green-500",
-      proposal: "bg-purple-500",
-      negotiation: "bg-orange-500",
-      closed_won: "bg-emerald-500",
-      closed_lost: "bg-red-500",
+      new: "bg-primary",
+      contacted: "bg-accent",
+      qualified: "bg-success",
+      proposal: "bg-secondary",
+      negotiation: "bg-brand-orange",
+      closed_won: "bg-success",
+      closed_lost: "bg-destructive",
     }
-    return colors[status as keyof typeof colors] || "bg-gray-500"
+    return colors[status as keyof typeof colors] || "bg-muted"
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#1a1f2c] flex items-center justify-center">
-        <div className="text-white">Loading customers...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Loading customers...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1f2c] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-64 bg-[#272e3f] min-h-screen p-6">
+        <div className="w-64 bg-card min-h-screen p-6 border-r border-border">
           <div className="mb-8">
-            <h1 className="text-xl font-bold text-white">RedFox CRM</h1>
-            <p className="text-gray-400 text-sm">Acme Landscaping</p>
+            <h1 className="text-xl font-bold text-foreground">RedFox CRM</h1>
+            <p className="text-muted-foreground text-sm">Acme Landscaping</p>
           </div>
 
           <nav className="space-y-2">
             <a
               href="/dashboard"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
+              className="flex items-center space-x-3 text-muted-foreground hover:text-foreground hover:bg-accent p-3 rounded-lg transition-colors"
             >
               <span>📊</span>
               <span>Dashboard</span>
             </a>
-            <a href="/customers" className="flex items-center space-x-3 text-white bg-[#1a1f2c] p-3 rounded-lg">
+            <a href="/customers" className="flex items-center space-x-3 text-foreground bg-accent p-3 rounded-lg">
               <Users className="w-5 h-5" />
               <span>Customers</span>
             </a>
             <a
               href="/estimates"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
+              className="flex items-center space-x-3 text-muted-foreground hover:text-foreground hover:bg-accent p-3 rounded-lg transition-colors"
             >
               <span>📋</span>
               <span>Estimates</span>
             </a>
             <a
               href="/invoices"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
+              className="flex items-center space-x-3 text-muted-foreground hover:text-foreground hover:bg-accent p-3 rounded-lg transition-colors"
             >
               <span>🧾</span>
               <span>Invoices</span>
             </a>
             <a
               href="/projects"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
+              className="flex items-center space-x-3 text-muted-foreground hover:text-foreground hover:bg-accent p-3 rounded-lg transition-colors"
             >
               <span>🏗️</span>
               <span>Projects</span>
             </a>
             <a
               href="/settings"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
+              className="flex items-center space-x-3 text-muted-foreground hover:text-foreground hover:bg-accent p-3 rounded-lg transition-colors"
             >
               <span>⚙️</span>
               <span>Settings</span>
@@ -234,24 +234,24 @@ export default function CustomersPage() {
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search customers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-[#272e3f] border-gray-600 text-white placeholder-gray-400 w-80"
+                  className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground w-80"
                 />
               </div>
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Plus className="w-4 h-4 mr-2" />
                   New Customer
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-[#272e3f] border-gray-600 text-white max-w-2xl">
+              <DialogContent className="bg-card border-border text-foreground max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Add New Customer</DialogTitle>
                 </DialogHeader>
@@ -262,7 +262,7 @@ export default function CustomersPage() {
                       id="first_name"
                       value={newCustomer.first_name}
                       onChange={(e) => setNewCustomer({ ...newCustomer, first_name: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                     />
                   </div>
                   <div>
@@ -271,7 +271,7 @@ export default function CustomersPage() {
                       id="last_name"
                       value={newCustomer.last_name}
                       onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                     />
                   </div>
                   <div>
@@ -281,7 +281,7 @@ export default function CustomersPage() {
                       type="email"
                       value={newCustomer.email}
                       onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                     />
                   </div>
                   <div>
@@ -290,7 +290,7 @@ export default function CustomersPage() {
                       id="phone"
                       value={newCustomer.phone_number}
                       onChange={(e) => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                     />
                   </div>
                   <div className="col-span-2">
@@ -299,7 +299,7 @@ export default function CustomersPage() {
                       id="address"
                       value={newCustomer.address}
                       onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                     />
                   </div>
                   <div>
@@ -308,7 +308,7 @@ export default function CustomersPage() {
                       id="city"
                       value={newCustomer.city}
                       onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                     />
                   </div>
                   <div>
@@ -317,7 +317,7 @@ export default function CustomersPage() {
                       id="state"
                       value={newCustomer.state}
                       onChange={(e) => setNewCustomer({ ...newCustomer, state: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                     />
                   </div>
                   <div>
@@ -326,10 +326,10 @@ export default function CustomersPage() {
                       value={newCustomer.lead_status}
                       onValueChange={(value) => setNewCustomer({ ...newCustomer, lead_status: value })}
                     >
-                      <SelectTrigger className="bg-[#1a1f2c] border-gray-600 text-white">
+                      <SelectTrigger className="bg-background border-border text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#272e3f] border-gray-600">
+                      <SelectContent className="bg-card border-border">
                         <SelectItem value="new">New</SelectItem>
                         <SelectItem value="contacted">Contacted</SelectItem>
                         <SelectItem value="qualified">Qualified</SelectItem>
@@ -346,10 +346,10 @@ export default function CustomersPage() {
                       value={newCustomer.customer_type}
                       onValueChange={(value) => setNewCustomer({ ...newCustomer, customer_type: value })}
                     >
-                      <SelectTrigger className="bg-[#1a1f2c] border-gray-600 text-white">
+                      <SelectTrigger className="bg-background border-border text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#272e3f] border-gray-600">
+                      <SelectContent className="bg-card border-border">
                         <SelectItem value="residential">Residential</SelectItem>
                         <SelectItem value="commercial">Commercial</SelectItem>
                       </SelectContent>
@@ -361,7 +361,7 @@ export default function CustomersPage() {
                       id="notes"
                       value={newCustomer.notes}
                       onChange={(e) => setNewCustomer({ ...newCustomer, notes: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-background border-border text-foreground"
                       rows={3}
                     />
                   </div>
@@ -370,11 +370,14 @@ export default function CustomersPage() {
                   <Button
                     variant="outline"
                     onClick={() => setIsDialogOpen(false)}
-                    className="border-gray-600 text-gray-300 hover:bg-[#1a1f2c]"
+                    className="border-border text-muted-foreground hover:bg-accent"
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateCustomer} className="bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    onClick={handleCreateCustomer}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
                     Create Customer
                   </Button>
                 </div>
@@ -384,56 +387,56 @@ export default function CustomersPage() {
 
           {/* Stats Card */}
           <div className="mb-8">
-            <Card className="bg-[#272e3f] border-gray-600">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-foreground flex items-center">
                   <Users className="w-5 h-5 mr-2" />
                   Total Customers
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-white">{customers.length}</div>
-                <p className="text-gray-400 text-sm">Active customer accounts</p>
+                <div className="text-3xl font-bold text-foreground">{customers.length}</div>
+                <p className="text-muted-foreground text-sm">Active customer accounts</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Customers Table */}
-          <Card className="bg-[#272e3f] border-gray-600">
+          <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-white">Customers</CardTitle>
+              <CardTitle className="text-foreground">Customers</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-600">
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Name</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Contact</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Location</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Status</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Actions</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Name</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Contact</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Location</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Type</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredCustomers.map((customer) => (
-                      <tr key={customer.id} className="border-b border-gray-700 hover:bg-[#1a1f2c] transition-colors">
+                      <tr key={customer.id} className="border-b border-border hover:bg-accent transition-colors">
                         <td className="py-4 px-4">
-                          <div className="text-white font-medium">
+                          <div className="text-foreground font-medium">
                             {customer.first_name} {customer.last_name}
                           </div>
                         </td>
                         <td className="py-4 px-4">
                           <div className="space-y-1">
                             {customer.email && (
-                              <div className="flex items-center text-gray-300 text-sm">
+                              <div className="flex items-center text-muted-foreground text-sm">
                                 <Mail className="w-4 h-4 mr-2" />
                                 {customer.email}
                               </div>
                             )}
                             {customer.phone_number && (
-                              <div className="flex items-center text-gray-300 text-sm">
+                              <div className="flex items-center text-muted-foreground text-sm">
                                 <Phone className="w-4 h-4 mr-2" />
                                 {customer.phone_number}
                               </div>
@@ -442,7 +445,7 @@ export default function CustomersPage() {
                         </td>
                         <td className="py-4 px-4">
                           {customer.address && (
-                            <div className="flex items-center text-gray-300 text-sm">
+                            <div className="flex items-center text-muted-foreground text-sm">
                               <MapPin className="w-4 h-4 mr-2" />
                               <div>
                                 {customer.address}
@@ -456,26 +459,26 @@ export default function CustomersPage() {
                           )}
                         </td>
                         <td className="py-4 px-4">
-                          <Badge className={`${getStatusColor(customer.lead_status)} text-white`}>
+                          <Badge className={`${getStatusColor(customer.lead_status)} text-foreground`}>
                             {customer.lead_status.replace("_", " ").toUpperCase()}
                           </Badge>
                         </td>
                         <td className="py-4 px-4">
-                          <span className="text-gray-300 capitalize">{customer.customer_type}</span>
+                          <span className="text-muted-foreground capitalize">{customer.customer_type}</span>
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex space-x-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-gray-600 text-gray-300 hover:bg-[#1a1f2c] bg-transparent"
+                              className="border-border text-muted-foreground hover:bg-accent bg-transparent"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-gray-600 text-gray-300 hover:bg-[#1a1f2c] bg-transparent"
+                              className="border-border text-muted-foreground hover:bg-accent bg-transparent"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -486,7 +489,7 @@ export default function CustomersPage() {
                   </tbody>
                 </table>
                 {filteredCustomers.length === 0 && (
-                  <div className="text-center py-8 text-gray-400">No customers found</div>
+                  <div className="text-center py-8 text-muted-foreground">No customers found</div>
                 )}
               </div>
             </CardContent>

@@ -63,8 +63,8 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#08042B]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+      <div className="min-h-screen flex items-center justify-center bg-brand-dark">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-orange"></div>
       </div>
     )
   }
@@ -151,18 +151,18 @@ export default function AdminDashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-card border-b border-border">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-brand-orange rounded-lg flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Admin Dashboard</h1>
-                <p className="text-sm text-slate-600">RedFox CRM System Administration</p>
+                <h1 className="text-xl font-bold text-foreground">Admin Dashboard</h1>
+                <p className="text-sm text-muted-foreground">RedFox CRM System Administration</p>
               </div>
             </div>
             <Button variant="outline" onClick={handleLogout}>
@@ -179,20 +179,20 @@ export default function AdminDashboardPage() {
           {systemStats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-700">{stat.title}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
                 <stat.icon
                   className={`h-4 w-4 ${
                     stat.status === "success"
-                      ? "text-green-600"
+                      ? "text-success"
                       : stat.status === "warning"
-                        ? "text-yellow-600"
-                        : "text-red-600"
+                        ? "text-accent"
+                        : "text-destructive"
                   }`}
                 />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</div>
-                <p className="text-xs text-slate-500 mt-1">{stat.change}</p>
+                <div className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</div>
+                <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
               </CardContent>
             </Card>
           ))}
@@ -221,19 +221,19 @@ export default function AdminDashboardPage() {
                       <div key={activity.id} className="flex items-center space-x-3">
                         <div
                           className={`w-2 h-2 rounded-full ${
-                            activity.status === "success" ? "bg-green-500" : "bg-red-500"
+                            activity.status === "success" ? "bg-success" : "bg-destructive"
                           }`}
                         ></div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-800">{activity.action}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-sm font-medium text-foreground">{activity.action}</p>
+                          <p className="text-xs text-muted-foreground">
                             {activity.user} • {activity.time}
                           </p>
                         </div>
                         {activity.status === "success" ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CheckCircle className="w-4 h-4 text-success" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-red-600" />
+                          <XCircle className="w-4 h-4 text-destructive" />
                         )}
                       </div>
                     ))}
@@ -282,18 +282,18 @@ export default function AdminDashboardPage() {
                   {sampleUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50"
+                      className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        <div className="w-8 h-8 bg-brand-orange rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {user.name
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-800">{user.name}</p>
-                          <p className="text-sm text-slate-500">{user.email}</p>
+                          <p className="font-medium text-foreground">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -319,22 +319,25 @@ export default function AdminDashboardPage() {
               <CardContent>
                 <div className="space-y-4">
                   {systemHealth.map((service) => (
-                    <div key={service.service} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={service.service}
+                      className="flex items-center justify-between p-3 border border-border rounded-lg"
+                    >
                       <div className="flex items-center space-x-3">
                         <div
                           className={`w-3 h-3 rounded-full ${
                             service.status === "healthy"
-                              ? "bg-green-500"
+                              ? "bg-success"
                               : service.status === "degraded"
-                                ? "bg-yellow-500"
-                                : "bg-red-500"
+                                ? "bg-accent"
+                                : "bg-destructive"
                           }`}
                         ></div>
-                        <span className="font-medium text-slate-800">{service.service}</span>
+                        <span className="font-medium text-foreground">{service.service}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Badge variant={service.status === "healthy" ? "default" : "secondary"}>{service.status}</Badge>
-                        <span className="text-sm text-slate-500">{service.uptime}</span>
+                        <span className="text-sm text-muted-foreground">{service.uptime}</span>
                       </div>
                     </div>
                   ))}
@@ -351,9 +354,9 @@ export default function AdminDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <Settings className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                  <p className="text-slate-700">System settings interface would go here</p>
-                  <p className="text-sm text-slate-500 mt-2">
+                  <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-foreground">System settings interface would go here</p>
+                  <p className="text-sm text-muted-foreground mt-2">
                     Configure authentication, database, and other system settings
                   </p>
                 </div>

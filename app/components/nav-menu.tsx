@@ -26,35 +26,35 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
       <div className="flex flex-col space-y-2">
         <Link
           href="/features"
-          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
           onClick={scrollToTop}
         >
           Features
         </Link>
         <Link
           href="/pricing"
-          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
           onClick={scrollToTop}
         >
           Pricing
         </Link>
         <Link
           href="/industries"
-          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
           onClick={scrollToTop}
         >
           Industries
         </Link>
         <Link
           href="/resources"
-          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:bg-accent rounded-md transition-colors"
           onClick={scrollToTop}
         >
           Resources
         </Link>
         <Link
           href="/contact-sales"
-          className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
           onClick={scrollToTop}
         >
           Contact Sales
@@ -67,7 +67,7 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent text-gray-300 hover:text-white hover:bg-gray-800">
+          <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent">
             Features
           </NavigationMenuTrigger>
           <NavigationMenuContent>
@@ -104,7 +104,7 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
             <NavigationMenuLink
               className={cn(
                 navigationMenuTriggerStyle(),
-                "bg-transparent text-gray-300 hover:text-white hover:bg-gray-800",
+                "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
               onClick={scrollToTop}
             >
@@ -114,7 +114,7 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-transparent text-gray-300 hover:text-white hover:bg-gray-800">
+          <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent">
             Industries
           </NavigationMenuTrigger>
           <NavigationMenuContent>
@@ -140,7 +140,7 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
             <NavigationMenuLink
               className={cn(
                 navigationMenuTriggerStyle(),
-                "bg-transparent text-gray-300 hover:text-white hover:bg-gray-800",
+                "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
               onClick={scrollToTop}
             >
@@ -154,7 +154,7 @@ export function NavMenu({ mobile = false }: NavMenuProps) {
             <NavigationMenuLink
               className={cn(
                 navigationMenuTriggerStyle(),
-                "bg-transparent text-gray-300 hover:text-white hover:bg-gray-800",
+                "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
               onClick={scrollToTop}
             >
