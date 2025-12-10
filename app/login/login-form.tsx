@@ -1,14 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
-import { Suspense } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 function LoginFormContent() {
   const [email, setEmail] = useState("")
@@ -18,38 +17,7 @@ function LoginFormContent() {
   const router = useRouter()
   const sp = useSearchParams()
   const message = sp.get("message")
-
-  // Improved test mode bypass - simple local auth for testing
-  const handleTestLogin = (email: string, password: string): boolean => {
-    const testCredentials = [
-      { email: "demo@example.com", password: "demo123", userId: "demo-user-123", name: "Demo User" },
-      { email: "john@example.com", password: "john123", userId: "john-doe-456", name: "John Doe" },
-      { email: "jane@example.com", password: "jane123", userId: "jane-smith-789", name: "Jane Smith" },
-      { email: "test@example.com", password: "test123", userId: "test-user-001", name: "Test User" },
-    ]
-
-    const validCredential = testCredentials.find((cred) => cred.email === email && cred.password === password)
-
-    if (validCredential) {
-      const testSession = {
-        userId: validCredential.userId,
-        email: validCredential.email,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-      }
-
-      // Set test session in localStorage
-      localStorage.setItem("test-auth-session", JSON.stringify(testSession))
-
-      // Set test session as cookie for middleware
-      const cookieValue = encodeURIComponent(JSON.stringify(testSession))
-      document.cookie = `test-auth-session=${cookieValue}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`
-
-      console.log("Test session created for:", validCredential.email)
-      return true
-    }
-
-    return false
-  }
+  const supabase = createClient()
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,34 +25,15 @@ function LoginFormContent() {
     setErrorMsg("")
 
     try {
-      // Try test login first
-      if (handleTestLogin(email, password)) {
-        // Force a full page navigation to ensure auth state is properly set
-        const redirectTo = sp.get("redirectedFrom") || "/dashboard"
-        console.log("Redirecting to:", redirectTo)
-        window.location.href = redirectTo
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+      if (error) {
+        setErrorMsg(error.message)
         return
       }
 
-      // If test login fails, try Supabase
-      try {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-
-        if (error) {
-          setErrorMsg(error.message)
-          return
-        }
-
-        await supabase.auth.getSession()
-        const redirectTo = sp.get("redirectedFrom") || "/dashboard"
-        window.location.href = redirectTo
-      } catch (err) {
-        console.error("Supabase login error:", err)
-        setErrorMsg("Invalid credentials. Please check your email and password.")
-      }
+      const redirectTo = sp.get("redirectedFrom") || "/dashboard"
+      window.location.href = redirectTo
     } catch (err) {
       console.error("Login error:", err)
       setErrorMsg("An unexpected error occurred")
@@ -130,7 +79,6 @@ function LoginFormContent() {
         </Alert>
       )}
 
-      {/* Google Sign In Button */}
       <Button
         type="button"
         variant="outline"
@@ -168,13 +116,11 @@ function LoginFormContent() {
         </div>
       </div>
 
-      {/* Email/Password Form */}
       <form onSubmit={handleEmailSignIn} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
-            name="email"
             type="email"
             placeholder="Enter your email"
             value={email}
@@ -189,7 +135,6 @@ function LoginFormContent() {
           <Label htmlFor="password">Password</Label>
           <Input
             id="password"
-            name="password"
             type="password"
             placeholder="Enter your password"
             value={password}
@@ -207,7 +152,7 @@ function LoginFormContent() {
 
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{" "}
+          {"Don't have an account? "}
           <Button variant="link" className="p-0 h-auto" onClick={() => router.push("/signup")}>
             Sign up
           </Button>

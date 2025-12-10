@@ -17,10 +17,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { Package, Plus, LayoutDashboard, ScrollText, Users, BarChart, Settings, DollarSign } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { WarehouseIcon as Inventory } from "lucide-react"
+import { Indent as Inventory } from "lucide-react"
 
 interface Product {
   id: string
@@ -48,6 +48,7 @@ export default function ProductsPage() {
   const [companyName, setCompanyName] = useState("Company name")
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClient()
 
   useEffect(() => {
     const checkAuthAndLoadData = async () => {

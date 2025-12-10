@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +16,11 @@ export default function ProfilePage() {
   const [website, setWebsite] = useState("")
   const [avatarUrl, setAvatarUrl] = useState("")
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
+
+  useEffect(() => {
+    getProfile()
+  }, [])
 
   async function getProfile() {
     try {
@@ -83,10 +87,6 @@ export default function ProfilePage() {
     }
   }
 
-  useState(() => {
-    getProfile()
-  }, [])
-
   return (
     <div className="container mx-auto py-10">
       <Card className="w-full max-w-md mx-auto">
@@ -98,8 +98,8 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <div className="flex justify-center">
               <Avatar className="w-24 h-24">
-                <AvatarImage src={avatarUrl} alt="Profile picture" />
-                <AvatarFallback>{fullName.charAt(0)}</AvatarFallback>
+                <AvatarImage src={avatarUrl || "/placeholder.svg"} alt="Profile picture" />
+                <AvatarFallback>{fullName?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
             </div>
             <div className="space-y-2">

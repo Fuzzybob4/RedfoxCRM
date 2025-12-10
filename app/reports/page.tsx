@@ -17,7 +17,7 @@ import {
   TrendingUp,
   Activity,
 } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 import type { User } from "@supabase/supabase-js"
 
@@ -43,6 +43,8 @@ const navItems = [
   { icon: <BarChartIcon className="h-5 w-5" />, label: "Reports", href: "/reports", active: true },
   { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/settings" },
 ]
+
+const supabase = createClient()
 
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true)

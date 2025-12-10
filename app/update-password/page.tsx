@@ -7,16 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 
 export default function UpdatePassword() {
   const [newPassword, setNewPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClient()
 
   useEffect(() => {
-    // Check if the user is in a password reset flow
     const checkSession = async () => {
       const { data, error } = await supabase.auth.getSession()
       if (error || !data.session) {
@@ -29,7 +29,7 @@ export default function UpdatePassword() {
       }
     }
     checkSession()
-  }, [router, toast])
+  }, [router, toast, supabase])
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()

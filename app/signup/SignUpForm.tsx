@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import type React from "react"
-import { handleSignUp } from "@/lib/auth"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SignUpForm() {
   const [email, setEmail] = useState("")
@@ -26,9 +26,9 @@ export default function SignUpForm() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClient()
 
   useEffect(() => {
-    // Update cost based on subscription type and billing period
     if (subscriptionType === "starter") {
       setCost(billingPeriod === "monthly" ? 19 : 182.4)
     } else if (subscriptionType === "professional") {
@@ -42,34 +42,31 @@ export default function SignUpForm() {
     setError(null)
 
     try {
-      const result = await handleSignUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        firstName,
-        lastName,
-        phoneNumber,
-        companyName,
-        subscriptionType,
-        billingPeriod,
-        cost,
+        options: {
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
+          data: {
+            full_name: `${firstName} ${lastName}`,
+            first_name: firstName,
+            last_name: lastName,
+            phone_number: phoneNumber,
+            company_name: companyName,
+          },
+        },
       })
 
-      if (!result.success) {
-        // Handle specific error cases
-        if (result.error?.message) {
-          throw new Error(result.error.message)
-        } else {
-          throw new Error("Failed to create account. Please try again.")
-        }
+      if (signUpError) {
+        throw signUpError
       }
 
-      // Success! Show success message and redirect
       toast({
-        title: "Account Created Successfully! 🎉",
+        title: "Account Created Successfully!",
         description: "Please check your email to verify your account before logging in.",
       })
 
-      // Clear the form
       setEmail("")
       setPassword("")
       setFirstName("")
@@ -77,14 +74,12 @@ export default function SignUpForm() {
       setPhoneNumber("")
       setCompanyName("")
 
-      // Redirect to login page after a short delay
       setTimeout(() => {
         router.push("/login?message=Please check your email to verify your account")
       }, 2000)
     } catch (error) {
       console.error("Signup error:", error)
 
-      // Handle specific Supabase errors
       let errorMessage = "An unexpected error occurred"
 
       if (error instanceof Error) {

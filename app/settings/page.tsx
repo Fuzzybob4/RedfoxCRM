@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,7 +54,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -649,7 +649,7 @@ export default function SettingsPage() {
                           value={security.session_timeout}
                           onValueChange={(value) => setSecurity((prev) => ({ ...prev, session_timeout: value }))}
                         >
-                          <SelectTrigger className="bg-[#1a1f2c] border-gray-600 text-white w-48">
+                          <SelectTrigger className="bg-[#272e3f] border-gray-600 text-white w-48">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-[#272e3f] border-gray-600">

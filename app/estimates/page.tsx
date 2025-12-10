@@ -21,7 +21,7 @@ import {
   DollarSign,
   Briefcase,
 } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 import type { User } from "@supabase/supabase-js"
 
@@ -52,6 +52,7 @@ export default function EstimatesPage() {
   const [companyName, setCompanyName] = useState("Company name")
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClient()
 
   useEffect(() => {
     async function checkAuthAndLoadData() {

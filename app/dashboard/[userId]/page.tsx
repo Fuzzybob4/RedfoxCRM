@@ -22,7 +22,7 @@ import {
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 import type { JSX } from "react/jsx-runtime"
 
@@ -46,6 +46,7 @@ export default function DashboardPage({ params }: { params: { userId: string } }
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClient()
 
   const stats = [
     {

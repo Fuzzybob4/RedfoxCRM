@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
-import { mockAuth } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 
 interface LoginDialogProps {
   isOpen: boolean
@@ -20,49 +20,26 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const { toast } = useToast()
+  const supabase = createClient()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    console.log("[v0] Attempting sign in for:", email)
-
     try {
-      const { data, error } = await mockAuth.signIn(email, password)
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-      console.log("[v0] Sign in result:", { user: data?.user, error })
-
-      if (error || !data.user) {
-        toast({
-          title: "Error",
-          description: error?.message || "Invalid email or password",
-          variant: "destructive",
-        })
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" })
         setIsLoading(false)
         return
       }
 
-      console.log("[v0] User signed in successfully:", data.user)
-      console.log("[v0] User role:", data.user.role)
-      console.log("[v0] Cookie set, redirecting to /dashboard")
-
-      toast({
-        title: "Success",
-        description: `Signed in as ${data.user.name} (${data.user.role})`,
-      })
-
+      toast({ title: "Success", description: "Signed in successfully" })
       onClose()
-
-      setTimeout(() => {
-        window.location.replace("/dashboard")
-      }, 100)
+      window.location.replace("/dashboard")
     } catch (error) {
-      console.error("[v0] Sign in error:", error)
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -73,21 +50,22 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
     setIsLoading(true)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      toast({
-        title: "Reset Email Sent",
-        description: `If an account exists for ${email}, you will receive a password reset link shortly.`,
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/update-password`,
       })
 
-      setIsForgotPassword(false)
-      setEmail("")
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" })
+      } else {
+        toast({
+          title: "Reset Email Sent",
+          description: `If an account exists for ${email}, you will receive a password reset link.`,
+        })
+        setIsForgotPassword(false)
+        setEmail("")
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send reset email. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "Failed to send reset email", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -122,19 +100,17 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
               </Label>
               <Input
                 id="reset-email"
-                name="email"
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                tabIndex={0}
-                className="bg-background/50 border-border focus:border-brand-orange focus:ring-brand-orange text-foreground placeholder:text-muted-foreground"
+                className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-brand-orange to-brand-yellow hover:opacity-90 text-brand-dark transition-colors duration-300"
+              className="w-full bg-gradient-to-r from-brand-orange to-brand-yellow hover:opacity-90 text-brand-dark"
               disabled={isLoading}
             >
               {isLoading ? "Sending..." : "Send Reset Link"}
@@ -156,14 +132,12 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
               </Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                tabIndex={0}
-                className="bg-background/50 border-border focus:border-brand-orange focus:ring-brand-orange text-foreground placeholder:text-muted-foreground"
+                className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
@@ -181,19 +155,17 @@ export function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
               </div>
               <Input
                 id="password"
-                name="password"
                 type="password"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                tabIndex={0}
-                className="bg-background/50 border-border focus:border-brand-orange focus:ring-brand-orange text-foreground placeholder:text-muted-foreground"
+                className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-brand-orange to-brand-yellow hover:opacity-90 text-brand-dark transition-colors duration-300"
+              className="w-full bg-gradient-to-r from-brand-orange to-brand-yellow hover:opacity-90 text-brand-dark"
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Sign In"}

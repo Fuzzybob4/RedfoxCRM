@@ -17,9 +17,24 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/app/components/auth-provider"
 import { Menu, X, LogOut, ChevronDown, Shield, UserCog, User, Eye, Crown } from "lucide-react"
-import type { RolePermissions } from "@/lib/supabase"
 
-const navigation: { name: string; href: string; icon: string; feature: keyof RolePermissions }[] = [
+type Feature =
+  | "dashboard"
+  | "customers"
+  | "invoices"
+  | "estimates"
+  | "projects"
+  | "reports"
+  | "mapping"
+  | "scheduling"
+  | "products"
+  | "sales"
+  | "settings"
+  | "admin"
+  | "billing"
+  | "users"
+
+const navigation: { name: string; href: string; icon: string; feature: Feature }[] = [
   { name: "Dashboard", href: "/dashboard", icon: "/image/icon/dashboard.png", feature: "dashboard" },
   { name: "Customers", href: "/customers", icon: "/image/icon/customers.png", feature: "customers" },
   { name: "Invoices", href: "/invoices", icon: "/image/icon/invoices.png", feature: "invoices" },

@@ -2,21 +2,21 @@
 
 import { useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 
 export default function AuthCallback() {
   const router = useRouter()
   const sp = useSearchParams()
   const next = sp.get("next") || "/dashboard"
+  const supabase = createClient()
 
   useEffect(() => {
     ;(async () => {
-      // Exchange code for session and write cookie
       await supabase.auth.getSession()
       router.replace(next)
       router.refresh()
     })()
-  }, [router, next])
+  }, [router, next, supabase])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#08042B] to-[#1a1f3a]">

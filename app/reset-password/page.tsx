@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { showSuccessToast, showErrorToast } from "@/app/components/ui/custom-toast"
 
 export default function ResetPasswordPage() {
@@ -19,6 +19,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("")
   const router = useRouter()
   const searchParams = useSearchParams()
+  const supabase = createClient()
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()

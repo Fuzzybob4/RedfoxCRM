@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -49,7 +49,7 @@ export default function InvoicesPage() {
     due_date: "",
   })
 
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -320,7 +320,7 @@ export default function InvoicesPage() {
                       id="description"
                       value={newInvoice.description}
                       onChange={(e) => setNewInvoice({ ...newInvoice, description: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-600 text-white"
+                      className="bg-[#272e3f] border-gray-600 text-white"
                       rows={3}
                     />
                   </div>
