@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Video, Download, Users, FileText, CheckCircle, ArrowRight, Clock, Headphones } from "lucide-react"
+import { BookOpen, Video, Download, Users, FileText, CheckCircle, ArrowRight, Headphones } from "lucide-react"
 import Link from "next/link"
 import { Header } from "@/app/components/header"
 import { Footer } from "@/app/components/footer"
@@ -60,41 +60,6 @@ const resourceCategories = [
     href: "/resources/downloads",
     color: "from-indigo-500 to-indigo-600",
     popular: false,
-  },
-]
-
-const featuredResources = [
-  {
-    title: "Getting Started Guide",
-    description: "Complete setup guide for new RedFox CRM users",
-    type: "Guide",
-    readTime: "15 min read",
-    category: "Knowledge Base",
-    href: "/resources/knowledge-base/getting-started",
-  },
-  {
-    title: "Holiday Lighting Business Setup",
-    description: "Step-by-step video for holiday lighting contractors",
-    type: "Video",
-    readTime: "12 min watch",
-    category: "Video Tutorial",
-    href: "/resources/videos/holiday-lighting-setup",
-  },
-  {
-    title: "Service Contract Template",
-    description: "Professional service contract template",
-    type: "Template",
-    readTime: "Download",
-    category: "Templates",
-    href: "/resources/templates/service-contract",
-  },
-  {
-    title: "Route Optimization Best Practices",
-    description: "Maximize efficiency with route optimization tips",
-    type: "Guide",
-    readTime: "8 min read",
-    category: "Knowledge Base",
-    href: "/resources/knowledge-base/route-optimization",
   },
 ]
 
@@ -169,53 +134,6 @@ export default function ResourcesPage() {
           </div>
         </section>
 
-        {/* Featured Resources */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Featured Resources</h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Popular guides, tutorials, and tools to help you get started quickly
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-              {featuredResources.map((resource, index) => (
-                <Card
-                  key={index}
-                  className="bg-white/5 border-[#92E138]/20 hover:bg-white/10 transition-all duration-300 hover:scale-105 group cursor-pointer"
-                >
-                  <Link href={resource.href}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge className="bg-[#F67721]/20 text-[#F5F906] border-[#F67721]/30 text-xs">
-                          {resource.type}
-                        </Badge>
-                        <div className="flex items-center text-gray-400 text-xs">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {resource.readTime}
-                        </div>
-                      </div>
-                      <CardTitle className="text-lg text-white group-hover:text-[#F5F906] transition-colors">
-                        {resource.title}
-                      </CardTitle>
-                      <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                        {resource.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-[#F67721]">{resource.category}</span>
-                        <ArrowRight className="h-4 w-4 text-[#F67721] group-hover:text-[#F5F906] group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Link>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Resource Categories */}
         <section className="py-20 bg-white/5">
           <div className="container mx-auto px-4">
@@ -239,35 +157,27 @@ export default function ResourcesPage() {
                       <Badge className="bg-[#F67721] text-white">Most Popular</Badge>
                     </div>
                   )}
-                  <Link href={category.href}>
-                    <CardHeader className="text-center">
-                      <div
-                        className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}
-                      >
-                        <category.icon className="h-8 w-8 text-white" />
-                      </div>
-                      <CardTitle className="text-xl text-white group-hover:text-[#F5F906] transition-colors">
-                        {category.title}
-                      </CardTitle>
-                      <CardDescription className="text-gray-300 leading-relaxed">
-                        {category.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2 mb-4">
-                        {category.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-center space-x-2">
-                            <CheckCircle className="h-3 w-3 text-[#92E138]" />
-                            <span className="text-gray-300 text-sm">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="flex items-center text-[#F67721] group-hover:text-[#F5F906] transition-colors">
-                        <span className="text-sm font-medium">Explore resources</span>
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </CardContent>
-                  </Link>
+                  <CardHeader className="text-center">
+                    <div
+                      className={`w-16 h-16 bg-gradient-to-r ${category.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}
+                    >
+                      <category.icon className="h-8 w-8 text-white" />
+                    </div>
+                    <CardTitle className="text-xl text-white group-hover:text-[#F5F906] transition-colors">
+                      {category.title}
+                    </CardTitle>
+                    <CardDescription className="text-gray-300 leading-relaxed">{category.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {category.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-center space-x-2">
+                          <CheckCircle className="h-3 w-3 text-[#92E138]" />
+                          <span className="text-gray-300 text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
                 </Card>
               ))}
             </div>

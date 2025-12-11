@@ -33,6 +33,7 @@ type Feature =
   | "admin"
   | "billing"
   | "users"
+  | "resources"
 
 const navigation: { name: string; href: string; icon: string; feature: Feature }[] = [
   { name: "Dashboard", href: "/dashboard", icon: "/image/icon/dashboard.png", feature: "dashboard" },
@@ -45,6 +46,7 @@ const navigation: { name: string; href: string; icon: string; feature: Feature }
   { name: "Scheduling", href: "/scheduling", icon: "/image/icon/calendar.png", feature: "scheduling" },
   { name: "Products", href: "/products", icon: "/image/icon/jobs.png", feature: "products" },
   { name: "Sales", href: "/sales", icon: "/image/icon/payments.png", feature: "sales" },
+  { name: "Resources", href: "/company-resources", icon: "/image/icon/reports.png", feature: "resources" },
   { name: "Users", href: "/users", icon: "/image/icon/customers.png", feature: "users" },
   { name: "Billing", href: "/billing", icon: "/image/icon/payments.png", feature: "billing" },
   { name: "Settings", href: "/settings", icon: "/image/icon/settings.png", feature: "settings" },

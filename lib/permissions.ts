@@ -22,6 +22,7 @@ type Feature =
   | "admin"
   | "billing"
   | "users"
+  | "resources"
 
 const fullAccess: Permission = { canView: true, canCreate: true, canEdit: true, canDelete: true }
 const viewOnly: Permission = { canView: true, canCreate: false, canEdit: false, canDelete: false }
@@ -43,6 +44,7 @@ const allFeatures: Feature[] = [
   "admin",
   "billing",
   "users",
+  "resources",
 ]
 
 export const rolePermissions: Record<UserRole, Record<Feature, Permission>> = {
@@ -69,6 +71,7 @@ export const rolePermissions: Record<UserRole, Record<Feature, Permission>> = {
     admin: noAccess,
     billing: noAccess,
     users: viewOnly,
+    resources: createEdit,
   },
 
   user: {
@@ -86,15 +89,26 @@ export const rolePermissions: Record<UserRole, Record<Feature, Permission>> = {
     admin: noAccess,
     billing: noAccess,
     users: noAccess,
+    resources: viewOnly,
   },
 
   viewer: {
-    ...Object.fromEntries(allFeatures.slice(0, 10).map((f) => [f, viewOnly])),
+    dashboard: viewOnly,
+    customers: viewOnly,
+    invoices: viewOnly,
+    estimates: viewOnly,
+    projects: viewOnly,
+    reports: viewOnly,
+    mapping: viewOnly,
+    scheduling: viewOnly,
+    products: viewOnly,
+    sales: viewOnly,
     settings: noAccess,
     admin: noAccess,
     billing: noAccess,
     users: noAccess,
-  } as Record<Feature, Permission>,
+    resources: viewOnly,
+  },
 }
 
 export function hasPermission(role: UserRole, feature: Feature, action: keyof Permission): boolean {
