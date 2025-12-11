@@ -2,29 +2,31 @@
 
 A modern, full-featured Customer Relationship Management (CRM) system built with Next.js 15, React 19, and Supabase. Designed specifically for service-based businesses like landscaping, outdoor lighting, and irrigation companies.
 
-## 🔐 Login Credentials
+## 🔐 Authentication
 
-### Admin Access
-- **URL**: `/admin/login`
-- **Username**: `admin`
-- **Password**: `redfox2024!`
-- **Capabilities**: Full system access, can view and edit all user dashboards
+This application uses **Supabase Authentication**. There are no pre-configured demo accounts.
 
-### Demo User Accounts
-1. **Demo User**
-   - **Email**: `demo@example.com`
-   - **Password**: `demo123`
-   - **Features**: Basic user with sample data
+### Creating Your First User
 
-2. **John Doe**
-   - **Email**: `john@example.com`
-   - **Password**: `john123`
-   - **Features**: Advanced user with project data
+1. **Sign Up via the App**
+   - Navigate to `/signup`
+   - Enter your email and password
+   - Check your email for the confirmation link
+   - Click the link to verify your account
 
-3. **Jane Smith**
-   - **Email**: `jane@example.com`
-   - **Password**: `jane123`
-   - **Features**: Manager-level access with team data
+2. **Or Create via Supabase Dashboard**
+   - Go to your Supabase project dashboard
+   - Navigate to Authentication > Users
+   - Click "Add User" and enter email/password
+   - The user will be created and can log in immediately
+
+### User Roles
+
+After creating a user, update their role in the `profiles` table:
+- **admin**: Full system access
+- **manager**: Team and project management  
+- **user**: Basic CRM functionality
+- **viewer**: Read-only access
 
 ## 🚀 Quick Start
 
