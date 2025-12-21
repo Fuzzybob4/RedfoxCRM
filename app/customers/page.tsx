@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +32,7 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [orgId, setOrgId] = useState<string | null>(null)
   const [newCustomer, setNewCustomer] = useState({
     first_name: "",
     last_name: "",
@@ -46,6 +48,7 @@ export default function CustomersPage() {
 
   const supabase = createClient()
   const { toast } = useToast()
+  const router = useRouter()
 
   useEffect(() => {
     fetchCustomers()
@@ -56,7 +59,10 @@ export default function CustomersPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        router.replace("/login")
+        return
+      }
 
       const { data: membership, error: membershipError } = await supabase
         .from("user_memberships")
@@ -66,10 +72,19 @@ export default function CustomersPage() {
 
       if (membershipError) {
         console.error("[v0] Error fetching membership:", membershipError)
-        throw membershipError
       }
 
-      if (!membership?.org_id) return
+      if (!membership?.org_id) {
+        // No organization - redirect to setup
+        toast({
+          title: "Setup Required",
+          description: "Please set up your organization first.",
+        })
+        router.replace("/setup-organization")
+        return
+      }
+
+      setOrgId(membership.org_id)
 
       const { data, error } = await supabase
         .from("customers")
@@ -110,45 +125,16 @@ export default function CustomersPage() {
       return
     }
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "Not authenticated",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const { data: membership, error: membershipError } = await supabase
-        .from("user_memberships")
-        .select("org_id")
-        .eq("user_id", user.id)
-        .maybeSingle()
-
-      if (membershipError) {
-        console.error("[v0] Error fetching membership:", membershipError)
-        throw membershipError
-      }
-
-      if (!membership?.org_id) {
-        toast({
-          title: "Error",
-          description: "No organization found",
-          variant: "destructive",
-        })
-        return
-      }
-
-      console.log("[v0] Creating customer with data:", {
-        first_name: newCustomer.first_name,
-        last_name: newCustomer.last_name,
-        org_id: membership.org_id,
+    if (!orgId) {
+      toast({
+        title: "Error",
+        description: "No organization found. Please refresh the page.",
+        variant: "destructive",
       })
+      return
+    }
 
+    try {
       const { data: insertedData, error } = await supabase
         .from("customers")
         .insert([
@@ -163,7 +149,7 @@ export default function CustomersPage() {
             zip_code: newCustomer.zip_code.trim() || null,
             country: newCustomer.country.trim() || null,
             notes: newCustomer.notes.trim() || null,
-            org_id: membership.org_id,
+            org_id: orgId,
           },
         ])
         .select()
@@ -172,8 +158,6 @@ export default function CustomersPage() {
         console.error("[v0] Supabase error:", error)
         throw error
       }
-
-      console.log("[v0] Customer created successfully:", insertedData)
 
       toast({
         title: "Success",
@@ -211,19 +195,6 @@ export default function CustomersPage() {
       customer.phone?.includes(searchTerm),
   )
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      new: "bg-primary",
-      contacted: "bg-accent",
-      qualified: "bg-success",
-      proposal: "bg-secondary",
-      negotiation: "bg-brand-orange",
-      closed_won: "bg-success",
-      closed_lost: "bg-destructive",
-    }
-    return colors[status as keyof typeof colors] || "bg-muted"
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -239,7 +210,6 @@ export default function CustomersPage() {
         <div className="w-64 bg-card min-h-screen p-6 border-r border-border">
           <div className="mb-8">
             <h1 className="text-xl font-bold text-foreground">RedFox CRM</h1>
-            <p className="text-muted-foreground text-sm">Acme Landscaping</p>
           </div>
 
           <nav className="space-y-2">
@@ -314,7 +284,7 @@ export default function CustomersPage() {
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4 py-4">
                   <div>
-                    <Label htmlFor="first_name">First Name</Label>
+                    <Label htmlFor="first_name">First Name *</Label>
                     <Input
                       id="first_name"
                       value={newCustomer.first_name}
@@ -323,7 +293,7 @@ export default function CustomersPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="last_name">Last Name</Label>
+                    <Label htmlFor="last_name">Last Name *</Label>
                     <Input
                       id="last_name"
                       value={newCustomer.last_name}
@@ -519,7 +489,9 @@ export default function CustomersPage() {
                   </tbody>
                 </table>
                 {filteredCustomers.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">No customers found</div>
+                  <div className="text-center py-8 text-muted-foreground">
+                    {searchTerm ? "No customers match your search" : "No customers yet. Add your first customer!"}
+                  </div>
                 )}
               </div>
             </CardContent>

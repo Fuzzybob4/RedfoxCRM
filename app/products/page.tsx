@@ -1,283 +1,358 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Input } from "@/components/ui/input"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog"
+import { Search, Plus, Package, DollarSign, Trash2, Edit } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { createClient } from "@/lib/supabase/client"
-import { Package, Plus, LayoutDashboard, ScrollText, Users, BarChart, Settings, DollarSign } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Indent as Inventory } from "lucide-react"
 
 interface Product {
   id: string
   name: string
-  description: string
+  description?: string
+  sku?: string
   price: number
-  owner_id: string
+  cost?: number
+  quantity?: number
+  unit?: string
+  category?: string
+  is_active: boolean
+  created_at: string
 }
-
-const navItems = [
-  { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", href: "/dashboard" },
-  { icon: <DollarSign className="h-5 w-5" />, label: "Sales", href: "/sales" },
-  { icon: <ScrollText className="h-5 w-5" />, label: "Invoices", href: "/invoices" },
-  { icon: <Package className="h-5 w-5" />, label: "Products", href: "/products", active: true },
-  { icon: <Users className="h-5 w-5" />, label: "Customers", href: "/customers" },
-  { icon: <BarChart className="h-5 w-5" />, label: "Reports", href: "/reports" },
-  { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/settings" },
-]
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
-  const [newProduct, setNewProduct] = useState({ name: "", description: "", price: "" })
-  const [loading, setLoading] = useState(true)
-  const [isAddProductOpen, setIsAddProductOpen] = useState(false)
-  const [companyName, setCompanyName] = useState("Company name")
-  const router = useRouter()
-  const { toast } = useToast()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [orgId, setOrgId] = useState<string | null>(null)
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    description: "",
+    sku: "",
+    price: 0,
+    cost: 0,
+    quantity: 0,
+    unit: "each",
+    category: "",
+  })
+
   const supabase = createClient()
+  const { toast } = useToast()
 
   useEffect(() => {
-    const checkAuthAndLoadData = async () => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
+      if (!user) return
 
-      if (!user) {
-        router.push("/login")
+      const { data: membership } = await supabase
+        .from("user_memberships")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      if (!membership?.org_id) {
+        setIsLoading(false)
         return
       }
 
-      fetchCompanyName(user.id)
-      fetchProducts(user.id)
-    }
+      setOrgId(membership.org_id)
 
-    checkAuthAndLoadData()
-  }, [router])
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("org_id", membership.org_id)
+        .order("created_at", { ascending: false })
 
-  const fetchCompanyName = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("company_profiles")
-      .select("company_name")
-      .eq("owner_id", userId)
-      .single()
-
-    if (error) {
-      console.error("Error fetching company name:", error)
-    } else if (data && data.company_name) {
-      setCompanyName(data.company_name)
-    }
-  }
-
-  const fetchProducts = async (userId: string) => {
-    const { data, error } = await supabase.from("products").select("*").eq("owner_id", userId)
-
-    if (error) {
-      console.error("Error fetching products:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch products. Please try again.",
-        variant: "destructive",
-      })
-    } else {
+      if (error) throw error
       setProducts(data || [])
+    } catch (error) {
+      console.error("[v0] Error loading products:", error)
+      toast({ title: "Error", description: "Failed to load products", variant: "destructive" })
+    } finally {
+      setIsLoading(false)
     }
-    setLoading(false)
   }
 
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to add a product.",
-        variant: "destructive",
-      })
+  const handleCreateProduct = async () => {
+    if (!orgId) {
+      toast({ title: "Error", description: "No organization found", variant: "destructive" })
       return
     }
 
-    const { data, error } = await supabase
-      .from("products")
-      .insert([{ ...newProduct, price: Number.parseFloat(newProduct.price), owner_id: user.id }])
-      .select()
+    if (!newProduct.name.trim()) {
+      toast({ title: "Error", description: "Product name is required", variant: "destructive" })
+      return
+    }
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add product. Please try again.",
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Success",
-        description: "Product added successfully.",
-      })
-      setProducts([...products, data[0] as Product])
-      setIsAddProductOpen(false)
-      setNewProduct({ name: "", description: "", price: "" })
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase.from("products").insert([
+        {
+          org_id: orgId,
+          created_by: user.id,
+          name: newProduct.name.trim(),
+          description: newProduct.description.trim() || null,
+          sku: newProduct.sku.trim() || null,
+          price: newProduct.price,
+          cost: newProduct.cost || null,
+          quantity: newProduct.quantity || 0,
+          unit: newProduct.unit || "each",
+          category: newProduct.category.trim() || null,
+          is_active: true,
+        },
+      ])
+
+      if (error) throw error
+
+      toast({ title: "Success", description: "Product created successfully" })
+      setIsDialogOpen(false)
+      setNewProduct({ name: "", description: "", sku: "", price: 0, cost: 0, quantity: 0, unit: "each", category: "" })
+      loadData()
+    } catch (error) {
+      console.error("[v0] Error creating product:", error)
+      toast({ title: "Error", description: "Failed to create product", variant: "destructive" })
     }
   }
 
-  if (loading) {
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      const { error } = await supabase.from("products").delete().eq("id", id)
+      if (error) throw error
+      toast({ title: "Success", description: "Product deleted" })
+      loadData()
+    } catch (error) {
+      console.error("[v0] Error deleting product:", error)
+      toast({ title: "Error", description: "Failed to delete product", variant: "destructive" })
+    }
+  }
+
+  const filteredProducts = products.filter(
+    (prod) =>
+      prod.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prod.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prod.category?.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const totalValue = products.reduce((sum, prod) => sum + prod.price * (prod.quantity || 0), 0)
+
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#1a1f2c]">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Loading products...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-[#1a1f2c]">
-      {/* Left Sidebar */}
-      <div className="w-64 bg-[#272e3f] text-gray-300">
-        <div className="p-4 border-b border-gray-700">
-          <h1 className="text-xl font-semibold text-white">{companyName}</h1>
-        </div>
-        <nav className="p-4 space-y-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors
-                ${item.active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white"}`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
-      <div className="flex-1 flex flex-col">
-        {/* Top Search Bar */}
-        <div className="h-16 bg-[#272e3f] flex items-center px-4 border-b border-gray-700">
-          <div className="flex-1 flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-white">Products</h1>
-            <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+    <div className="min-h-screen bg-background text-foreground p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Products</h1>
+            <p className="text-muted-foreground">Manage your product catalog and inventory</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-80"
+              />
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white">
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Product
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-[#272e3f] text-white">
+              <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Add New Product</DialogTitle>
-                  <DialogDescription>
-                    Fill in the details below to add a new product to your inventory.
-                  </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleAddProduct} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Product Name</Label>
-                    <Input
-                      id="name"
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-700 text-white"
-                    />
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Name *</Label>
+                      <Input
+                        value={newProduct.name}
+                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                        placeholder="Product name"
+                      />
+                    </div>
+                    <div>
+                      <Label>SKU</Label>
+                      <Input
+                        value={newProduct.sku}
+                        onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                        placeholder="SKU-001"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label>Description</Label>
                     <Textarea
-                      id="description"
                       value={newProduct.description}
                       onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-700 text-white"
+                      rows={2}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="price">Price</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                      className="bg-[#1a1f2c] border-gray-700 text-white"
-                    />
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label>Price ($)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={newProduct.price}
+                        onChange={(e) =>
+                          setNewProduct({ ...newProduct, price: Number.parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Cost ($)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={newProduct.cost}
+                        onChange={(e) => setNewProduct({ ...newProduct, cost: Number.parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Quantity</Label>
+                      <Input
+                        type="number"
+                        value={newProduct.quantity}
+                        onChange={(e) =>
+                          setNewProduct({ ...newProduct, quantity: Number.parseInt(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
                   </div>
-                  <Button type="submit" className="bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white">
-                    Add Product
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Unit</Label>
+                      <Input
+                        value={newProduct.unit}
+                        onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
+                        placeholder="each, hour, sq ft..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Category</Label>
+                      <Input
+                        value={newProduct.category}
+                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                        placeholder="Category"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
                   </Button>
-                </form>
+                  <Button onClick={handleCreateProduct}>Add Product</Button>
+                </div>
               </DialogContent>
             </Dialog>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-                <Package className="h-8 w-8" />
-                Products
-              </h1>
-              <p className="text-slate-600 mt-2">Product catalog and inventory management</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-blue-600" />
-                    Product Catalog
-                  </CardTitle>
-                  <CardDescription>Manage your product and service offerings</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600">
-                    Coming soon - Complete product catalog with pricing and descriptions
-                  </p>
-                </CardContent>
-              </Card>
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <Package className="w-4 h-4 mr-2" />
+                Total Products
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{products.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Inventory Value
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+        </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Inventory className="h-5 w-5 text-green-600" />
-                    Inventory Tracking
-                  </CardTitle>
-                  <CardDescription>Track stock levels and manage inventory</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600">
-                    Coming soon - Real-time inventory tracking with low stock alerts
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-orange-600" />
-                    Pricing Management
-                  </CardTitle>
-                  <CardDescription>Manage pricing tiers and special offers</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600">Coming soon - Dynamic pricing with customer-specific rates</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+        {/* Products Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProducts.map((prod) => (
+            <Card key={prod.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{prod.name}</CardTitle>
+                    {prod.sku && <p className="text-xs text-muted-foreground">SKU: {prod.sku}</p>}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500"
+                      onClick={() => handleDeleteProduct(prod.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {prod.description && (
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{prod.description}</p>
+                )}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-2xl font-bold">${prod.price.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">per {prod.unit || "each"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{prod.quantity || 0} in stock</p>
+                    {prod.category && <p className="text-xs text-muted-foreground">{prod.category}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {filteredProducts.length === 0 && (
+            <Card className="col-span-full">
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No products found. Add your first product!
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

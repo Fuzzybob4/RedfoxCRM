@@ -26,7 +26,6 @@ export default function SignUpForm() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
-  const supabase = createClient()
 
   useEffect(() => {
     if (subscriptionType === "starter") {
@@ -41,8 +40,10 @@ export default function SignUpForm() {
     setIsLoading(true)
     setError(null)
 
+    const supabase = createClient()
+
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -62,21 +63,67 @@ export default function SignUpForm() {
         throw signUpError
       }
 
-      toast({
-        title: "Account Created Successfully!",
-        description: "Please check your email to verify your account before logging in.",
-      })
+      if (authData.user && authData.session) {
+        // Create organization
+        const { data: org, error: orgError } = await supabase
+          .from("organizations")
+          .insert({ name: companyName || `${firstName}'s Organization` })
+          .select("id")
+          .single()
 
-      setEmail("")
-      setPassword("")
-      setFirstName("")
-      setLastName("")
-      setPhoneNumber("")
-      setCompanyName("")
+        if (orgError) {
+          console.error("Error creating organization:", orgError)
+        } else if (org) {
+          // Create membership with owner role
+          await supabase.from("user_memberships").insert({
+            user_id: authData.user.id,
+            org_id: org.id,
+            role: "owner",
+          })
 
-      setTimeout(() => {
-        router.push("/login?message=Please check your email to verify your account")
-      }, 2000)
+          // Create business profile
+          await supabase.from("business_profiles").insert({
+            org_id: org.id,
+            business_name: companyName || `${firstName}'s Business`,
+            email: email,
+            phone: phoneNumber || null,
+          })
+
+          // Create/update profile
+          await supabase.from("profiles").upsert({
+            id: authData.user.id,
+            email: email,
+            full_name: `${firstName} ${lastName}`,
+            role: "owner",
+          })
+        }
+
+        toast({
+          title: "Account Created Successfully!",
+          description: "Redirecting to your dashboard...",
+        })
+
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 1500)
+      } else {
+        // Email confirmation required
+        toast({
+          title: "Account Created Successfully!",
+          description: "Please check your email to verify your account before logging in.",
+        })
+
+        setEmail("")
+        setPassword("")
+        setFirstName("")
+        setLastName("")
+        setPhoneNumber("")
+        setCompanyName("")
+
+        setTimeout(() => {
+          router.push("/login?message=Please check your email to verify your account")
+        }, 2000)
+      }
     } catch (error) {
       console.error("Signup error:", error)
 
@@ -164,6 +211,7 @@ export default function SignUpForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
               className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
             />
           </div>
@@ -187,6 +235,7 @@ export default function SignUpForm() {
               id="companyName"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
+              required
               className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
             />
           </div>
@@ -214,19 +263,20 @@ export default function SignUpForm() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
+                <SelectItem value="yearly">Yearly (20% off)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="cost" className="text-white">
-              Cost
-            </Label>
-            <Input id="cost" type="number" value={cost} readOnly className="bg-white/10 border-white/20 text-white" />
+          <div className="p-4 bg-white/5 rounded-lg">
+            <p className="text-sm text-gray-400">Estimated Cost</p>
+            <p className="text-2xl font-bold text-white">
+              ${cost.toFixed(2)}
+              <span className="text-sm text-gray-400">/{billingPeriod === "monthly" ? "mo" : "yr"}</span>
+            </p>
           </div>
         </form>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col gap-4">
         <Button
           type="submit"
           className="w-full bg-[#F67721] hover:bg-[#F5F906] hover:text-[#08042B] text-white"
@@ -236,14 +286,20 @@ export default function SignUpForm() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing Up...
+              Creating Account...
             </>
           ) : (
-            "Sign Up"
+            "Create Account"
           )}
         </Button>
+        {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+        <p className="text-sm text-gray-400 text-center">
+          Already have an account?{" "}
+          <a href="/login" className="text-[#F67721] hover:underline">
+            Sign in
+          </a>
+        </p>
       </CardFooter>
-      {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
     </Card>
   )
 }
