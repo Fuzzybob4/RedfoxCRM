@@ -17,9 +17,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { customerId, lineItems } = body
 
-    const { data: profile } = await supabase.from("profiles").select("default_org").eq("id", user.id).single()
+    const { data: membership } = await supabase
+      .from("user_memberships")
+      .select("org_id")
+      .eq("user_id", user.id)
+      .maybeSingle()
 
-    const orgId = profile?.default_org
+    const orgId = membership?.org_id
     if (!orgId) {
       return NextResponse.json({ error: "No organization found" }, { status: 400 })
     }

@@ -64,9 +64,13 @@ export default function InvoicesPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: prof } = await supabase.from("profiles").select("default_org").eq("id", user.id).maybeSingle()
+      const { data: membership } = await supabase
+        .from("user_memberships")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
 
-      if (!prof?.default_org) return
+      if (!membership?.org_id) return
 
       const { data, error } = await supabase
         .from("invoices")
@@ -74,7 +78,7 @@ export default function InvoicesPage() {
           *,
           customer:customers(first_name, last_name, email)
         `)
-        .eq("org_id", prof.default_org)
+        .eq("org_id", membership.org_id)
         .order("created_at", { ascending: false })
 
       if (error) throw error
@@ -98,14 +102,18 @@ export default function InvoicesPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: prof } = await supabase.from("profiles").select("default_org").eq("id", user.id).maybeSingle()
+      const { data: membership } = await supabase
+        .from("user_memberships")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
 
-      if (!prof?.default_org) return
+      if (!membership?.org_id) return
 
       const { data, error } = await supabase
         .from("customers")
         .select("id, first_name, last_name, email")
-        .eq("org_id", prof.default_org)
+        .eq("org_id", membership.org_id)
         .eq("is_active", true)
 
       if (error) throw error
@@ -122,9 +130,13 @@ export default function InvoicesPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: prof } = await supabase.from("profiles").select("default_org").eq("id", user.id).maybeSingle()
+      const { data: membership } = await supabase
+        .from("user_memberships")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
 
-      if (!prof?.default_org) {
+      if (!membership?.org_id) {
         toast({
           title: "Error",
           description: "No organization found",
@@ -139,7 +151,7 @@ export default function InvoicesPage() {
       const { error } = await supabase.from("invoices").insert([
         {
           ...newInvoice,
-          org_id: prof.default_org,
+          org_id: membership.org_id,
           created_by: user.id,
           invoice_number: `INV-${Date.now()}`,
           tax_amount: taxAmount,

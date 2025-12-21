@@ -76,10 +76,14 @@ export default function SettingsPage() {
       }
 
       // Fetch organization
-      const { data: prof } = await supabase.from("profiles").select("default_org").eq("id", user.id).maybeSingle()
+      const { data: membership } = await supabase
+        .from("user_memberships")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
 
-      if (prof?.default_org) {
-        const { data: orgData } = await supabase.from("organizations").select("*").eq("id", prof.default_org).single()
+      if (membership?.org_id) {
+        const { data: orgData } = await supabase.from("organizations").select("*").eq("id", membership.org_id).single()
 
         if (orgData) {
           setOrganization(orgData)
@@ -513,44 +517,46 @@ export default function SettingsPage() {
                           />
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-white">SMS & Push Notifications</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">SMS reminders</Label>
-                            <p className="text-sm text-gray-400">Receive text message reminders for important events</p>
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-white">SMS & Push Notifications</h3>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label className="text-white">SMS reminders</Label>
+                              <p className="text-sm text-gray-400">
+                                Receive text message reminders for important events
+                              </p>
+                            </div>
+                            <Switch
+                              checked={notifications.sms_reminders}
+                              onCheckedChange={(checked) =>
+                                setNotifications((prev) => ({ ...prev, sms_reminders: checked }))
+                              }
+                            />
                           </div>
-                          <Switch
-                            checked={notifications.sms_reminders}
-                            onCheckedChange={(checked) =>
-                              setNotifications((prev) => ({ ...prev, sms_reminders: checked }))
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">Push notifications</Label>
-                            <p className="text-sm text-gray-400">
-                              Receive browser push notifications for real-time updates
-                            </p>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label className="text-white">Push notifications</Label>
+                              <p className="text-sm text-gray-400">
+                                Receive browser push notifications for real-time updates
+                              </p>
+                            </div>
+                            <Switch
+                              checked={notifications.push_notifications}
+                              onCheckedChange={(checked) =>
+                                setNotifications((prev) => ({ ...prev, push_notifications: checked }))
+                              }
+                            />
                           </div>
-                          <Switch
-                            checked={notifications.push_notifications}
-                            onCheckedChange={(checked) =>
-                              setNotifications((prev) => ({ ...prev, push_notifications: checked }))
-                            }
-                          />
                         </div>
                       </div>
-                    </div>
 
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Preferences
-                    </Button>
+                      <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Preferences
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

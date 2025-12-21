@@ -58,20 +58,29 @@ export default function CustomersPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: prof } = await supabase.from("profiles").select("default_org").eq("id", user.id).maybeSingle()
+      const { data: membership, error: membershipError } = await supabase
+        .from("user_memberships")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
 
-      if (!prof?.default_org) return
+      if (membershipError) {
+        console.error("[v0] Error fetching membership:", membershipError)
+        throw membershipError
+      }
+
+      if (!membership?.org_id) return
 
       const { data, error } = await supabase
         .from("customers")
         .select("*")
-        .eq("org_id", prof.default_org)
+        .eq("org_id", membership.org_id)
         .order("created_at", { ascending: false })
 
       if (error) throw error
       setCustomers(data || [])
     } catch (error) {
-      console.error("Error fetching customers:", error)
+      console.error("[v0] Error fetching customers:", error)
       toast({
         title: "Error",
         description: "Failed to load customers",
@@ -83,15 +92,49 @@ export default function CustomersPage() {
   }
 
   const handleCreateCustomer = async () => {
+    if (!newCustomer.first_name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "First name is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!newCustomer.last_name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Last name is required",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Not authenticated",
+          variant: "destructive",
+        })
+        return
+      }
 
-      const { data: prof } = await supabase.from("profiles").select("default_org").eq("id", user.id).maybeSingle()
+      const { data: membership, error: membershipError } = await supabase
+        .from("user_memberships")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
 
-      if (!prof?.default_org) {
+      if (membershipError) {
+        console.error("[v0] Error fetching membership:", membershipError)
+        throw membershipError
+      }
+
+      if (!membership?.org_id) {
         toast({
           title: "Error",
           description: "No organization found",
@@ -100,23 +143,37 @@ export default function CustomersPage() {
         return
       }
 
-      const { error } = await supabase.from("customers").insert([
-        {
-          first_name: newCustomer.first_name,
-          last_name: newCustomer.last_name,
-          email: newCustomer.email,
-          phone: newCustomer.phone,
-          address: newCustomer.address,
-          city: newCustomer.city,
-          state: newCustomer.state,
-          zip_code: newCustomer.zip_code,
-          country: newCustomer.country,
-          notes: newCustomer.notes,
-          org_id: prof.default_org,
-        },
-      ])
+      console.log("[v0] Creating customer with data:", {
+        first_name: newCustomer.first_name,
+        last_name: newCustomer.last_name,
+        org_id: membership.org_id,
+      })
 
-      if (error) throw error
+      const { data: insertedData, error } = await supabase
+        .from("customers")
+        .insert([
+          {
+            first_name: newCustomer.first_name.trim(),
+            last_name: newCustomer.last_name.trim(),
+            email: newCustomer.email.trim() || null,
+            phone: newCustomer.phone.trim() || null,
+            address: newCustomer.address.trim() || null,
+            city: newCustomer.city.trim() || null,
+            state: newCustomer.state.trim() || null,
+            zip_code: newCustomer.zip_code.trim() || null,
+            country: newCustomer.country.trim() || null,
+            notes: newCustomer.notes.trim() || null,
+            org_id: membership.org_id,
+          },
+        ])
+        .select()
+
+      if (error) {
+        console.error("[v0] Supabase error:", error)
+        throw error
+      }
+
+      console.log("[v0] Customer created successfully:", insertedData)
 
       toast({
         title: "Success",
@@ -138,10 +195,10 @@ export default function CustomersPage() {
       })
       fetchCustomers()
     } catch (error) {
-      console.error("Error creating customer:", error)
+      console.error("[v0] Error creating customer:", error)
       toast({
         title: "Error",
-        description: "Failed to create customer",
+        description: error instanceof Error ? error.message : "Failed to create customer",
         variant: "destructive",
       })
     }
