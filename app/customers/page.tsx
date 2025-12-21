@@ -5,10 +5,8 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Users, Phone, Mail, MapPin, Edit, Trash2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
@@ -18,14 +16,12 @@ interface Customer {
   first_name: string
   last_name: string
   email?: string
-  phone_number?: string
+  phone?: string
   address?: string
   city?: string
   state?: string
-  zip?: string
-  lead_status: string
-  customer_type: string
-  source?: string
+  zip_code?: string
+  country?: string
   notes?: string
   created_at: string
 }
@@ -39,14 +35,12 @@ export default function CustomersPage() {
     first_name: "",
     last_name: "",
     email: "",
-    phone_number: "",
+    phone: "",
     address: "",
     city: "",
     state: "",
-    zip: "",
-    lead_status: "new",
-    customer_type: "residential",
-    source: "",
+    zip_code: "",
+    country: "",
     notes: "",
   })
 
@@ -108,9 +102,17 @@ export default function CustomersPage() {
 
       const { error } = await supabase.from("customers").insert([
         {
-          ...newCustomer,
+          first_name: newCustomer.first_name,
+          last_name: newCustomer.last_name,
+          email: newCustomer.email,
+          phone: newCustomer.phone,
+          address: newCustomer.address,
+          city: newCustomer.city,
+          state: newCustomer.state,
+          zip_code: newCustomer.zip_code,
+          country: newCustomer.country,
+          notes: newCustomer.notes,
           org_id: prof.default_org,
-          owner_id: user.id,
         },
       ])
 
@@ -126,14 +128,12 @@ export default function CustomersPage() {
         first_name: "",
         last_name: "",
         email: "",
-        phone_number: "",
+        phone: "",
         address: "",
         city: "",
         state: "",
-        zip: "",
-        lead_status: "new",
-        customer_type: "residential",
-        source: "",
+        zip_code: "",
+        country: "",
         notes: "",
       })
       fetchCustomers()
@@ -151,7 +151,7 @@ export default function CustomersPage() {
     (customer) =>
       `${customer.first_name} ${customer.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone_number?.includes(searchTerm),
+      customer.phone?.includes(searchTerm),
   )
 
   const getStatusColor = (status: string) => {
@@ -288,8 +288,8 @@ export default function CustomersPage() {
                     <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
-                      value={newCustomer.phone_number}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
+                      value={newCustomer.phone}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
                       className="bg-background border-border text-foreground"
                     />
                   </div>
@@ -321,39 +321,22 @@ export default function CustomersPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="lead_status">Lead Status</Label>
-                    <Select
-                      value={newCustomer.lead_status}
-                      onValueChange={(value) => setNewCustomer({ ...newCustomer, lead_status: value })}
-                    >
-                      <SelectTrigger className="bg-background border-border text-foreground">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="contacted">Contacted</SelectItem>
-                        <SelectItem value="qualified">Qualified</SelectItem>
-                        <SelectItem value="proposal">Proposal</SelectItem>
-                        <SelectItem value="negotiation">Negotiation</SelectItem>
-                        <SelectItem value="closed_won">Closed Won</SelectItem>
-                        <SelectItem value="closed_lost">Closed Lost</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="zip_code">Zip Code</Label>
+                    <Input
+                      id="zip_code"
+                      value={newCustomer.zip_code}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, zip_code: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="customer_type">Customer Type</Label>
-                    <Select
-                      value={newCustomer.customer_type}
-                      onValueChange={(value) => setNewCustomer({ ...newCustomer, customer_type: value })}
-                    >
-                      <SelectTrigger className="bg-background border-border text-foreground">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="residential">Residential</SelectItem>
-                        <SelectItem value="commercial">Commercial</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                      id="country"
+                      value={newCustomer.country}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, country: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
                   </div>
                   <div className="col-span-2">
                     <Label htmlFor="notes">Notes</Label>
@@ -414,8 +397,6 @@ export default function CustomersPage() {
                       <th className="text-left py-3 px-4 text-muted-foreground font-medium">Name</th>
                       <th className="text-left py-3 px-4 text-muted-foreground font-medium">Contact</th>
                       <th className="text-left py-3 px-4 text-muted-foreground font-medium">Location</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Type</th>
                       <th className="text-left py-3 px-4 text-muted-foreground font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -435,10 +416,10 @@ export default function CustomersPage() {
                                 {customer.email}
                               </div>
                             )}
-                            {customer.phone_number && (
+                            {customer.phone && (
                               <div className="flex items-center text-muted-foreground text-sm">
                                 <Phone className="w-4 h-4 mr-2" />
-                                {customer.phone_number}
+                                {customer.phone}
                               </div>
                             )}
                           </div>
@@ -451,20 +432,12 @@ export default function CustomersPage() {
                                 {customer.address}
                                 {customer.city && customer.state && (
                                   <div>
-                                    {customer.city}, {customer.state} {customer.zip}
+                                    {customer.city}, {customer.state} {customer.zip_code}
                                   </div>
                                 )}
                               </div>
                             </div>
                           )}
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge className={`${getStatusColor(customer.lead_status)} text-foreground`}>
-                            {customer.lead_status.replace("_", " ").toUpperCase()}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-muted-foreground capitalize">{customer.customer_type}</span>
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex space-x-2">
