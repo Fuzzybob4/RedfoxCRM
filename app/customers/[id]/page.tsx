@@ -1,11 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRouter, useParams } from "next/navigation"
-import { MapPin, ArrowLeft } from "lucide-react"
+import { MapPin, ArrowLeft, Upload, X } from "lucide-react"
+import { upload } from "@vercel/blob/client"
 
 interface Customer {
   id: string
@@ -49,6 +52,14 @@ interface Project {
   end_date: string | null
 }
 
+interface CustomerPhoto {
+  id: string
+  photo_url: string
+  photo_type: string | null
+  description: string | null
+  created_at: string
+}
+
 export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [estimates, setEstimates] = useState<Estimate[]>([])
@@ -56,7 +67,9 @@ export default function CustomerDetailPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [lifetimeSpend, setLifetimeSpend] = useState(0)
   const [outstandingBalance, setOutstandingBalance] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [photos, setPhotos] = useState<CustomerPhoto[]>([])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const params = useParams()
   const customerId = params.id as string
@@ -128,11 +141,20 @@ export default function CustomerDetailPage() {
 
         setProjects(projectsData || [])
 
+        const { data: photosData } = await supabase
+          .from("customer_photos")
+          .select("*")
+          .eq("customer_id", customerId)
+          .eq("org_id", membership.org_id)
+          .order("created_at", { ascending: false })
+
+        setPhotos(photosData || [])
+
         // Calculate lifetime spend and outstanding balance
         if (invoicesData) {
           const totalPaid = invoicesData.reduce((sum, inv) => sum + Number(inv.amount_paid || 0), 0)
           const totalAmount = invoicesData.reduce((sum, inv) => sum + Number(inv.total_amount || 0), 0)
-          setLifetimeSpend(totalPaid)
+          setLifetimeSpend(totalAmount)
           setOutstandingBalance(totalAmount - totalPaid)
         }
       } catch (error) {
@@ -145,6 +167,68 @@ export default function CustomerDetailPage() {
 
     fetchCustomerData()
   }, [supabase, router, customerId])
+
+  const [loading, setLoading] = useState(true)
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      console.log("[v0] Uploading photo:", file.name)
+
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/customers/photos/upload",
+        clientPayload: JSON.stringify({
+          customerId: customerId,
+          orgId: customer?.org_id,
+          photoType: "other",
+        }),
+      })
+
+      console.log("[v0] Photo uploaded:", blob.url)
+
+      // Refresh photos list
+      const { data: photosData } = await supabase
+        .from("customer_photos")
+        .select("*")
+        .eq("customer_id", customerId)
+        .order("created_at", { ascending: false })
+
+      setPhotos(photosData || [])
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    } catch (error) {
+      console.error("[v0] Error uploading photo:", error)
+      alert("Failed to upload photo. Please try again.")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDeletePhoto = async (photoId: string, photoUrl: string) => {
+    if (!confirm("Are you sure you want to delete this photo?")) return
+
+    try {
+      // Delete from database
+      const { error } = await supabase.from("customer_photos").delete().eq("id", photoId)
+
+      if (error) throw error
+
+      // Update local state
+      setPhotos(photos.filter((p) => p.id !== photoId))
+
+      console.log("[v0] Photo deleted from database")
+    } catch (error) {
+      console.error("[v0] Error deleting photo:", error)
+      alert("Failed to delete photo. Please try again.")
+    }
+  }
 
   if (loading) {
     return (
@@ -353,21 +437,61 @@ export default function CustomerDetailPage() {
             {/* Property & Project Photos */}
             <Card className="bg-white border-[#E4E0D6] rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-lg text-[#050103]">Property & Project Photos</CardTitle>
-                <CardDescription className="text-gray-700 font-semibold">
-                  Front • Roofline • Trees • After Install
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-lg text-[#050103]">Property & Project Photos</CardTitle>
+                    <CardDescription className="text-gray-700 font-semibold">
+                      Front • Roofline • Trees • After Install
+                    </CardDescription>
+                  </div>
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      size="sm"
+                      className="bg-[#FFC864] hover:bg-[#FFB84D] text-[#050103] font-semibold"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploading ? "Uploading..." : "Add Photo"}
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-3">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div
-                      key={i}
-                      className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 text-sm font-medium"
-                    >
-                      Image
-                    </div>
-                  ))}
+                  {photos.length > 0
+                    ? photos.map((photo) => (
+                        <div key={photo.id} className="relative aspect-square group">
+                          <img
+                            src={photo.photo_url || "/placeholder.svg"}
+                            alt={photo.description || "Customer photo"}
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                          {/* Delete button on hover */}
+                          <button
+                            onClick={() => handleDeletePhoto(photo.id, photo.photo_url)}
+                            className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))
+                    : Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 text-sm font-medium"
+                        >
+                          {i === 0 ? "Upload Photos" : ""}
+                        </div>
+                      ))}
                 </div>
               </CardContent>
             </Card>

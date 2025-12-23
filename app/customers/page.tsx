@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -10,8 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, Users, Phone, Mail, MapPin, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Users, Phone, Mail, MapPin, Edit, Trash2, Upload, X } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { upload } from "@vercel/blob/client"
 
 interface Customer {
   id: string
@@ -46,6 +49,8 @@ export default function CustomersPage() {
     country: "",
     notes: "",
   })
+  const [uploadedPhotos, setUploadedPhotos] = useState<{ url: string; name: string }[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
   const supabase = createClient()
   const { toast } = useToast()
@@ -160,6 +165,22 @@ export default function CustomersPage() {
         throw error
       }
 
+      if (insertedData && insertedData.length > 0 && uploadedPhotos.length > 0) {
+        const customerId = insertedData[0].id
+        const photoInserts = uploadedPhotos.map((photo) => ({
+          customer_id: customerId,
+          org_id: orgId,
+          url: photo.url,
+          caption: photo.name,
+        }))
+
+        const { error: photoError } = await supabase.from("customer_photos").insert(photoInserts)
+
+        if (photoError) {
+          console.error("[v0] Error saving photos:", photoError)
+        }
+      }
+
       toast({
         title: "Success",
         description: "Customer created successfully",
@@ -178,6 +199,7 @@ export default function CustomersPage() {
         country: "",
         notes: "",
       })
+      setUploadedPhotos([])
       fetchCustomers()
     } catch (error) {
       console.error("[v0] Error creating customer:", error)
@@ -187,6 +209,43 @@ export default function CustomersPage() {
         variant: "destructive",
       })
     }
+  }
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files || files.length === 0) return
+
+    setIsUploading(true)
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const blob = await upload(file.name, file, {
+          access: "public",
+          handleUploadUrl: "/api/customers/photos/upload",
+        })
+        return { url: blob.url, name: file.name }
+      })
+
+      const newPhotos = await Promise.all(uploadPromises)
+      setUploadedPhotos([...uploadedPhotos, ...newPhotos])
+
+      toast({
+        title: "Success",
+        description: `${newPhotos.length} photo(s) uploaded successfully`,
+      })
+    } catch (error) {
+      console.error("[v0] Error uploading photos:", error)
+      toast({
+        title: "Error",
+        description: "Failed to upload photos",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const removePhoto = (url: string) => {
+    setUploadedPhotos(uploadedPhotos.filter((photo) => photo.url !== url))
   }
 
   const filteredCustomers = customers.filter(
@@ -279,7 +338,7 @@ export default function CustomersPage() {
                   New Customer
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border text-foreground max-w-2xl">
+              <DialogContent className="bg-card border-border text-foreground max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New Customer</DialogTitle>
                 </DialogHeader>
@@ -376,11 +435,59 @@ export default function CustomersPage() {
                       rows={3}
                     />
                   </div>
+
+                  {/* Photo upload section */}
+                  <div className="col-span-2">
+                    <Label>Property Photos (Optional)</Label>
+                    <div className="mt-2">
+                      <label className="cursor-pointer">
+                        <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary transition-colors text-center">
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
+                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 10MB</p>
+                        </div>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                          disabled={isUploading}
+                        />
+                      </label>
+
+                      {/* Display uploaded photos */}
+                      {uploadedPhotos.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2 mt-4">
+                          {uploadedPhotos.map((photo, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={photo.url || "/placeholder.svg"}
+                                alt={photo.name}
+                                className="w-full h-24 object-cover rounded-lg border border-border"
+                              />
+                              <button
+                                onClick={() => removePhoto(photo.url)}
+                                className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {isUploading && <p className="text-sm text-muted-foreground mt-2">Uploading...</p>}
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button
                     variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setUploadedPhotos([])
+                    }}
                     className="border-border text-muted-foreground hover:bg-accent"
                   >
                     Cancel
@@ -388,6 +495,7 @@ export default function CustomersPage() {
                   <Button
                     onClick={handleCreateCustomer}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    disabled={isUploading}
                   >
                     Create Customer
                   </Button>
