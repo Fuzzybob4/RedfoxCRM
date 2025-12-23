@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -429,11 +430,16 @@ export default function CustomersPage() {
                   </thead>
                   <tbody>
                     {filteredCustomers.map((customer) => (
-                      <tr key={customer.id} className="border-b border-border hover:bg-accent transition-colors">
+                      <tr
+                        key={customer.id}
+                        className="border-b border-border hover:bg-accent transition-colors cursor-pointer"
+                      >
                         <td className="py-4 px-4">
-                          <div className="text-foreground font-medium">
-                            {customer.first_name} {customer.last_name}
-                          </div>
+                          <Link href={`/customers/${customer.id}`}>
+                            <div className="text-foreground font-medium hover:text-primary transition-colors">
+                              {customer.first_name} {customer.last_name}
+                            </div>
+                          </Link>
                         </td>
                         <td className="py-4 px-4">
                           <div className="space-y-1">

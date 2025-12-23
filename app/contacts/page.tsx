@@ -133,7 +133,11 @@ export default function ContactsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredContacts.map((contact) => (
-            <Card key={contact.id} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={contact.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => router.push(`/customers/${contact.id}`)}
+            >
               <CardHeader>
                 <CardTitle className="text-lg">
                   {contact.first_name} {contact.last_name}
