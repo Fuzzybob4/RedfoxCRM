@@ -92,7 +92,7 @@ export default function SignUpForm() {
           })
 
           const trialEnd = new Date()
-          trialEnd.setDate(trialEnd.getDate() + 14) // 14-day trial
+          trialEnd.setDate(trialEnd.getDate() + 30) // 30-day trial
 
           await supabase.from("subscriptions").insert({
             org_id: org.id,

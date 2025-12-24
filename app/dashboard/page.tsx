@@ -56,9 +56,10 @@ export default function DashboardPage() {
         .select("org_id")
         .eq("user_id", user?.id)
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (!membership?.org_id) {
+        router.push("/setup-organization")
         setStatsLoading(false)
         return
       }

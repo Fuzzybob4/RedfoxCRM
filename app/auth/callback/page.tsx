@@ -42,48 +42,17 @@ export default function AuthCallback() {
         .select("org_id")
         .eq("user_id", session.user.id)
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (!membership) {
-        // New user - create organization and membership
-        const userMeta = session.user.user_metadata
-        const companyName = userMeta?.company_name || `${userMeta?.full_name || session.user.email}'s Organization`
-
-        // Create organization
-        const { data: org, error: orgError } = await supabase
-          .from("organizations")
-          .insert({ name: companyName })
-          .select("id")
-          .single()
-
-        if (orgError) {
-          console.error("Error creating organization:", orgError)
-        } else if (org) {
-          // Create membership
-          await supabase.from("user_memberships").insert({
-            user_id: session.user.id,
-            org_id: org.id,
-            role: "owner",
-          })
-
-          // Create business profile
-          await supabase.from("business_profiles").insert({
-            org_id: org.id,
-            business_name: companyName,
-            email: session.user.email,
-            phone: userMeta?.phone_number || null,
-          })
-
-          // Create profile if not exists
-          await supabase.from("profiles").upsert({
-            id: session.user.id,
-            email: session.user.email,
-            full_name: userMeta?.full_name || null,
-            role: "owner",
-          })
-        }
+        // First-time user - redirect to onboarding
+        console.log("[v0] New user detected, redirecting to setup-organization")
+        router.replace("/setup-organization")
+        return
       }
 
+      // Existing user - proceed to dashboard
+      console.log("[v0] Existing user detected, proceeding to dashboard")
       router.replace(next)
       router.refresh()
     }

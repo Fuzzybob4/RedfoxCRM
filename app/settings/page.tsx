@@ -7,55 +7,59 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Settings, User, Building, Bell, Shield, CreditCard, Save, Eye, EyeOff } from "lucide-react"
+import { User, Building, Shield, CreditCard, Save } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface Profile {
   id: string
-  first_name?: string
-  last_name?: string
+  full_name?: string
   email?: string
-  phone_number?: string
-  job_title?: string
-  department?: string
+}
+
+interface BusinessProfile {
+  business_name?: string
+  phone?: string
+  email?: string
+  address?: string
+  website?: string
+  city?: string
+  state?: string
+  zip_code?: string
+  country?: string
 }
 
 interface Organization {
   id: string
   name: string
-  plan: string
-  address?: string
-  phone?: string
-  email?: string
-  website?: string
+}
+
+interface Subscription {
+  plan_type: string
+  billing_period: string
+  status: string
+  amount?: number
+  trial_end?: string
+  stripe_customer_id?: string
 }
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [orgId, setOrgId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showPassword, setShowPassword] = useState(false)
-  const [notifications, setNotifications] = useState({
-    email_marketing: true,
-    email_invoices: true,
-    email_estimates: true,
-    sms_reminders: false,
-    push_notifications: true,
-  })
-  const [security, setSecurity] = useState({
-    two_factor_enabled: false,
-    session_timeout: "24",
-    login_notifications: true,
-  })
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [currentPassword, setCurrentPassword] = useState("")
 
   const supabase = createClient()
   const { toast } = useToast()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const defaultTab = searchParams.get("tab") || "profile"
 
   useEffect(() => {
     fetchUserData()
@@ -66,7 +70,10 @@ export default function SettingsPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        router.push("/login")
+        return
+      }
 
       // Fetch profile
       const { data: profileData } = await supabase.from("profiles").select("*").eq("id", user.id).single()
@@ -83,10 +90,34 @@ export default function SettingsPage() {
         .maybeSingle()
 
       if (membership?.org_id) {
+        setOrgId(membership.org_id)
+
         const { data: orgData } = await supabase.from("organizations").select("*").eq("id", membership.org_id).single()
 
         if (orgData) {
           setOrganization(orgData)
+        }
+
+        // Fetch business profile
+        const { data: businessData } = await supabase
+          .from("business_profiles")
+          .select("*")
+          .eq("org_id", membership.org_id)
+          .maybeSingle()
+
+        if (businessData) {
+          setBusinessProfile(businessData)
+        }
+
+        // Fetch subscription
+        const { data: subData } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("org_id", membership.org_id)
+          .maybeSingle()
+
+        if (subData) {
+          setSubscription(subData)
         }
       }
     } catch (error) {
@@ -105,16 +136,7 @@ export default function SettingsPage() {
     if (!profile) return
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          phone_number: profile.phone_number,
-          job_title: profile.job_title,
-          department: profile.department,
-        })
-        .eq("id", profile.id)
+      const { error } = await supabase.from("profiles").update({ full_name: profile.full_name }).eq("id", profile.id)
 
       if (error) throw error
 
@@ -132,32 +154,37 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSaveOrganization = async () => {
-    if (!organization) return
+  const handleSaveBusinessProfile = async () => {
+    if (!businessProfile || !orgId) return
 
     try {
       const { error } = await supabase
-        .from("organizations")
-        .update({
-          name: organization.name,
-          address: organization.address,
-          phone: organization.phone,
-          email: organization.email,
-          website: organization.website,
+        .from("business_profiles")
+        .upsert({
+          org_id: orgId,
+          business_name: businessProfile.business_name,
+          phone: businessProfile.phone,
+          email: businessProfile.email,
+          address: businessProfile.address,
+          city: businessProfile.city,
+          state: businessProfile.state,
+          zip_code: businessProfile.zip_code,
+          country: businessProfile.country,
+          website: businessProfile.website,
         })
-        .eq("id", organization.id)
+        .eq("org_id", orgId)
 
       if (error) throw error
 
       toast({
         title: "Success",
-        description: "Company information updated successfully",
+        description: "Business information updated successfully",
       })
     } catch (error) {
-      console.error("Error updating organization:", error)
+      console.error("Error updating business profile:", error)
       toast({
         title: "Error",
-        description: "Failed to update company information",
+        description: "Failed to update business information",
         variant: "destructive",
       })
     }
@@ -196,6 +223,7 @@ export default function SettingsPage() {
 
       setNewPassword("")
       setConfirmPassword("")
+      setCurrentPassword("")
     } catch (error) {
       console.error("Error updating password:", error)
       toast({
@@ -206,578 +234,400 @@ export default function SettingsPage() {
     }
   }
 
+  const handleUpdateEmail = async (newEmail: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail,
+      })
+
+      if (error) throw error
+
+      toast({
+        title: "Success",
+        description: "Verification email sent to new address",
+      })
+    } catch (error) {
+      console.error("Error updating email:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update email",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#1a1f2c] flex items-center justify-center">
-        <div className="text-white">Loading settings...</div>
+      <div className="min-h-screen bg-[#F5F2EA] flex items-center justify-center">
+        <div className="text-gray-700">Loading settings...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1f2c] text-white">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-[#272e3f] min-h-screen p-6">
-          <div className="mb-8">
-            <h1 className="text-xl font-bold text-white">RedFox CRM</h1>
-            <p className="text-gray-400 text-sm">{organization?.name || "Your Company"}</p>
-          </div>
-
-          <nav className="space-y-2">
-            <a
-              href="/dashboard"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
-            >
-              <span>📊</span>
-              <span>Dashboard</span>
-            </a>
-            <a
-              href="/customers"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
-            >
-              <span>👥</span>
-              <span>Customers</span>
-            </a>
-            <a
-              href="/estimates"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
-            >
-              <span>📋</span>
-              <span>Estimates</span>
-            </a>
-            <a
-              href="/invoices"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
-            >
-              <span>🧾</span>
-              <span>Invoices</span>
-            </a>
-            <a
-              href="/projects"
-              className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-[#1a1f2c] p-3 rounded-lg transition-colors"
-            >
-              <span>🏗️</span>
-              <span>Projects</span>
-            </a>
-            <a href="/settings" className="flex items-center space-x-3 text-white bg-[#1a1f2c] p-3 rounded-lg">
-              <Settings className="w-5 h-5" />
-              <span>Settings</span>
-            </a>
-          </nav>
+    <div className="min-h-screen bg-[#F5F2EA]">
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+          <p className="text-gray-600">Manage your account and business settings</p>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-              <p className="text-gray-400">Manage your account and organization settings</p>
-            </div>
+        <Tabs defaultValue={defaultTab} className="space-y-6">
+          <TabsList className="bg-white border border-gray-200">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-[#F67721] data-[state=active]:text-white">
+              <User className="w-4 h-4 mr-2" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="business" className="data-[state=active]:bg-[#F67721] data-[state=active]:text-white">
+              <Building className="w-4 h-4 mr-2" />
+              Business
+            </TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-[#F67721] data-[state=active]:text-white">
+              <Shield className="w-4 h-4 mr-2" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="data-[state=active]:bg-[#F67721] data-[state=active]:text-white">
+              <CreditCard className="w-4 h-4 mr-2" />
+              Billing
+            </TabsTrigger>
+          </TabsList>
 
-            <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="bg-[#272e3f] border-gray-600">
-                <TabsTrigger
-                  value="profile"
-                  className="data-[state=active]:bg-[#1a1f2c] data-[state=active]:text-white"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  Profile
-                </TabsTrigger>
-                <TabsTrigger
-                  value="company"
-                  className="data-[state=active]:bg-[#1a1f2c] data-[state=active]:text-white"
-                >
-                  <Building className="w-4 h-4 mr-2" />
-                  Company
-                </TabsTrigger>
-                <TabsTrigger
-                  value="notifications"
-                  className="data-[state=active]:bg-[#1a1f2c] data-[state=active]:text-white"
-                >
-                  <Bell className="w-4 h-4 mr-2" />
-                  Notifications
-                </TabsTrigger>
-                <TabsTrigger
-                  value="security"
-                  className="data-[state=active]:bg-[#1a1f2c] data-[state=active]:text-white"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Security
-                </TabsTrigger>
-                <TabsTrigger
-                  value="billing"
-                  className="data-[state=active]:bg-[#1a1f2c] data-[state=active]:text-white"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Billing
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Profile Tab */}
-              <TabsContent value="profile">
-                <Card className="bg-[#272e3f] border-gray-600">
-                  <CardHeader>
-                    <CardTitle className="text-white">Personal Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="first_name">First Name</Label>
-                        <Input
-                          id="first_name"
-                          value={profile?.first_name || ""}
-                          onChange={(e) =>
-                            setProfile((prev) => (prev ? { ...prev, first_name: e.target.value } : null))
-                          }
-                          className="bg-[#1a1f2c] border-gray-600 text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="last_name">Last Name</Label>
-                        <Input
-                          id="last_name"
-                          value={profile?.last_name || ""}
-                          onChange={(e) => setProfile((prev) => (prev ? { ...prev, last_name: e.target.value } : null))}
-                          className="bg-[#1a1f2c] border-gray-600 text-white"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profile?.email || ""}
-                        disabled
-                        className="bg-[#1a1f2c] border-gray-600 text-gray-400"
-                      />
-                      <p className="text-sm text-gray-400 mt-1">
-                        Email cannot be changed here. Contact support if needed.
-                      </p>
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        value={profile?.phone_number || ""}
-                        onChange={(e) =>
-                          setProfile((prev) => (prev ? { ...prev, phone_number: e.target.value } : null))
-                        }
-                        className="bg-[#1a1f2c] border-gray-600 text-white"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="job_title">Job Title</Label>
-                        <Input
-                          id="job_title"
-                          value={profile?.job_title || ""}
-                          onChange={(e) => setProfile((prev) => (prev ? { ...prev, job_title: e.target.value } : null))}
-                          className="bg-[#1a1f2c] border-gray-600 text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="department">Department</Label>
-                        <Input
-                          id="department"
-                          value={profile?.department || ""}
-                          onChange={(e) =>
-                            setProfile((prev) => (prev ? { ...prev, department: e.target.value } : null))
-                          }
-                          className="bg-[#1a1f2c] border-gray-600 text-white"
-                        />
-                      </div>
-                    </div>
-                    <Button onClick={handleSaveProfile} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Profile
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Company Tab */}
-              <TabsContent value="company">
-                <Card className="bg-[#272e3f] border-gray-600">
-                  <CardHeader>
-                    <CardTitle className="text-white">Company Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label htmlFor="company_name">Company Name</Label>
-                      <Input
-                        id="company_name"
-                        value={organization?.name || ""}
-                        onChange={(e) => setOrganization((prev) => (prev ? { ...prev, name: e.target.value } : null))}
-                        className="bg-[#1a1f2c] border-gray-600 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="company_address">Address</Label>
-                      <Textarea
-                        id="company_address"
-                        value={organization?.address || ""}
-                        onChange={(e) =>
-                          setOrganization((prev) => (prev ? { ...prev, address: e.target.value } : null))
-                        }
-                        className="bg-[#1a1f2c] border-gray-600 text-white"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="company_phone">Phone</Label>
-                        <Input
-                          id="company_phone"
-                          value={organization?.phone || ""}
-                          onChange={(e) =>
-                            setOrganization((prev) => (prev ? { ...prev, phone: e.target.value } : null))
-                          }
-                          className="bg-[#1a1f2c] border-gray-600 text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="company_email">Email</Label>
-                        <Input
-                          id="company_email"
-                          type="email"
-                          value={organization?.email || ""}
-                          onChange={(e) =>
-                            setOrganization((prev) => (prev ? { ...prev, email: e.target.value } : null))
-                          }
-                          className="bg-[#1a1f2c] border-gray-600 text-white"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="website">Website</Label>
-                      <Input
-                        id="website"
-                        value={organization?.website || ""}
-                        onChange={(e) =>
-                          setOrganization((prev) => (prev ? { ...prev, website: e.target.value } : null))
-                        }
-                        className="bg-[#1a1f2c] border-gray-600 text-white"
-                        placeholder="https://yourcompany.com"
-                      />
-                    </div>
-                    <Button onClick={handleSaveOrganization} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Company Info
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Notifications Tab */}
-              <TabsContent value="notifications">
-                <Card className="bg-[#272e3f] border-gray-600">
-                  <CardHeader>
-                    <CardTitle className="text-white">Notification Preferences</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-white">Email Notifications</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">Marketing emails</Label>
-                            <p className="text-sm text-gray-400">Receive updates about new features and tips</p>
-                          </div>
-                          <Switch
-                            checked={notifications.email_marketing}
-                            onCheckedChange={(checked) =>
-                              setNotifications((prev) => ({ ...prev, email_marketing: checked }))
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">Invoice notifications</Label>
-                            <p className="text-sm text-gray-400">Get notified when invoices are paid or overdue</p>
-                          </div>
-                          <Switch
-                            checked={notifications.email_invoices}
-                            onCheckedChange={(checked) =>
-                              setNotifications((prev) => ({ ...prev, email_invoices: checked }))
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">Estimate notifications</Label>
-                            <p className="text-sm text-gray-400">Get notified when estimates are viewed or accepted</p>
-                          </div>
-                          <Switch
-                            checked={notifications.email_estimates}
-                            onCheckedChange={(checked) =>
-                              setNotifications((prev) => ({ ...prev, email_estimates: checked }))
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">SMS & Push Notifications</h3>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label className="text-white">SMS reminders</Label>
-                              <p className="text-sm text-gray-400">
-                                Receive text message reminders for important events
-                              </p>
-                            </div>
-                            <Switch
-                              checked={notifications.sms_reminders}
-                              onCheckedChange={(checked) =>
-                                setNotifications((prev) => ({ ...prev, sms_reminders: checked }))
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label className="text-white">Push notifications</Label>
-                              <p className="text-sm text-gray-400">
-                                Receive browser push notifications for real-time updates
-                              </p>
-                            </div>
-                            <Switch
-                              checked={notifications.push_notifications}
-                              onCheckedChange={(checked) =>
-                                setNotifications((prev) => ({ ...prev, push_notifications: checked }))
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Preferences
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Security Tab */}
-              <TabsContent value="security">
-                <div className="space-y-6">
-                  <Card className="bg-[#272e3f] border-gray-600">
-                    <CardHeader>
-                      <CardTitle className="text-white">Change Password</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label htmlFor="new_password">New Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="new_password"
-                            type={showPassword ? "text" : "password"}
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="bg-[#1a1f2c] border-gray-600 text-white pr-10"
-                            placeholder="Enter new password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4 text-gray-400" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-gray-400" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="confirm_password">Confirm Password</Label>
-                        <Input
-                          id="confirm_password"
-                          type={showPassword ? "text" : "password"}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="bg-[#1a1f2c] border-gray-600 text-white"
-                          placeholder="Confirm new password"
-                        />
-                      </div>
-                      <Button onClick={handleChangePassword} className="bg-blue-600 hover:bg-blue-700">
-                        Update Password
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-[#272e3f] border-gray-600">
-                    <CardHeader>
-                      <CardTitle className="text-white">Security Settings</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label className="text-white">Two-Factor Authentication</Label>
-                          <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={security.two_factor_enabled ? "default" : "secondary"}>
-                            {security.two_factor_enabled ? "Enabled" : "Disabled"}
-                          </Badge>
-                          <Switch
-                            checked={security.two_factor_enabled}
-                            onCheckedChange={(checked) =>
-                              setSecurity((prev) => ({ ...prev, two_factor_enabled: checked }))
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label className="text-white">Login Notifications</Label>
-                          <p className="text-sm text-gray-400">Get notified when someone logs into your account</p>
-                        </div>
-                        <Switch
-                          checked={security.login_notifications}
-                          onCheckedChange={(checked) =>
-                            setSecurity((prev) => ({ ...prev, login_notifications: checked }))
-                          }
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-white">Session Timeout</Label>
-                        <p className="text-sm text-gray-400 mb-2">Automatically log out after period of inactivity</p>
-                        <Select
-                          value={security.session_timeout}
-                          onValueChange={(value) => setSecurity((prev) => ({ ...prev, session_timeout: value }))}
-                        >
-                          <SelectTrigger className="bg-[#272e3f] border-gray-600 text-white w-48">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#272e3f] border-gray-600">
-                            <SelectItem value="1">1 hour</SelectItem>
-                            <SelectItem value="8">8 hours</SelectItem>
-                            <SelectItem value="24">24 hours</SelectItem>
-                            <SelectItem value="168">1 week</SelectItem>
-                            <SelectItem value="never">Never</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Security Settings
-                      </Button>
-                    </CardContent>
-                  </Card>
+          {/* Profile Tab */}
+          <TabsContent value="profile">
+            <Card className="bg-white border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Personal Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="full_name" className="text-gray-700 font-semibold">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="full_name"
+                    value={profile?.full_name || ""}
+                    onChange={(e) => setProfile((prev) => (prev ? { ...prev, full_name: e.target.value } : null))}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                  />
                 </div>
-              </TabsContent>
+                <div>
+                  <Label htmlFor="email" className="text-gray-700 font-semibold">
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profile?.email || ""}
+                    disabled
+                    className="bg-gray-100 border-gray-300 text-gray-600 mt-1"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Contact support to change your email address</p>
+                </div>
+                <Button onClick={handleSaveProfile} className="bg-[#F67721] hover:bg-[#e56610]">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Profile
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              {/* Billing Tab */}
-              <TabsContent value="billing">
-                <div className="space-y-6">
-                  <Card className="bg-[#272e3f] border-gray-600">
-                    <CardHeader>
-                      <CardTitle className="text-white">Current Plan</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+          {/* Business Tab */}
+          <TabsContent value="business">
+            <Card className="bg-white border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Business Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="business_name" className="text-gray-700 font-semibold">
+                    Business Name
+                  </Label>
+                  <Input
+                    id="business_name"
+                    value={businessProfile?.business_name || ""}
+                    onChange={(e) =>
+                      setBusinessProfile((prev) => (prev ? { ...prev, business_name: e.target.value } : null))
+                    }
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="business_email" className="text-gray-700 font-semibold">
+                      Business Email
+                    </Label>
+                    <Input
+                      id="business_email"
+                      type="email"
+                      value={businessProfile?.email || ""}
+                      onChange={(e) => setBusinessProfile((prev) => (prev ? { ...prev, email: e.target.value } : null))}
+                      className="bg-white border-gray-300 text-gray-900 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="business_phone" className="text-gray-700 font-semibold">
+                      Business Phone
+                    </Label>
+                    <Input
+                      id="business_phone"
+                      value={businessProfile?.phone || ""}
+                      onChange={(e) => setBusinessProfile((prev) => (prev ? { ...prev, phone: e.target.value } : null))}
+                      className="bg-white border-gray-300 text-gray-900 mt-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="address" className="text-gray-700 font-semibold">
+                    Address
+                  </Label>
+                  <Input
+                    id="address"
+                    value={businessProfile?.address || ""}
+                    onChange={(e) => setBusinessProfile((prev) => (prev ? { ...prev, address: e.target.value } : null))}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="city" className="text-gray-700 font-semibold">
+                      City
+                    </Label>
+                    <Input
+                      id="city"
+                      value={businessProfile?.city || ""}
+                      onChange={(e) => setBusinessProfile((prev) => (prev ? { ...prev, city: e.target.value } : null))}
+                      className="bg-white border-gray-300 text-gray-900 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state" className="text-gray-700 font-semibold">
+                      State
+                    </Label>
+                    <Input
+                      id="state"
+                      value={businessProfile?.state || ""}
+                      onChange={(e) => setBusinessProfile((prev) => (prev ? { ...prev, state: e.target.value } : null))}
+                      className="bg-white border-gray-300 text-gray-900 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zip_code" className="text-gray-700 font-semibold">
+                      ZIP Code
+                    </Label>
+                    <Input
+                      id="zip_code"
+                      value={businessProfile?.zip_code || ""}
+                      onChange={(e) =>
+                        setBusinessProfile((prev) => (prev ? { ...prev, zip_code: e.target.value } : null))
+                      }
+                      className="bg-white border-gray-300 text-gray-900 mt-1"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="country" className="text-gray-700 font-semibold">
+                      Country
+                    </Label>
+                    <Input
+                      id="country"
+                      value={businessProfile?.country || ""}
+                      onChange={(e) =>
+                        setBusinessProfile((prev) => (prev ? { ...prev, country: e.target.value } : null))
+                      }
+                      className="bg-white border-gray-300 text-gray-900 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="website" className="text-gray-700 font-semibold">
+                      Website
+                    </Label>
+                    <Input
+                      id="website"
+                      value={businessProfile?.website || ""}
+                      onChange={(e) =>
+                        setBusinessProfile((prev) => (prev ? { ...prev, website: e.target.value } : null))
+                      }
+                      className="bg-white border-gray-300 text-gray-900 mt-1"
+                      placeholder="https://yourcompany.com"
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleSaveBusinessProfile} className="bg-[#F67721] hover:bg-[#e56610]">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Business Info
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security">
+            <Card className="bg-white border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Change Password</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="new_password" className="text-gray-700 font-semibold">
+                    New Password
+                  </Label>
+                  <Input
+                    id="new_password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirm_password" className="text-gray-700 font-semibold">
+                    Confirm New Password
+                  </Label>
+                  <Input
+                    id="confirm_password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="bg-white border-gray-300 text-gray-900 mt-1"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+                <Button onClick={handleChangePassword} className="bg-[#F67721] hover:bg-[#e56610]">
+                  <Save className="w-4 h-4 mr-2" />
+                  Update Password
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing">
+            <Card className="bg-white border-gray-200">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Subscription & Billing</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {subscription ? (
+                  <>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="text-xl font-bold text-white capitalize">
-                            {organization?.plan || "Free"} Plan
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {subscription.plan_type.charAt(0).toUpperCase() + subscription.plan_type.slice(1)} Plan
                           </h3>
-                          <p className="text-gray-400">
-                            {organization?.plan === "free" && "Perfect for getting started"}
-                            {organization?.plan === "pro" && "$29/month - Great for small teams"}
-                            {organization?.plan === "business" && "$99/month - Perfect for growing businesses"}
-                            {organization?.plan === "enterprise" && "Custom pricing - For large organizations"}
+                          <p className="text-sm text-gray-600">
+                            ${subscription.amount?.toFixed(2)} / {subscription.billing_period}
                           </p>
                         </div>
-                        <Badge className="bg-green-600 text-white">Active</Badge>
+                        <Badge
+                          className={`${
+                            subscription.status === "active"
+                              ? "bg-green-500"
+                              : subscription.status === "trial"
+                                ? "bg-blue-500"
+                                : "bg-yellow-500"
+                          } text-white`}
+                        >
+                          {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                        </Badge>
                       </div>
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        {organization?.plan === "free" ? "Upgrade Plan" : "Change Plan"}
-                      </Button>
-                    </CardContent>
-                  </Card>
+                      {subscription.status === "trial" && subscription.trial_end && (
+                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                          <p className="text-sm text-blue-900">
+                            <strong>Trial Period:</strong> Your trial ends on{" "}
+                            {new Date(subscription.trial_end).toLocaleDateString()}. Add payment method before trial
+                            ends to continue service.
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
-                  <Card className="bg-[#272e3f] border-gray-600">
-                    <CardHeader>
-                      <CardTitle className="text-white">Payment Method</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center space-x-4 mb-4">
-                        <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">VISA</span>
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-gray-900">Payment Method</h4>
+                      {subscription.stripe_customer_id ? (
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <p className="text-sm text-gray-600">Stripe Customer ID: {subscription.stripe_customer_id}</p>
+                          <Button
+                            onClick={() => {
+                              toast({
+                                title: "Coming Soon",
+                                description: "Stripe integration for payment management is coming soon",
+                              })
+                            }}
+                            variant="outline"
+                            className="mt-3 border-[#F67721] text-[#F67721] hover:bg-[#F67721] hover:text-white"
+                          >
+                            Manage Payment Methods
+                          </Button>
                         </div>
-                        <div>
-                          <p className="text-white">•••• •••• •••• 4242</p>
-                          <p className="text-gray-400 text-sm">Expires 12/25</p>
+                      ) : (
+                        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                          <p className="text-sm text-yellow-900 mb-3">No payment method on file</p>
+                          <Button
+                            onClick={() => {
+                              toast({
+                                title: "Coming Soon",
+                                description: "Stripe payment setup is coming soon",
+                              })
+                            }}
+                            className="bg-[#F67721] hover:bg-[#e56610]"
+                          >
+                            Add Payment Method
+                          </Button>
                         </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="border-gray-600 text-gray-300 hover:bg-[#1a1f2c] bg-transparent"
-                      >
-                        Update Payment Method
-                      </Button>
-                    </CardContent>
-                  </Card>
+                      )}
+                    </div>
 
-                  <Card className="bg-[#272e3f] border-gray-600">
-                    <CardHeader>
-                      <CardTitle className="text-white">Billing History</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between py-2 border-b border-gray-700">
-                          <div>
-                            <p className="text-white">Pro Plan - January 2024</p>
-                            <p className="text-gray-400 text-sm">Jan 1, 2024</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white">$29.00</p>
-                            <Badge className="bg-green-600 text-white text-xs">Paid</Badge>
-                          </div>
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="font-semibold text-gray-900 mb-3">Billing Address</h4>
+                      {businessProfile?.address ? (
+                        <div className="text-sm text-gray-700 space-y-1">
+                          <p>{businessProfile.address}</p>
+                          <p>
+                            {businessProfile.city}, {businessProfile.state} {businessProfile.zip_code}
+                          </p>
+                          <p>{businessProfile.country}</p>
                         </div>
-                        <div className="flex items-center justify-between py-2 border-b border-gray-700">
-                          <div>
-                            <p className="text-white">Pro Plan - December 2023</p>
-                            <p className="text-gray-400 text-sm">Dec 1, 2023</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white">$29.00</p>
-                            <Badge className="bg-green-600 text-white text-xs">Paid</Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between py-2">
-                          <div>
-                            <p className="text-white">Pro Plan - November 2023</p>
-                            <p className="text-gray-400 text-sm">Nov 1, 2023</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white">$29.00</p>
-                            <Badge className="bg-green-600 text-white text-xs">Paid</Badge>
-                          </div>
-                        </div>
-                      </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No billing address on file</p>
+                      )}
                       <Button
+                        onClick={() => {
+                          const params = new URLSearchParams(window.location.search)
+                          params.set("tab", "business")
+                          router.push(`/settings?${params.toString()}`)
+                        }}
                         variant="outline"
-                        className="border-gray-600 text-gray-300 hover:bg-[#1a1f2c] mt-4 bg-transparent"
+                        className="mt-3 border-gray-300"
                       >
-                        View All Invoices
+                        Update Billing Address
                       </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-200">
+                      <Button
+                        onClick={() => router.push("/pricing")}
+                        variant="outline"
+                        className="border-[#F67721] text-[#F67721] hover:bg-[#F67721] hover:text-white"
+                      >
+                        Change Plan
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">No active subscription</p>
+                    <Button onClick={() => router.push("/pricing")} className="bg-[#F67721] hover:bg-[#e56610]">
+                      View Plans
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

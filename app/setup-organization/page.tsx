@@ -80,60 +80,94 @@ export default function SetupOrganizationPage() {
         return
       }
 
-      // Try using the provision function first
-      const { data: orgId, error: provisionError } = await supabase.rpc("provision_user_organization", {
-        target_user_id: user.id,
+      console.log("[v0] Creating organization for user:", user.id)
+
+      const { data: org, error: orgError } = await supabase
+        .from("organizations")
+        .insert({
+          name: companyName.trim(),
+        })
+        .select("id")
+        .single()
+
+      if (orgError) {
+        throw new Error("Failed to create organization: " + orgError.message)
+      }
+
+      console.log("[v0] Organization created:", org.id)
+
+      // Create membership
+      const { error: membershipError } = await supabase.from("user_memberships").insert({
+        user_id: user.id,
+        org_id: org.id,
+        role: "admin",
       })
 
-      if (provisionError) {
-        console.error("Provision error:", provisionError)
-
-        // Fallback: Create organization manually
-        const { data: org, error: orgError } = await supabase
-          .from("organizations")
-          .insert({ name: companyName.trim() })
-          .select("id")
-          .single()
-
-        if (orgError) {
-          throw new Error("Failed to create organization: " + orgError.message)
-        }
-
-        // Create membership
-        const { error: membershipError } = await supabase.from("user_memberships").insert({
-          user_id: user.id,
-          org_id: org.id,
-          role: "owner",
-        })
-
-        if (membershipError) {
-          throw new Error("Failed to create membership: " + membershipError.message)
-        }
-
-        // Create business profile
-        await supabase.from("business_profiles").insert({
-          org_id: org.id,
-          business_name: companyName.trim(),
-          email: user.email,
-        })
-
-        // Create profile
-        await supabase.from("profiles").upsert({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || null,
-          role: "owner",
-        })
+      if (membershipError) {
+        throw new Error("Failed to create membership: " + membershipError.message)
       }
+
+      console.log("[v0] Membership created")
+
+      await supabase.from("business_profiles").insert({
+        org_id: org.id,
+        business_name: companyName.trim(),
+        email: user.email,
+        phone: user.user_metadata?.phone_number || null,
+      })
+
+      console.log("[v0] Business profile created")
+
+      const trialEnd = new Date()
+      trialEnd.setDate(trialEnd.getDate() + 30)
+
+      await supabase.from("subscriptions").insert({
+        org_id: org.id,
+        user_id: user.id,
+        plan_type: user.user_metadata?.plan_type || "starter",
+        billing_period: user.user_metadata?.billing_period || "monthly",
+        status: "trial",
+        amount:
+          user.user_metadata?.plan_type === "professional"
+            ? 79
+            : user.user_metadata?.plan_type === "enterprise"
+              ? 199
+              : 29,
+        trial_start: new Date().toISOString(),
+        trial_end: trialEnd.toISOString(),
+        current_period_start: new Date().toISOString(),
+        current_period_end: trialEnd.toISOString(),
+      })
+
+      console.log("[v0] Subscription created with 30-day trial")
+
+      await supabase.from("profiles").upsert({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || null,
+        role: "admin",
+      })
+
+      console.log("[v0] Profile created")
+
+      await supabase.from("onboarding_state").insert({
+        user_id: user.id,
+        org_id: org.id,
+        current_step: 1,
+        completed_steps: ["organization_created"],
+      })
+
+      console.log("[v0] Onboarding state created")
 
       toast({
         title: "Success!",
-        description: "Your organization has been created.",
+        description: "Your organization has been created. Welcome to RedFox CRM!",
       })
 
       router.replace("/dashboard")
+      router.refresh()
     } catch (error) {
-      console.error("Setup error:", error)
+      console.error("[v0] Setup error:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create organization",

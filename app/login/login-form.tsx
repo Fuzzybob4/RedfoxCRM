@@ -25,11 +25,27 @@ function LoginFormContent() {
     setErrorMsg("")
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error, data } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         setErrorMsg(error.message)
         return
+      }
+
+      if (data.user) {
+        console.log("[v0] Checking if user needs onboarding")
+
+        const { data: membership } = await supabase
+          .from("user_memberships")
+          .select("org_id")
+          .eq("user_id", data.user.id)
+          .maybeSingle()
+
+        if (!membership) {
+          console.log("[v0] No organization found, redirecting to setup")
+          router.push("/setup-organization")
+          return
+        }
       }
 
       const redirectTo = sp.get("redirectedFrom") || "/dashboard"
