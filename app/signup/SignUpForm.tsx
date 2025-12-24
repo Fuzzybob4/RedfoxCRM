@@ -29,9 +29,11 @@ export default function SignUpForm() {
 
   useEffect(() => {
     if (subscriptionType === "starter") {
-      setCost(billingPeriod === "monthly" ? 19 : 182.4)
+      setCost(billingPeriod === "monthly" ? 29 : 278.4) // $29/mo or $23.20/mo * 12 (20% off)
     } else if (subscriptionType === "professional") {
-      setCost(billingPeriod === "monthly" ? 85 : 816)
+      setCost(billingPeriod === "monthly" ? 79 : 758.4) // $79/mo or $63.20/mo * 12 (20% off)
+    } else if (subscriptionType === "enterprise") {
+      setCost(billingPeriod === "monthly" ? 199 : 1910.4) // $199/mo or $159.20/mo * 12 (20% off)
     }
   }, [subscriptionType, billingPeriod])
 
@@ -87,6 +89,22 @@ export default function SignUpForm() {
             business_name: companyName || `${firstName}'s Business`,
             email: email,
             phone: phoneNumber || null,
+          })
+
+          const trialEnd = new Date()
+          trialEnd.setDate(trialEnd.getDate() + 14) // 14-day trial
+
+          await supabase.from("subscriptions").insert({
+            org_id: org.id,
+            user_id: authData.user.id,
+            plan_type: subscriptionType,
+            billing_period: billingPeriod,
+            status: "trial",
+            amount: cost,
+            trial_start: new Date().toISOString(),
+            trial_end: trialEnd.toISOString(),
+            current_period_start: new Date().toISOString(),
+            current_period_end: trialEnd.toISOString(),
           })
 
           // Create/update profile
@@ -248,8 +266,9 @@ export default function SignUpForm() {
                 <SelectValue placeholder="Select a plan" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="starter">Starter</SelectItem>
-                <SelectItem value="professional">Professional</SelectItem>
+                <SelectItem value="starter">Starter - $29/month</SelectItem>
+                <SelectItem value="professional">Professional - $79/month</SelectItem>
+                <SelectItem value="enterprise">Enterprise - $199/month</SelectItem>
               </SelectContent>
             </Select>
           </div>
