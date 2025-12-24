@@ -146,12 +146,21 @@ export function Header() {
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-foreground hover:text-brand-orange"
-                      onClick={() => setLoginDialogOpen(true)}
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        setLoginDialogOpen(true)
+                      }}
                     >
                       Sign In
                     </Button>
                     <Button asChild className="w-full bg-gradient-to-r from-brand-orange to-brand-yellow">
-                      <Link href="/signup" onClick={scrollToTop}>
+                      <Link
+                        href="/signup"
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          scrollToTop()
+                        }}
+                      >
                         Get Started
                       </Link>
                     </Button>
