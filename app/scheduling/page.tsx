@@ -1,11 +1,24 @@
 "use client"
 
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Clock, Users, CalendarDays } from "lucide-react"
+import { Calendar, Clock, Users, CalendarDays, ArrowLeft } from "lucide-react"
 
 export default function SchedulingPage() {
+  const router = useRouter()
+
   return (
     <div className="p-6 space-y-6">
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/dashboard")}
+        className="mb-2 text-slate-600 hover:text-slate-900"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back to Dashboard
+      </Button>
+
       <div>
         <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
           <Calendar className="h-8 w-8" />

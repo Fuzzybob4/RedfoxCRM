@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Building2, CreditCard, Calendar } from "lucide-react"
+import { Mail, Building2, CreditCard, Calendar, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 
@@ -133,6 +133,15 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#F5F2EA] py-8">
       <div className="container mx-auto px-4 max-w-4xl">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/dashboard")}
+          className="mb-4 text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
           <p className="text-gray-600">View your account information</p>

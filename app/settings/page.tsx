@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { User, Building, Shield, CreditCard, Save } from "lucide-react"
+import { User, Building, Shield, CreditCard, Save, ArrowLeft } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -59,7 +59,7 @@ export default function SettingsPage() {
   const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const defaultTab = searchParams.get("tab") || "profile"
+  const currentTab = searchParams.get("tab") || "profile"
 
   useEffect(() => {
     fetchUserData()
@@ -158,6 +158,8 @@ export default function SettingsPage() {
     if (!businessProfile || !orgId) return
 
     try {
+      console.log("[v0] Updating business profile with billing address:", businessProfile)
+
       const { error } = await supabase
         .from("business_profiles")
         .upsert({
@@ -169,22 +171,38 @@ export default function SettingsPage() {
           city: businessProfile.city,
           state: businessProfile.state,
           zip_code: businessProfile.zip_code,
-          country: businessProfile.country,
+          country: businessProfile.country || "United States",
           website: businessProfile.website,
         })
         .eq("org_id", orgId)
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Error updating business profile:", error)
+        throw error
+      }
+
+      console.log("[v0] Business profile updated successfully")
+
+      const { data: updatedBusinessData } = await supabase
+        .from("business_profiles")
+        .select("*")
+        .eq("org_id", orgId)
+        .single()
+
+      if (updatedBusinessData) {
+        setBusinessProfile(updatedBusinessData)
+        console.log("[v0] Refreshed business profile data:", updatedBusinessData)
+      }
 
       toast({
         title: "Success",
-        description: "Business information updated successfully",
+        description: "Business profile updated successfully",
       })
-    } catch (error) {
-      console.error("Error updating business profile:", error)
+    } catch (error: any) {
+      console.error("[v0] Business profile update error:", error)
       toast({
         title: "Error",
-        description: "Failed to update business information",
+        description: error.message || "Failed to update business profile",
         variant: "destructive",
       })
     }
@@ -258,21 +276,32 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F5F2EA] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-700">Loading settings...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F2EA]">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-8 px-4 max-w-5xl">
+        <Button variant="ghost" onClick={() => router.push("/dashboard")} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Button>
+
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">Manage your account and business settings</p>
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-2">Manage your account and business settings</p>
         </div>
 
-        <Tabs defaultValue={defaultTab} className="space-y-6">
+        <Tabs
+          value={currentTab}
+          onValueChange={(value) => {
+            router.push(`/settings?tab=${value}`)
+          }}
+          className="space-y-6"
+        >
           <TabsList className="bg-white border border-gray-200">
             <TabsTrigger value="profile" className="data-[state=active]:bg-[#F67721] data-[state=active]:text-white">
               <User className="w-4 h-4 mr-2" />
@@ -584,23 +613,25 @@ export default function SettingsPage() {
                       <h4 className="font-semibold text-gray-900 mb-3">Billing Address</h4>
                       {businessProfile?.address ? (
                         <div className="text-sm text-gray-700 space-y-1">
-                          <p>{businessProfile.address}</p>
-                          <p>
-                            {businessProfile.city}, {businessProfile.state} {businessProfile.zip_code}
-                          </p>
-                          <p>{businessProfile.country}</p>
+                          <p className="font-medium">{businessProfile.address}</p>
+                          {(businessProfile.city || businessProfile.state || businessProfile.zip_code) && (
+                            <p>
+                              {businessProfile.city}
+                              {businessProfile.city && businessProfile.state && ", "}
+                              {businessProfile.state} {businessProfile.zip_code}
+                            </p>
+                          )}
+                          {businessProfile.country && <p>{businessProfile.country}</p>}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">No billing address on file</p>
+                        <p className="text-sm text-gray-500 italic">
+                          No billing address on file. Update your business information to add a billing address.
+                        </p>
                       )}
                       <Button
-                        onClick={() => {
-                          const params = new URLSearchParams(window.location.search)
-                          params.set("tab", "business")
-                          router.push(`/settings?${params.toString()}`)
-                        }}
+                        onClick={() => router.push("/settings?tab=business")}
                         variant="outline"
-                        className="mt-3 border-gray-300"
+                        className="mt-3 border-gray-300 hover:bg-gray-50"
                       >
                         Update Billing Address
                       </Button>

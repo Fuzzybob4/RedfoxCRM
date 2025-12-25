@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, Package, DollarSign, Trash2, Edit } from "lucide-react"
+import { Search, Plus, Package, DollarSign, Trash2, Edit, ArrowLeft } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
 
 interface Product {
   id: string
@@ -44,6 +45,7 @@ export default function ProductsPage() {
 
   const supabase = createClient()
   const { toast } = useToast()
+  const router = useRouter()
 
   useEffect(() => {
     loadData()
@@ -162,6 +164,16 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Back to Dashboard Button */}
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/dashboard")}
+          className="mb-4 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
