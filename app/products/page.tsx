@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, Package, DollarSign, Trash2, Edit, ArrowLeft } from "lucide-react"
+import { Search, Plus, Package, DollarSign, Trash2, Edit } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
+import { DashboardSidebar } from "@/app/components/dashboard-sidebar"
 
 interface Product {
   id: string
@@ -155,216 +156,216 @@ export default function ProductsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading products...</div>
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar />
+        <div className="flex-1 lg:ml-64 flex items-center justify-center">
+          <div className="text-foreground">Loading products...</div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Back to Dashboard Button */}
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/dashboard")}
-          className="mb-4 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
-        </Button>
-
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Products</h1>
-            <p className="text-muted-foreground">Manage your product catalog and inventory</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80"
-              />
+    <div className="flex min-h-screen bg-background">
+      <DashboardSidebar />
+      <div className="flex-1 lg:ml-64">
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h1 className="text-3xl font-bold">Products</h1>
+                <p className="text-muted-foreground">Manage your product catalog and inventory</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-80"
+                  />
+                </div>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-primary hover:bg-primary/90">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Product
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Add New Product</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Name *</Label>
+                          <Input
+                            value={newProduct.name}
+                            onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                            placeholder="Product name"
+                          />
+                        </div>
+                        <div>
+                          <Label>SKU</Label>
+                          <Input
+                            value={newProduct.sku}
+                            onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                            placeholder="SKU-001"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Description</Label>
+                        <Textarea
+                          value={newProduct.description}
+                          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                          rows={2}
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label>Price ($)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={newProduct.price}
+                            onChange={(e) =>
+                              setNewProduct({ ...newProduct, price: Number.parseFloat(e.target.value) || 0 })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label>Cost ($)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={newProduct.cost}
+                            onChange={(e) =>
+                              setNewProduct({ ...newProduct, cost: Number.parseFloat(e.target.value) || 0 })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label>Quantity</Label>
+                          <Input
+                            type="number"
+                            value={newProduct.quantity}
+                            onChange={(e) =>
+                              setNewProduct({ ...newProduct, quantity: Number.parseInt(e.target.value) || 0 })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Unit</Label>
+                          <Input
+                            value={newProduct.unit}
+                            onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
+                            placeholder="each, hour, sq ft..."
+                          />
+                        </div>
+                        <div>
+                          <Label>Category</Label>
+                          <Input
+                            value={newProduct.category}
+                            onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                            placeholder="Category"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateProduct}>Add Product</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Product
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add New Product</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Name *</Label>
-                      <Input
-                        value={newProduct.name}
-                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                        placeholder="Product name"
-                      />
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-sm font-medium">
+                    <Package className="w-4 h-4 mr-2" />
+                    Total Products
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{products.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-sm font-medium">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Inventory Value
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map((prod) => (
+                <Card key={prod.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{prod.name}</CardTitle>
+                        {prod.sku && <p className="text-xs text-muted-foreground">SKU: {prod.sku}</p>}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500"
+                          onClick={() => handleDeleteProduct(prod.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div>
-                      <Label>SKU</Label>
-                      <Input
-                        value={newProduct.sku}
-                        onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                        placeholder="SKU-001"
-                      />
+                  </CardHeader>
+                  <CardContent>
+                    {prod.description && (
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{prod.description}</p>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-2xl font-bold">${prod.price.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">per {prod.unit || "each"}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{prod.quantity || 0} in stock</p>
+                        {prod.category && <p className="text-xs text-muted-foreground">{prod.category}</p>}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <Label>Description</Label>
-                    <Textarea
-                      value={newProduct.description}
-                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                      rows={2}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label>Price ($)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={newProduct.price}
-                        onChange={(e) =>
-                          setNewProduct({ ...newProduct, price: Number.parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Cost ($)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={newProduct.cost}
-                        onChange={(e) => setNewProduct({ ...newProduct, cost: Number.parseFloat(e.target.value) || 0 })}
-                      />
-                    </div>
-                    <div>
-                      <Label>Quantity</Label>
-                      <Input
-                        type="number"
-                        value={newProduct.quantity}
-                        onChange={(e) =>
-                          setNewProduct({ ...newProduct, quantity: Number.parseInt(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Unit</Label>
-                      <Input
-                        value={newProduct.unit}
-                        onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
-                        placeholder="each, hour, sq ft..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Category</Label>
-                      <Input
-                        value={newProduct.category}
-                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                        placeholder="Category"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateProduct}>Add Product</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                  </CardContent>
+                </Card>
+              ))}
+              {filteredProducts.length === 0 && (
+                <Card className="col-span-full">
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No products found. Add your first product!
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-sm font-medium">
-                <Package className="w-4 h-4 mr-2" />
-                Total Products
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{products.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-sm font-medium">
-                <DollarSign className="w-4 h-4 mr-2" />
-                Inventory Value
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((prod) => (
-            <Card key={prod.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{prod.name}</CardTitle>
-                    {prod.sku && <p className="text-xs text-muted-foreground">SKU: {prod.sku}</p>}
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500"
-                      onClick={() => handleDeleteProduct(prod.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {prod.description && (
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{prod.description}</p>
-                )}
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-2xl font-bold">${prod.price.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">per {prod.unit || "each"}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{prod.quantity || 0} in stock</p>
-                    {prod.category && <p className="text-xs text-muted-foreground">{prod.category}</p>}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {filteredProducts.length === 0 && (
-            <Card className="col-span-full">
-              <CardContent className="py-8 text-center text-muted-foreground">
-                No products found. Add your first product!
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>

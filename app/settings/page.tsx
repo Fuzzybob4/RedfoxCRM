@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -12,6 +14,7 @@ import { User, Building, Shield, CreditCard, Save } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter, useSearchParams } from "next/navigation"
 import { DashboardSidebar } from "@/app/components/dashboard-sidebar"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 interface Profile {
   id: string
@@ -29,6 +32,7 @@ interface BusinessProfile {
   state?: string
   zip_code?: string
   country?: string
+  avatar_url?: string
 }
 
 interface Organization {
@@ -55,6 +59,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   const supabase = createClient()
   const { toast } = useToast()
@@ -174,6 +179,7 @@ export default function SettingsPage() {
           zip_code: businessProfile.zip_code,
           country: businessProfile.country || "United States",
           website: businessProfile.website,
+          avatar_url: businessProfile.avatar_url,
         })
         .eq("org_id", orgId)
 
@@ -272,6 +278,52 @@ export default function SettingsPage() {
         description: "Failed to update email",
         variant: "destructive",
       })
+    }
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !orgId) return
+
+    try {
+      setUploadingAvatar(true)
+
+      // Upload to Vercel Blob
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("orgId", orgId)
+
+      const uploadResponse = await fetch("/api/customers/photos/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload avatar")
+      }
+
+      const { url } = await uploadResponse.json()
+
+      // Update business profile with avatar URL
+      const { error } = await supabase.from("business_profiles").update({ avatar_url: url }).eq("org_id", orgId)
+
+      if (error) throw error
+
+      setBusinessProfile((prev) => (prev ? { ...prev, avatar_url: url } : null))
+
+      toast({
+        title: "Success",
+        description: "Business avatar updated successfully",
+      })
+    } catch (error) {
+      console.error("[v0] Error uploading avatar:", error)
+      toast({
+        title: "Error",
+        description: "Failed to upload avatar",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingAvatar(false)
     }
   }
 
@@ -380,6 +432,28 @@ export default function SettingsPage() {
                     <CardTitle className="text-gray-900">Business Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    <div>
+                      <Label className="text-gray-700 font-semibold">Business Logo</Label>
+                      <div className="flex items-center gap-4 mt-2">
+                        <Avatar className="h-20 w-20">
+                          <AvatarImage src={businessProfile?.avatar_url || ""} alt="Business logo" />
+                          <AvatarFallback className="bg-brand-orange/10 text-brand-orange text-xl">
+                            {businessProfile?.business_name?.[0]?.toUpperCase() || "B"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            disabled={uploadingAvatar}
+                            className="bg-white border-gray-300"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Upload your business logo (PNG, JPG, or GIF)</p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div>
                       <Label htmlFor="business_name" className="text-gray-700 font-semibold">
                         Business Name
