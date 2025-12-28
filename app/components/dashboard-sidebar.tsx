@@ -169,9 +169,9 @@ export function DashboardSidebar() {
                   <Image
                     src={item.icon || "/placeholder.svg"}
                     alt={item.name}
-                    width={20}
-                    height={20}
-                    className={`mr-3 h-5 w-5 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}
+                    width={24}
+                    height={24}
+                    className={`mr-3 h-6 w-6 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}
                   />
                   {item.name}
                 </Link>
@@ -265,9 +265,9 @@ export function DashboardSidebar() {
                   <Image
                     src={item.icon || "/placeholder.svg"}
                     alt={item.name}
-                    width={20}
-                    height={20}
-                    className={`mr-3 h-5 w-5 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}
+                    width={24}
+                    height={24}
+                    className={`mr-3 h-6 w-6 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}
                   />
                   {item.name}
                 </Link>

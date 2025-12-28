@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { useRouter, useParams } from "next/navigation"
 import { MapPin, ArrowLeft, Upload, X } from "lucide-react"
-import { upload } from "@vercel/blob/client"
 
 interface Customer {
   id: string
@@ -178,16 +177,23 @@ export default function CustomerDetailPage() {
     try {
       console.log("[v0] Uploading photo:", file.name)
 
-      const blob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/customers/photos/upload",
-        clientPayload: JSON.stringify({
-          customerId: customerId,
-          orgId: customer?.org_id,
-          photoType: "other",
-        }),
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("customerId", customerId)
+      formData.append("orgId", customer?.org_id || "")
+      formData.append("photoType", "other")
+
+      const response = await fetch("/api/customers/photos/upload", {
+        method: "POST",
+        body: formData,
       })
 
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
+      }
+
+      const blob = await response.json()
       console.log("[v0] Photo uploaded:", blob.url)
 
       // Refresh photos list
@@ -205,7 +211,7 @@ export default function CustomerDetailPage() {
       }
     } catch (error) {
       console.error("[v0] Error uploading photo:", error)
-      alert("Failed to upload photo. Please try again.")
+      alert(error instanceof Error ? error.message : "Failed to upload photo. Please try again.")
     } finally {
       setUploading(false)
     }

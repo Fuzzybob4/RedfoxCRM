@@ -1,75 +1,115 @@
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client"
-import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { put } from "@vercel/blob"
+import { type NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadBody
+export async function POST(request: NextRequest) {
+  console.log("[v0] Photo upload route called")
 
   try {
-    // Verify user is authenticated
-    const supabase = await createClient()
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+            } catch {
+              // Ignore cookie errors in route handlers
+            }
+          },
+        },
+      },
+    )
+
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
+    console.log("[v0] Auth check - user:", user?.id, "error:", authError?.message)
+
+    if (authError || !user) {
+      console.error("[v0] Auth error:", authError)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const jsonResponse = await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken: async (pathname: string) => {
-        // Validate file extension
-        const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".heic"]
-        const hasValidExtension = allowedExtensions.some((ext) => pathname.toLowerCase().endsWith(ext))
+    const formData = await request.formData()
+    const file = formData.get("file") as File
+    const customerId = formData.get("customerId") as string | null
+    const orgId = formData.get("orgId") as string | null
+    const photoType = formData.get("photoType") as string | null
 
-        if (!hasValidExtension) {
-          throw new Error("Only image files (JPG, PNG, WebP, HEIC) are allowed")
-        }
+    console.log("[v0] File received:", file?.name, file?.size, file?.type)
+    console.log("[v0] Customer info:", { customerId, orgId, photoType })
 
-        return {
-          allowedContentTypes: ["image/jpeg", "image/png", "image/webp", "image/heic"],
-          maximumSizeInBytes: 10_000_000, // 10 MB
-        }
-      },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        console.log("[v0] Photo uploaded to Blob storage:", blob.url)
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+    }
 
-        // Save reference to Supabase database
-        try {
-          const customerId = tokenPayload?.customerId as string
-          const orgId = tokenPayload?.orgId as string
-          const photoType = tokenPayload?.photoType as string
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic"]
+    if (!allowedTypes.includes(file.type)) {
+      console.error("[v0] Invalid file type:", file.type)
+      return NextResponse.json({ error: "Only image files (JPG, PNG, WebP, HEIC) are allowed" }, { status: 400 })
+    }
 
-          if (!customerId || !orgId) {
-            console.error("[v0] Missing customerId or orgId in token payload")
-            return
-          }
+    // Validate file size (10 MB max)
+    if (file.size > 10_000_000) {
+      console.error("[v0] File too large:", file.size)
+      return NextResponse.json({ error: "File size must be less than 10 MB" }, { status: 400 })
+    }
 
-          const { error: dbError } = await supabase.from("customer_photos").insert({
-            customer_id: customerId,
-            org_id: orgId,
-            uploaded_by: user.id,
-            photo_url: blob.url,
-            photo_type: photoType || "other",
-            file_size: blob.size,
-          })
+    console.log("[v0] Uploading to Vercel Blob...")
 
-          if (dbError) {
-            console.error("[v0] Error saving photo to database:", dbError)
-          } else {
-            console.log("[v0] Photo reference saved to database")
-          }
-        } catch (error) {
-          console.error("[v0] Error in onUploadCompleted:", error)
-        }
-      },
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error("[v0] BLOB_READ_WRITE_TOKEN is not set")
+      return NextResponse.json({ error: "Blob storage not configured" }, { status: 500 })
+    }
+
+    // Upload to Vercel Blob
+    const blob = await put(`customer-photos/${user.id}/${Date.now()}-${file.name}`, file, {
+      access: "public",
     })
 
-    return NextResponse.json(jsonResponse)
+    console.log("[v0] Photo uploaded to Blob storage:", blob.url)
+
+    if (customerId && orgId) {
+      console.log("[v0] Saving photo to database...")
+      const { error: dbError } = await supabase.from("customer_photos").insert({
+        customer_id: customerId,
+        org_id: orgId,
+        uploaded_by: user.id,
+        photo_url: blob.url,
+        photo_type: photoType || "other",
+        file_size: file.size,
+      })
+
+      if (dbError) {
+        console.error("[v0] Database error:", dbError)
+        // Don't fail the request, photo is still uploaded to blob
+      } else {
+        console.log("[v0] Photo saved to database")
+      }
+    }
+
+    return NextResponse.json({
+      url: blob.url,
+      filename: file.name,
+      size: file.size,
+      type: file.type,
+    })
   } catch (error) {
-    console.error("[v0] Upload error:", error)
-    return NextResponse.json({ error: (error as Error).message }, { status: 400 })
+    console.error("[v0] Upload error details:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      error,
+    })
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Upload failed" }, { status: 500 })
   }
 }
