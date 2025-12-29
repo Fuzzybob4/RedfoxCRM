@@ -16,7 +16,7 @@ import { Search, Plus, Users, Phone, Mail, MapPin, Edit, Trash2, Upload, X } fro
 import { useToast } from "@/components/ui/use-toast"
 import { DashboardSidebar } from "@/app/components/dashboard-sidebar"
 
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface Customer {
   id: string
@@ -53,9 +53,13 @@ export default function CustomersPage() {
   })
   const [uploadedPhotos, setUploadedPhotos] = useState<{ url: string; name: string }[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<any>(null)
+  const [editUploadedPhotos, setEditUploadedPhotos] = useState<{ url: string; name: string }[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
 
   const supabase = createClient()
-  const { toast } = useToast()
   const router = useRouter()
 
   useEffect(() => {
@@ -313,6 +317,178 @@ export default function CustomersPage() {
     setUploadedPhotos(uploadedPhotos.filter((photo) => photo.url !== url))
   }
 
+  const handleEditCustomer = async (customer: any) => {
+    console.log("[v0] Edit customer:", customer.id)
+    setEditingCustomer(customer)
+    setEditUploadedPhotos([])
+
+    // Fetch existing photos for this customer
+    try {
+      const supabase = createClient()
+      const { data: photos, error } = await supabase
+        .from("customer_photos")
+        .select("photo_url, description")
+        .eq("customer_id", customer.id)
+
+      if (!error && photos) {
+        setEditUploadedPhotos(photos.map((p) => ({ url: p.photo_url, name: p.description || "Photo" })))
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching photos:", error)
+    }
+
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdateCustomer = async () => {
+    console.log("[v0] Updating customer:", editingCustomer?.id)
+
+    if (!editingCustomer?.first_name?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "First name is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!editingCustomer?.last_name?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Last name is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from("customers")
+        .update({
+          first_name: editingCustomer.first_name.trim(),
+          last_name: editingCustomer.last_name.trim(),
+          email: editingCustomer.email?.trim() || null,
+          phone: editingCustomer.phone?.trim() || null,
+          address: editingCustomer.address?.trim() || null,
+          city: editingCustomer.city?.trim() || null,
+          state: editingCustomer.state?.trim() || null,
+          zip_code: editingCustomer.zip_code?.trim() || null,
+          country: editingCustomer.country?.trim() || null,
+          notes: editingCustomer.notes?.trim() || null,
+        })
+        .eq("id", editingCustomer.id)
+
+      if (error) {
+        console.error("[v0] Error updating customer:", error)
+        toast({
+          title: "Error",
+          description: `Failed to update customer: ${error.message}`,
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (editUploadedPhotos.length > 0) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        const { data: membership } = await supabase
+          .from("user_memberships")
+          .select("org_id")
+          .eq("user_id", user?.id)
+          .single()
+
+        if (membership?.org_id && user) {
+          // Delete existing photos first
+          await supabase.from("customer_photos").delete().eq("customer_id", editingCustomer.id)
+
+          // Insert new photos
+          const photoInserts = editUploadedPhotos.map((photo) => ({
+            customer_id: editingCustomer.id,
+            org_id: membership.org_id,
+            uploaded_by: user.id,
+            photo_url: photo.url,
+            photo_type: "property",
+            description: photo.name,
+          }))
+
+          const { error: photoError } = await supabase.from("customer_photos").insert(photoInserts)
+
+          if (photoError) {
+            console.error("[v0] Error saving photos:", photoError)
+          }
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "Customer updated successfully!",
+      })
+
+      setIsEditDialogOpen(false)
+      setEditingCustomer(null)
+      setEditUploadedPhotos([])
+      fetchCustomers()
+    } catch (error) {
+      console.error("[v0] Unexpected error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update customer",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (!confirm("Are you sure you want to delete this customer? This action cannot be undone.")) {
+      return
+    }
+
+    console.log("[v0] Deleting customer:", customerId)
+    setIsDeleting(true)
+
+    try {
+      const supabase = createClient()
+
+      // Delete customer photos first (cascade will handle this if RLS allows)
+      const { error: photoError } = await supabase.from("customer_photos").delete().eq("customer_id", customerId)
+
+      if (photoError) {
+        console.error("[v0] Error deleting customer photos:", photoError)
+      }
+
+      // Delete the customer
+      const { error } = await supabase.from("customers").delete().eq("id", customerId)
+
+      if (error) {
+        console.error("[v0] Error deleting customer:", error)
+        toast({
+          title: "Error",
+          description: `Failed to delete customer: ${error.message}`,
+          variant: "destructive",
+        })
+        return
+      }
+
+      toast({
+        title: "Success",
+        description: "Customer deleted successfully",
+      })
+
+      fetchCustomers()
+    } catch (error) {
+      console.error("[v0] Unexpected error:", error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   const filteredCustomers = customers.filter(
     (customer) =>
       `${customer.first_name} ${customer.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -548,27 +724,21 @@ export default function CustomersPage() {
               <CardContent>
                 <div className="overflow-x-auto">
                   <Table className="w-full">
-                    <TableHead>
+                    <TableHeader>
                       <TableRow>
-                        <TableHeaderCell className="text-left py-3 px-4 text-muted-foreground font-medium">
-                          Name
-                        </TableHeaderCell>
-                        <TableHeaderCell className="text-left py-3 px-4 text-muted-foreground font-medium">
-                          Contact
-                        </TableHeaderCell>
-                        <TableHeaderCell className="text-left py-3 px-4 text-muted-foreground font-medium">
+                        <TableHead className="text-left py-3 px-4 text-muted-foreground font-medium">Name</TableHead>
+                        <TableHead className="text-left py-3 px-4 text-muted-foreground font-medium">Contact</TableHead>
+                        <TableHead className="text-left py-3 px-4 text-muted-foreground font-medium">
                           Location
-                        </TableHeaderCell>
-                        <TableHeaderCell className="text-left py-3 px-4 text-muted-foreground font-medium">
-                          Actions
-                        </TableHeaderCell>
+                        </TableHead>
+                        <TableHead className="text-left py-3 px-4 text-muted-foreground font-medium">Actions</TableHead>
                       </TableRow>
-                    </TableHead>
+                    </TableHeader>
                     <TableBody>
                       {filteredCustomers.map((customer) => (
                         <TableRow
                           key={customer.id}
-                          className="border-b border-border hover:bg-accent transition-colors cursor-pointer"
+                          className="border-b border-border hover:bg-accent transition-colors"
                         >
                           <TableCell className="py-4 px-4">
                             <Link href={`/customers/${customer.id}`}>
@@ -613,6 +783,7 @@ export default function CustomersPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                onClick={() => handleEditCustomer(customer)}
                                 className="border-border text-muted-foreground hover:bg-accent bg-transparent"
                               >
                                 <Edit className="w-4 h-4" />
@@ -620,6 +791,8 @@ export default function CustomersPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                onClick={() => handleDeleteCustomer(customer.id)}
+                                disabled={isDeleting}
                                 className="border-border text-muted-foreground hover:bg-accent bg-transparent"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -638,6 +811,172 @@ export default function CustomersPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Edit Customer Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent className="bg-card border-border text-foreground max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Customer</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4 py-4">
+                  <div>
+                    <Label htmlFor="edit_first_name">First Name *</Label>
+                    <Input
+                      id="edit_first_name"
+                      value={editingCustomer?.first_name || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, first_name: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_last_name">Last Name *</Label>
+                    <Input
+                      id="edit_last_name"
+                      value={editingCustomer?.last_name || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, last_name: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_email">Email</Label>
+                    <Input
+                      id="edit_email"
+                      type="email"
+                      value={editingCustomer?.email || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, email: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_phone">Phone</Label>
+                    <Input
+                      id="edit_phone"
+                      value={editingCustomer?.phone || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, phone: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="edit_address">Address</Label>
+                    <Input
+                      id="edit_address"
+                      value={editingCustomer?.address || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, address: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_city">City</Label>
+                    <Input
+                      id="edit_city"
+                      value={editingCustomer?.city || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, city: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_state">State</Label>
+                    <Input
+                      id="edit_state"
+                      value={editingCustomer?.state || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, state: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_zip_code">Zip Code</Label>
+                    <Input
+                      id="edit_zip_code"
+                      value={editingCustomer?.zip_code || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, zip_code: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_country">Country</Label>
+                    <Input
+                      id="edit_country"
+                      value={editingCustomer?.country || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, country: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="edit_notes">Notes</Label>
+                    <Textarea
+                      id="edit_notes"
+                      value={editingCustomer?.notes || ""}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, notes: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Label>Property Photos (Optional)</Label>
+                    <div className="mt-2">
+                      <label className="cursor-pointer">
+                        <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary transition-colors text-center">
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
+                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 10MB</p>
+                        </div>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleEditPhotoUpload}
+                          className="hidden"
+                          disabled={isUploading}
+                        />
+                      </label>
+
+                      {/* Display uploaded photos */}
+                      {editUploadedPhotos.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2 mt-4">
+                          {editUploadedPhotos.map((photo, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={photo.url || "/placeholder.svg"}
+                                alt={photo.name}
+                                className="w-full h-24 object-cover rounded-lg border border-border"
+                              />
+                              <button
+                                onClick={() => removeEditPhoto(photo.url)}
+                                className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {isUploading && <p className="text-sm text-muted-foreground mt-2">Uploading...</p>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditDialogOpen(false)
+                      setEditingCustomer(null)
+                      setEditUploadedPhotos([])
+                    }}
+                    className="border-border text-muted-foreground hover:bg-accent"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUpdateCustomer}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    Update Customer
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
@@ -645,7 +984,54 @@ export default function CustomersPage() {
   )
 }
 
-// Helper component for TableHeaderCell
-function TableHeaderCell({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <th className={`text-left py-3 px-4 text-muted-foreground font-medium ${className}`}>{children}</th>
+const handleEditPhotoUpload = async (
+  event: React.ChangeEvent<HTMLInputElement>,
+  setEditUploadedPhotos: any,
+  setIsUploading: any,
+  toast: any,
+) => {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+
+  setIsUploading(true)
+  try {
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/customers/photos/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
+      }
+
+      const blob = await response.json()
+      return { url: blob.url, name: file.name }
+    })
+
+    const newPhotos = await Promise.all(uploadPromises)
+    setEditUploadedPhotos([...newPhotos])
+
+    toast({
+      title: "Success",
+      description: `${newPhotos.length} photo(s) uploaded successfully`,
+    })
+  } catch (error) {
+    console.error("[v0] Error uploading photos:", error)
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to upload photos",
+      variant: "destructive",
+    })
+  } finally {
+    setIsUploading(false)
+  }
+}
+
+const removeEditPhoto = (url: string, setEditUploadedPhotos: any) => {
+  setEditUploadedPhotos((photos: any) => photos.filter((photo: any) => photo.url !== url))
 }
