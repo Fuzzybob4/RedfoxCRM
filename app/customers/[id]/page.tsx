@@ -158,7 +158,7 @@ export default function CustomerDetailPage() {
         }
       } catch (error) {
         console.error("Error fetching customer data:", error)
-        router.push("/contacts")
+        router.push("/customers")
       } finally {
         setLoading(false)
       }
@@ -247,9 +247,9 @@ export default function CustomerDetailPage() {
   if (!customer) {
     return (
       <div className="min-h-screen bg-[#F5F2EA] p-8">
-        <Button onClick={() => router.push("/contacts")} variant="outline" className="mb-6">
+        <Button onClick={() => router.push("/customers")} variant="outline" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Contacts
+          Back to Customers
         </Button>
         <Card className="text-center py-12">
           <CardContent>
@@ -289,9 +289,9 @@ export default function CustomerDetailPage() {
     <div className="min-h-screen bg-[#F5F2EA]">
       <div className="max-w-[1440px] mx-auto p-6">
         {/* Back Button */}
-        <Button onClick={() => router.push("/contacts")} variant="ghost" className="mb-6 -ml-4">
+        <Button onClick={() => router.push("/customers")} variant="ghost" className="mb-6 -ml-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Contacts
+          Back to Customers
         </Button>
 
         {/* Header Card - Full Width */}

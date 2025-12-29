@@ -5,14 +5,14 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, FileText, DollarSign } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
+import { Plus, Send, FileText, DollarSign, Calendar, Trash2, ArrowLeft } from "lucide-react"
 import { DashboardSidebar } from "@/app/components/dashboard-sidebar"
 
 interface Customer {
@@ -37,14 +37,29 @@ interface Estimate {
   customer?: Customer
 }
 
+interface LineItem {
+  description: string
+  quantity: number
+  unit_price: number
+  line_total: number
+}
+
 export default function EstimatesPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [actionDialogOpen, setActionDialogOpen] = useState(false)
+  const [actionType, setActionType] = useState<"estimate" | "invoice" | "schedule" | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [orgId, setOrgId] = useState<string | null>(null)
+  const [sendEstimateDialogOpen, setSendEstimateDialogOpen] = useState(false)
+  const [selectedEstimate, setSelectedEstimate] = useState<Estimate | null>(null)
+  const [sendMessage, setSendMessage] = useState("")
+  const [lineItems, setLineItems] = useState<LineItem[]>([
+    { description: "", quantity: 1, unit_price: 0, line_total: 0 },
+  ])
   const [newEstimate, setNewEstimate] = useState({
     customer_id: "",
     title: "",
@@ -53,9 +68,24 @@ export default function EstimatesPage() {
     tax_rate: 8.5,
     valid_until: "",
   })
-
-  const supabase = createClient()
-  const { toast } = useToast()
+  const [newInvoice, setNewInvoice] = useState({
+    customer_id: "",
+    title: "",
+    description: "",
+    tax_rate: 8.5,
+    due_date: "",
+    deposit_amount: 0,
+  })
+  const [newSchedule, setNewSchedule] = useState({
+    customer_id: "",
+    title: "",
+    description: "",
+    start_date: "",
+    end_date: "",
+    notes: "",
+  })
+  const [recipientEmail, setRecipientEmail] = useState("")
+  const [isSending, setIsSending] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -152,11 +182,70 @@ export default function EstimatesPage() {
     }
   }
 
+  const handleSendEstimate = async () => {
+    if (!selectedEstimate || !recipientEmail.trim()) {
+      toast({ title: "Error", description: "Please enter a recipient email", variant: "destructive" })
+      return
+    }
+
+    setIsSending(true)
+    try {
+      const response = await fetch("/api/send-estimate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          estimate: selectedEstimate,
+          recipientEmail: recipientEmail.trim(),
+          message: sendMessage.trim(),
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Failed to send estimate")
+      }
+
+      const { error: updateError } = await supabase
+        .from("estimates")
+        .update({ status: "sent" })
+        .eq("id", selectedEstimate.id)
+
+      if (updateError) throw updateError
+
+      toast({ title: "Success", description: "Estimate sent successfully" })
+      setSendEstimateDialogOpen(false)
+      setSelectedEstimate(null)
+      setSendMessage("")
+      setRecipientEmail("")
+      loadData()
+    } catch (error) {
+      console.error("[v0] Error sending estimate:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send estimate",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const openSendDialog = (estimate: Estimate) => {
+    setSelectedEstimate(estimate)
+    setRecipientEmail(estimate.customer?.email || "")
+    setSendMessage(
+      `Hi ${estimate.customer?.first_name || "there"},\n\nPlease find attached our estimate for your project.\n\nBest regards`,
+    )
+    setSendEstimateDialogOpen(true)
+  }
+
   const filteredEstimates = estimates.filter(
     (est) =>
-      est.estimate_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      est.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${est.customer?.first_name} ${est.customer?.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()),
+      est.estimate_number.toLowerCase().includes(router.query.searchTerm?.toString()?.toLowerCase() || "") ||
+      est.title.toLowerCase().includes(router.query.searchTerm?.toString()?.toLowerCase() || "") ||
+      `${est.customer?.first_name} ${est.customer?.last_name}`
+        .toLowerCase()
+        .includes(router.query.searchTerm?.toString()?.toLowerCase() || ""),
   )
 
   const getStatusColor = (status: string) => {
@@ -173,6 +262,160 @@ export default function EstimatesPage() {
 
   const totalValue = estimates.reduce((sum, est) => sum + (est.total_amount || 0), 0)
 
+  const addLineItem = () => {
+    setLineItems([...lineItems, { description: "", quantity: 1, unit_price: 0, line_total: 0 }])
+  }
+
+  const removeLineItem = (index: number) => {
+    if (lineItems.length > 1) {
+      setLineItems(lineItems.filter((_, i) => i !== index))
+    }
+  }
+
+  const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
+    const updated = [...lineItems]
+    updated[index] = { ...updated[index], [field]: value }
+    if (field === "quantity" || field === "unit_price") {
+      updated[index].line_total = updated[index].quantity * updated[index].unit_price
+    }
+    setLineItems(updated)
+  }
+
+  const calculateTotals = () => {
+    const subtotal = lineItems.reduce((sum, item) => sum + item.line_total, 0)
+    const taxAmount = (subtotal * newInvoice.tax_rate) / 100
+    const totalAmount = subtotal + taxAmount
+    const balanceDue = totalAmount - newInvoice.deposit_amount
+    return { subtotal, taxAmount, totalAmount, balanceDue }
+  }
+
+  const handleOpenActionDialog = (type: "estimate" | "invoice" | "schedule") => {
+    setActionType(type)
+    setActionDialogOpen(false)
+    setIsDialogOpen(true)
+  }
+
+  const handleCreateInvoice = async () => {
+    if (!orgId) {
+      toast({ title: "Error", description: "No organization found", variant: "destructive" })
+      return
+    }
+
+    if (!newInvoice.title.trim()) {
+      toast({ title: "Error", description: "Title is required", variant: "destructive" })
+      return
+    }
+
+    const validLineItems = lineItems.filter((item) => item.description.trim() && item.unit_price > 0)
+    if (validLineItems.length === 0) {
+      toast({ title: "Error", description: "Add at least one line item", variant: "destructive" })
+      return
+    }
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { subtotal, taxAmount, totalAmount, balanceDue } = calculateTotals()
+
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from("invoices")
+        .insert([
+          {
+            org_id: orgId,
+            created_by: user.id,
+            customer_id: newInvoice.customer_id || null,
+            invoice_number: `INV-${Date.now()}`,
+            title: newInvoice.title.trim(),
+            description: newInvoice.description.trim() || null,
+            subtotal,
+            tax_rate: newInvoice.tax_rate,
+            tax_amount: taxAmount,
+            total_amount: totalAmount,
+            deposit_amount: newInvoice.deposit_amount,
+            amount_paid: newInvoice.deposit_amount,
+            balance_due: balanceDue,
+            status: newInvoice.deposit_amount >= totalAmount ? "paid" : "draft",
+            due_date: newInvoice.due_date || null,
+          },
+        ])
+        .select()
+        .single()
+
+      if (invoiceError) throw invoiceError
+
+      const lineItemsToInsert = validLineItems.map((item, index) => ({
+        invoice_id: invoiceData.id,
+        org_id: orgId,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        line_total: item.line_total,
+        sort_order: index,
+      }))
+
+      const { error: lineItemsError } = await supabase.from("invoice_line_items").insert(lineItemsToInsert)
+
+      if (lineItemsError) throw lineItemsError
+
+      toast({ title: "Success", description: "Invoice created successfully" })
+      setIsDialogOpen(false)
+      setNewInvoice({ customer_id: "", title: "", description: "", tax_rate: 8.5, due_date: "", deposit_amount: 0 })
+      setLineItems([{ description: "", quantity: 1, unit_price: 0, line_total: 0 }])
+      setActionType(null)
+      router.push("/invoices")
+    } catch (error) {
+      console.error("[v0] Error creating invoice:", error)
+      toast({ title: "Error", description: "Failed to create invoice", variant: "destructive" })
+    }
+  }
+
+  const handleCreateSchedule = async () => {
+    if (!orgId) {
+      toast({ title: "Error", description: "No organization found", variant: "destructive" })
+      return
+    }
+
+    if (!newSchedule.title.trim()) {
+      toast({ title: "Error", description: "Title is required", variant: "destructive" })
+      return
+    }
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase.from("projects").insert([
+        {
+          org_id: orgId,
+          created_by: user.id,
+          customer_id: newSchedule.customer_id || null,
+          name: newSchedule.title.trim(),
+          description: newSchedule.description.trim() || null,
+          start_date: newSchedule.start_date || null,
+          end_date: newSchedule.end_date || null,
+          notes: newSchedule.notes || null,
+          status: "scheduled",
+        },
+      ])
+
+      if (error) throw error
+
+      toast({ title: "Success", description: "Job scheduled successfully" })
+      setIsDialogOpen(false)
+      setNewSchedule({ customer_id: "", title: "", description: "", start_date: "", end_date: "", notes: "" })
+      setActionType(null)
+      router.push("/scheduling")
+    } catch (error) {
+      console.error("[v0] Error scheduling job:", error)
+      toast({ title: "Error", description: "Failed to schedule job", variant: "destructive" })
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -182,208 +425,563 @@ export default function EstimatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="flex">
-        <DashboardSidebar />
-
-        {/* Main Content */}
-        <div className="flex-1 lg:ml-64">
-          <div className="p-8">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-8">
+    <div className="flex min-h-screen bg-background text-foreground">
+      <DashboardSidebar />
+      <div className="flex-1 lg:ml-64">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="mb-6">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")} className="mb-4">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-3xl font-bold">Estimates</h1>
-                <p className="text-muted-foreground">Create and manage project estimates</p>
+                <h1 className="text-3xl font-bold text-foreground">Estimates</h1>
+                <p className="text-muted-foreground mt-1">Manage and send estimates to customers</p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    placeholder="Search estimates..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-80"
-                  />
-                </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <div className="flex gap-2">
+                <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-primary hover:bg-primary/90">
                       <Plus className="w-4 h-4 mr-2" />
-                      New Estimate
+                      New Action
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-3xl">
                     <DialogHeader>
-                      <DialogTitle>Create New Estimate</DialogTitle>
+                      <DialogTitle>What would you like to create?</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div>
-                        <Label>Customer (Optional)</Label>
-                        <Select
-                          value={newEstimate.customer_id}
-                          onValueChange={(v) => setNewEstimate({ ...newEstimate, customer_id: v })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select customer" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {customers.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.first_name} {c.last_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Title *</Label>
-                        <Input
-                          value={newEstimate.title}
-                          onChange={(e) => setNewEstimate({ ...newEstimate, title: e.target.value })}
-                          placeholder="Estimate title"
-                        />
-                      </div>
-                      <div>
-                        <Label>Description</Label>
-                        <Textarea
-                          value={newEstimate.description}
-                          onChange={(e) => setNewEstimate({ ...newEstimate, description: e.target.value })}
-                          rows={3}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Subtotal ($)</Label>
-                          <Input
-                            type="number"
-                            value={newEstimate.subtotal}
-                            onChange={(e) =>
-                              setNewEstimate({ ...newEstimate, subtotal: Number.parseFloat(e.target.value) || 0 })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Tax Rate (%)</Label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            value={newEstimate.tax_rate}
-                            onChange={(e) =>
-                              setNewEstimate({ ...newEstimate, tax_rate: Number.parseFloat(e.target.value) || 0 })
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Valid Until</Label>
-                        <Input
-                          type="date"
-                          value={newEstimate.valid_until}
-                          onChange={(e) => setNewEstimate({ ...newEstimate, valid_until: e.target.value })}
-                        />
-                      </div>
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="flex justify-between text-sm">
-                          <span>Subtotal:</span>
-                          <span>${newEstimate.subtotal.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Tax ({newEstimate.tax_rate}%):</span>
-                          <span>${((newEstimate.subtotal * newEstimate.tax_rate) / 100).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-                          <span>Total:</span>
-                          <span>
-                            ${(newEstimate.subtotal + (newEstimate.subtotal * newEstimate.tax_rate) / 100).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleCreateEstimate}>Create Estimate</Button>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-6">
+                      <Card
+                        className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-primary"
+                        onClick={() => handleOpenActionDialog("estimate")}
+                      >
+                        <CardHeader className="text-center">
+                          <FileText className="w-12 h-12 mx-auto mb-2 text-blue-600" />
+                          <CardTitle className="text-lg">Create Estimate</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription className="text-center">
+                            Generate a professional estimate for a customer
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+
+                      <Card
+                        className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-primary"
+                        onClick={() => handleOpenActionDialog("invoice")}
+                      >
+                        <CardHeader className="text-center">
+                          <DollarSign className="w-12 h-12 mx-auto mb-2 text-green-600" />
+                          <CardTitle className="text-lg">Create Invoice</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription className="text-center">
+                            Create an invoice with line items for billing
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+
+                      <Card
+                        className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-primary"
+                        onClick={() => handleOpenActionDialog("schedule")}
+                      >
+                        <CardHeader className="text-center">
+                          <Calendar className="w-12 h-12 mx-auto mb-2 text-orange-600" />
+                          <CardTitle className="text-lg">Schedule Job</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription className="text-center">
+                            Schedule a job or appointment with a customer
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
                     </div>
                   </DialogContent>
                 </Dialog>
               </div>
             </div>
+          </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-sm font-medium">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Total Estimates
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{estimates.length}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-sm font-medium">
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Total Value
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
-                </CardContent>
-              </Card>
-            </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent
+              className={actionType === "invoice" ? "max-w-4xl max-h-[90vh] overflow-y-auto" : "max-w-2xl"}
+            >
+              <DialogHeader>
+                <DialogTitle>
+                  {actionType === "estimate" && "Create New Estimate"}
+                  {actionType === "invoice" && "Create New Invoice"}
+                  {actionType === "schedule" && "Schedule New Job"}
+                </DialogTitle>
+              </DialogHeader>
 
-            {/* Estimates Table */}
+              {actionType === "estimate" && (
+                <div className="grid gap-4 py-4">
+                  <div>
+                    <Label>Customer (Optional)</Label>
+                    <Select
+                      value={newEstimate.customer_id}
+                      onValueChange={(v) => setNewEstimate({ ...newEstimate, customer_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select customer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.first_name} {c.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Title *</Label>
+                    <Input
+                      value={newEstimate.title}
+                      onChange={(e) => setNewEstimate({ ...newEstimate, title: e.target.value })}
+                      placeholder="Estimate title"
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={newEstimate.description}
+                      onChange={(e) => setNewEstimate({ ...newEstimate, description: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Subtotal ($)</Label>
+                      <Input
+                        type="number"
+                        value={newEstimate.subtotal}
+                        onChange={(e) =>
+                          setNewEstimate({ ...newEstimate, subtotal: Number.parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Tax Rate (%)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={newEstimate.tax_rate}
+                        onChange={(e) =>
+                          setNewEstimate({ ...newEstimate, tax_rate: Number.parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Valid Until</Label>
+                    <Input
+                      type="date"
+                      value={newEstimate.valid_until}
+                      onChange={(e) => setNewEstimate({ ...newEstimate, valid_until: e.target.value })}
+                    />
+                  </div>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>${newEstimate.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Tax ({newEstimate.tax_rate}%):</span>
+                      <span>${((newEstimate.subtotal * newEstimate.tax_rate) / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
+                      <span>Total:</span>
+                      <span>
+                        ${(newEstimate.subtotal + (newEstimate.subtotal * newEstimate.tax_rate) / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {actionType === "invoice" && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Customer (Optional)</Label>
+                      <Select
+                        value={newInvoice.customer_id}
+                        onValueChange={(v) => setNewInvoice({ ...newInvoice, customer_id: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select customer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {customers.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.first_name} {c.last_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Due Date</Label>
+                      <Input
+                        type="date"
+                        value={newInvoice.due_date}
+                        onChange={(e) => setNewInvoice({ ...newInvoice, due_date: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Invoice Title *</Label>
+                    <Input
+                      value={newInvoice.title}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, title: e.target.value })}
+                      placeholder="e.g., Roof Repair Service"
+                    />
+                  </div>
+                  <div>
+                    <Label>Description / Notes</Label>
+                    <Textarea
+                      value={newInvoice.description}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, description: e.target.value })}
+                      rows={2}
+                      placeholder="Additional details about the work..."
+                    />
+                  </div>
+
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-base font-semibold">Line Items</Label>
+                      <Button onClick={addLineItem} size="sm" variant="outline">
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add Item
+                      </Button>
+                    </div>
+                    {lineItems.map((item, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-end">
+                        <div className="col-span-5">
+                          <Label className="text-xs">Description</Label>
+                          <Input
+                            value={item.description}
+                            onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                            placeholder="Service or product"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label className="text-xs">Quantity</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            step="0.01"
+                            value={item.quantity}
+                            onChange={(e) => updateLineItem(index, "quantity", Number.parseFloat(e.target.value) || 0)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label className="text-xs">Unit Price</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.unit_price}
+                            onChange={(e) =>
+                              updateLineItem(index, "unit_price", Number.parseFloat(e.target.value) || 0)
+                            }
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label className="text-xs">Total</Label>
+                          <Input value={`$${item.line_total.toFixed(2)}`} disabled className="text-sm bg-muted" />
+                        </div>
+                        <div className="col-span-1 flex items-end">
+                          <Button
+                            onClick={() => removeLineItem(index)}
+                            size="sm"
+                            variant="ghost"
+                            disabled={lineItems.length === 1}
+                            className="h-9"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Tax Rate (%)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={newInvoice.tax_rate}
+                        onChange={(e) =>
+                          setNewInvoice({ ...newInvoice, tax_rate: Number.parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Deposit Amount ($)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={newInvoice.deposit_amount}
+                        onChange={(e) =>
+                          setNewInvoice({ ...newInvoice, deposit_amount: Number.parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-muted p-4 rounded-lg">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>${calculateTotals().subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Tax ({newInvoice.tax_rate}%):</span>
+                      <span>${calculateTotals().taxAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Total:</span>
+                      <span>${calculateTotals().totalAmount.toFixed(2)}</span>
+                    </div>
+                    {newInvoice.deposit_amount > 0 && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span>Deposit:</span>
+                          <span>-${newInvoice.deposit_amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
+                          <span>Balance Due:</span>
+                          <span>${calculateTotals().balanceDue.toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {actionType === "schedule" && (
+                <div className="grid gap-4 py-4">
+                  <div>
+                    <Label>Customer (Optional)</Label>
+                    <Select
+                      value={newSchedule.customer_id}
+                      onValueChange={(v) => setNewSchedule({ ...newSchedule, customer_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select customer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.first_name} {c.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Job Title *</Label>
+                    <Input
+                      value={newSchedule.title}
+                      onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })}
+                      placeholder="e.g., Kitchen Renovation"
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={newSchedule.description}
+                      onChange={(e) => setNewSchedule({ ...newSchedule, description: e.target.value })}
+                      rows={3}
+                      placeholder="Job details..."
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Start Date</Label>
+                      <Input
+                        type="date"
+                        value={newSchedule.start_date}
+                        onChange={(e) => setNewSchedule({ ...newSchedule, start_date: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>End Date</Label>
+                      <Input
+                        type="date"
+                        value={newSchedule.end_date}
+                        onChange={(e) => setNewSchedule({ ...newSchedule, end_date: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Additional Notes</Label>
+                    <Textarea
+                      value={newSchedule.notes}
+                      onChange={(e) => setNewSchedule({ ...newSchedule, notes: e.target.value })}
+                      rows={2}
+                      placeholder="Special instructions or notes..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false)
+                    setActionType(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (actionType === "estimate") handleCreateEstimate()
+                    if (actionType === "invoice") handleCreateInvoice()
+                    if (actionType === "schedule") handleCreateSchedule()
+                  }}
+                >
+                  {actionType === "estimate" && "Create Estimate"}
+                  {actionType === "invoice" && "Create Invoice"}
+                  {actionType === "schedule" && "Schedule Job"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <div className="grid grid-cols-2 gap-6 mb-8">
             <Card>
-              <CardHeader>
-                <CardTitle>All Estimates</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center text-sm font-medium">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Total Estimates
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Estimate #</th>
-                      <th className="text-left py-3 px-4 font-medium">Customer</th>
-                      <th className="text-left py-3 px-4 font-medium">Title</th>
-                      <th className="text-left py-3 px-4 font-medium">Amount</th>
-                      <th className="text-left py-3 px-4 font-medium">Status</th>
-                      <th className="text-left py-3 px-4 font-medium">Valid Until</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEstimates.map((est) => (
-                      <tr key={est.id} className="border-b hover:bg-muted/50">
-                        <td className="py-4 px-4 font-medium">{est.estimate_number}</td>
-                        <td className="py-4 px-4">
-                          {est.customer ? `${est.customer.first_name} ${est.customer.last_name}` : "-"}
-                        </td>
-                        <td className="py-4 px-4">{est.title}</td>
-                        <td className="py-4 px-4">${est.total_amount.toLocaleString()}</td>
-                        <td className="py-4 px-4">
-                          <Badge className={`${getStatusColor(est.status)} text-white`}>
-                            {est.status.toUpperCase()}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          {est.valid_until ? new Date(est.valid_until).toLocaleDateString() : "-"}
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredEstimates.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                          No estimates found. Create your first estimate!
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                <div className="text-2xl font-bold">{estimates.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-sm font-medium">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Total Value
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
               </CardContent>
             </Card>
           </div>
+
+          <Dialog open={sendEstimateDialogOpen} onOpenChange={setSendEstimateDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Send Estimate</DialogTitle>
+              </DialogHeader>
+              {selectedEstimate && (
+                <div className="grid gap-4 py-4">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="font-semibold">{selectedEstimate.estimate_number}</p>
+                    <p className="text-sm">{selectedEstimate.title}</p>
+                    <p className="text-sm font-semibold">${selectedEstimate.total_amount.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <Label>Recipient Email</Label>
+                    <Input
+                      type="email"
+                      value={recipientEmail}
+                      onChange={(e) => setRecipientEmail(e.target.value)}
+                      placeholder="customer@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label>Message</Label>
+                    <Textarea
+                      value={sendMessage}
+                      onChange={(e) => setSendMessage(e.target.value)}
+                      rows={4}
+                      placeholder="Add a personal message..."
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setSendEstimateDialogOpen(false)} disabled={isSending}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSendEstimate} disabled={isSending}>
+                  {isSending ? "Sending..." : "Send Estimate"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>All Estimates</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium">Estimate #</th>
+                    <th className="text-left py-3 px-4 font-medium">Customer</th>
+                    <th className="text-left py-3 px-4 font-medium">Title</th>
+                    <th className="text-left py-3 px-4 font-medium">Amount</th>
+                    <th className="text-left py-3 px-4 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 font-medium">Valid Until</th>
+                    <th className="text-left py-3 px-4 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEstimates.map((est) => (
+                    <tr key={est.id} className="border-b hover:bg-muted/50">
+                      <td className="py-4 px-4 font-medium">{est.estimate_number}</td>
+                      <td className="py-4 px-4">
+                        {est.customer ? `${est.customer.first_name} ${est.customer.last_name}` : "-"}
+                      </td>
+                      <td className="py-4 px-4">{est.title}</td>
+                      <td className="py-4 px-4">${est.total_amount.toLocaleString()}</td>
+                      <td className="py-4 px-4">
+                        <Badge className={`${getStatusColor(est.status)} text-white`}>{est.status.toUpperCase()}</Badge>
+                      </td>
+                      <td className="py-4 px-4">
+                        {est.valid_until ? new Date(est.valid_until).toLocaleDateString() : "-"}
+                      </td>
+                      <td className="py-4 px-4">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openSendDialog(est)}
+                          disabled={!est.customer?.email}
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          Send
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredEstimates.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                        No estimates found. Create your first estimate!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -10,12 +10,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, Receipt, DollarSign, Trash2 } from "lucide-react"
+import { Search, Plus, Receipt, DollarSign, Trash2, Send, Eye, CreditCard } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js"
 import { loadStripe } from "@stripe/stripe-js"
-import { createInvoicePaymentSession } from "@/app/actions/stripe-invoice"
+import { createInvoicePaymentSession, markInvoicePaid } from "@/app/actions/stripe-invoice"
 import { DashboardSidebar } from "@/app/components/dashboard-sidebar"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -74,6 +74,19 @@ export default function InvoicesPage() {
     due_date: "",
     deposit_amount: 0,
   })
+
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [selectedInvoiceLineItems, setSelectedInvoiceLineItems] = useState<LineItem[]>([])
+  const [isSendDialogOpen, setIsSendDialogOpen] = useState(false)
+  const [sendEmail, setSendEmail] = useState("")
+  const [sendMessage, setSendMessage] = useState("")
+  const [isSending, setIsSending] = useState(false)
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false)
+  const [newStatus, setNewStatus] = useState("")
+  const [isManualPaymentDialogOpen, setIsManualPaymentDialogOpen] = useState(false)
+  const [manualPaymentAmount, setManualPaymentAmount] = useState("")
+  const [manualPaymentMethod, setManualPaymentMethod] = useState("cash")
 
   const supabase = createClient()
   const { toast } = useToast()
@@ -138,7 +151,6 @@ export default function InvoicesPage() {
   const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
     const updated = [...lineItems]
     updated[index] = { ...updated[index], [field]: value }
-    // Calculate line total
     if (field === "quantity" || field === "unit_price") {
       updated[index].line_total = updated[index].quantity * updated[index].unit_price
     }
@@ -229,6 +241,118 @@ export default function InvoicesPage() {
     }
   }
 
+  const handleViewInvoice = async (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+
+    // Fetch line items for this invoice
+    const { data: items, error } = await supabase
+      .from("invoice_line_items")
+      .select("*")
+      .eq("invoice_id", invoice.id)
+      .order("sort_order")
+
+    if (!error && items) {
+      setSelectedInvoiceLineItems(items)
+    }
+
+    setIsViewDialogOpen(true)
+  }
+
+  const handleSendInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+    setSendEmail(invoice.customer?.email || "")
+    setSendMessage(
+      `Dear ${invoice.customer?.first_name || "Customer"},\n\nPlease find attached invoice #${invoice.invoice_number} for ${invoice.title}.\n\nTotal Amount: $${invoice.total_amount.toFixed(2)}\nBalance Due: $${(invoice.balance_due || 0).toFixed(2)}\n\nThank you for your business!`,
+    )
+    setIsSendDialogOpen(true)
+  }
+
+  const sendInvoiceEmail = async () => {
+    if (!selectedInvoice || !sendEmail) {
+      toast({ title: "Error", description: "Email address is required", variant: "destructive" })
+      return
+    }
+
+    setIsSending(true)
+    try {
+      const response = await fetch("/api/send-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoiceId: selectedInvoice.id,
+          email: sendEmail,
+          message: sendMessage,
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to send")
+
+      // Update status to sent if it was draft
+      if (selectedInvoice.status === "draft") {
+        await supabase.from("invoices").update({ status: "sent" }).eq("id", selectedInvoice.id)
+      }
+
+      toast({ title: "Success", description: "Invoice sent successfully" })
+      setIsSendDialogOpen(false)
+      loadData()
+    } catch (error) {
+      console.error("[v0] Error sending invoice:", error)
+      toast({ title: "Error", description: "Failed to send invoice", variant: "destructive" })
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const handleChangeStatus = (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+    setNewStatus(invoice.status)
+    setIsStatusDialogOpen(true)
+  }
+
+  const updateInvoiceStatus = async () => {
+    if (!selectedInvoice) return
+
+    try {
+      const { error } = await supabase.from("invoices").update({ status: newStatus }).eq("id", selectedInvoice.id)
+
+      if (error) throw error
+
+      toast({ title: "Success", description: "Status updated successfully" })
+      setIsStatusDialogOpen(false)
+      loadData()
+    } catch (error) {
+      console.error("[v0] Error updating status:", error)
+      toast({ title: "Error", description: "Failed to update status", variant: "destructive" })
+    }
+  }
+
+  const handleManualPayment = (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+    setManualPaymentAmount((invoice.balance_due || 0).toString())
+    setManualPaymentMethod("cash")
+    setIsManualPaymentDialogOpen(true)
+  }
+
+  const recordManualPayment = async () => {
+    if (!selectedInvoice) return
+
+    const amount = Number.parseFloat(manualPaymentAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast({ title: "Error", description: "Please enter a valid amount", variant: "destructive" })
+      return
+    }
+
+    try {
+      await markInvoicePaid(selectedInvoice.id, manualPaymentMethod, amount)
+      toast({ title: "Success", description: "Payment recorded successfully" })
+      setIsManualPaymentDialogOpen(false)
+      loadData()
+    } catch (error) {
+      console.error("[v0] Error recording payment:", error)
+      toast({ title: "Error", description: "Failed to record payment", variant: "destructive" })
+    }
+  }
+
   const handlePayInvoice = (invoiceId: string) => {
     setSelectedInvoiceForPayment(invoiceId)
     setIsPaymentDialogOpen(true)
@@ -271,7 +395,6 @@ export default function InvoicesPage() {
       <div className="flex">
         <DashboardSidebar />
 
-        {/* Main Content */}
         <div className="flex-1 lg:ml-64">
           <div className="p-8">
             <div className="flex justify-between items-center mb-8">
@@ -513,62 +636,319 @@ export default function InvoicesPage() {
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle>All Invoices</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Invoice #</th>
-                      <th className="text-left py-3 px-4 font-medium">Customer</th>
-                      <th className="text-left py-3 px-4 font-medium">Title</th>
-                      <th className="text-left py-3 px-4 font-medium">Total</th>
-                      <th className="text-left py-3 px-4 font-medium">Paid</th>
-                      <th className="text-left py-3 px-4 font-medium">Balance</th>
-                      <th className="text-left py-3 px-4 font-medium">Status</th>
-                      <th className="text-left py-3 px-4 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredInvoices.map((inv) => (
-                      <tr key={inv.id} className="border-b hover:bg-muted/50">
-                        <td className="py-4 px-4 font-medium">{inv.invoice_number}</td>
-                        <td className="py-4 px-4">
-                          {inv.customer ? `${inv.customer.first_name} ${inv.customer.last_name}` : "-"}
-                        </td>
-                        <td className="py-4 px-4">{inv.title}</td>
-                        <td className="py-4 px-4">${inv.total_amount.toLocaleString()}</td>
-                        <td className="py-4 px-4 text-green-600">${(inv.amount_paid || 0).toLocaleString()}</td>
-                        <td className="py-4 px-4 text-orange-600 font-semibold">
-                          ${(inv.balance_due || 0).toLocaleString()}
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge className={`${getStatusColor(inv.status)} text-white`}>
-                            {inv.status.toUpperCase()}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          {inv.status !== "paid" && inv.balance_due && inv.balance_due > 0 && (
-                            <Button onClick={() => handlePayInvoice(inv.id)} size="sm" variant="outline">
-                              Pay Now
-                            </Button>
-                          )}
-                        </td>
+              <CardContent className="pt-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-medium">Invoice #</th>
+                        <th className="text-left py-3 px-4 font-medium">Customer</th>
+                        <th className="text-left py-3 px-4 font-medium">Title</th>
+                        <th className="text-left py-3 px-4 font-medium">Total</th>
+                        <th className="text-left py-3 px-4 font-medium">Paid</th>
+                        <th className="text-left py-3 px-4 font-medium">Balance</th>
+                        <th className="text-left py-3 px-4 font-medium">Status</th>
+                        <th className="text-left py-3 px-4 font-medium">Actions</th>
                       </tr>
-                    ))}
-                    {filteredInvoices.length === 0 && (
-                      <tr>
-                        <td colSpan={8} className="py-8 text-center text-muted-foreground">
-                          No invoices found. Create your first invoice!
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredInvoices.map((inv) => (
+                        <tr key={inv.id} className="border-b hover:bg-muted/50">
+                          <td className="py-4 px-4">
+                            <button
+                              onClick={() => handleViewInvoice(inv)}
+                              className="font-medium text-primary hover:underline"
+                            >
+                              {inv.invoice_number}
+                            </button>
+                          </td>
+                          <td className="py-4 px-4">
+                            {inv.customer ? `${inv.customer.first_name} ${inv.customer.last_name}` : "-"}
+                          </td>
+                          <td className="py-4 px-4">{inv.title}</td>
+                          <td className="py-4 px-4">${inv.total_amount.toLocaleString()}</td>
+                          <td className="py-4 px-4 text-green-600">${(inv.amount_paid || 0).toLocaleString()}</td>
+                          <td className="py-4 px-4 text-orange-600 font-semibold">
+                            ${(inv.balance_due || 0).toLocaleString()}
+                          </td>
+                          <td className="py-4 px-4">
+                            <button onClick={() => handleChangeStatus(inv)}>
+                              <Badge
+                                className={`${getStatusColor(inv.status)} text-white cursor-pointer hover:opacity-80`}
+                              >
+                                {inv.status.toUpperCase()}
+                              </Badge>
+                            </button>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                onClick={() => handleViewInvoice(inv)}
+                                size="sm"
+                                variant="ghost"
+                                title="View Details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                onClick={() => handleSendInvoice(inv)}
+                                size="sm"
+                                variant="ghost"
+                                title="Send Invoice"
+                              >
+                                <Send className="w-4 h-4" />
+                              </Button>
+                              {inv.status !== "paid" && inv.balance_due && inv.balance_due > 0 && (
+                                <>
+                                  <Button
+                                    onClick={() => handleManualPayment(inv)}
+                                    size="sm"
+                                    variant="ghost"
+                                    title="Record Payment"
+                                  >
+                                    <DollarSign className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    onClick={() => handlePayInvoice(inv.id)}
+                                    size="sm"
+                                    variant="outline"
+                                    title="Pay with Stripe"
+                                  >
+                                    <CreditCard className="w-4 h-4 mr-1" />
+                                    Pay
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredInvoices.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                            No invoices found. Create your first invoice!
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
 
+            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Invoice Details - {selectedInvoice?.invoice_number}</DialogTitle>
+                </DialogHeader>
+                {selectedInvoice && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-muted-foreground">Customer</Label>
+                        <p className="font-medium">
+                          {selectedInvoice.customer
+                            ? `${selectedInvoice.customer.first_name} ${selectedInvoice.customer.last_name}`
+                            : "No customer assigned"}
+                        </p>
+                        {selectedInvoice.customer?.email && (
+                          <p className="text-sm text-muted-foreground">{selectedInvoice.customer.email}</p>
+                        )}
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground">Status</Label>
+                        <div className="mt-1">
+                          <Badge className={`${getStatusColor(selectedInvoice.status)} text-white`}>
+                            {selectedInvoice.status.toUpperCase()}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-muted-foreground">Title</Label>
+                      <p className="font-medium">{selectedInvoice.title}</p>
+                    </div>
+
+                    {selectedInvoice.description && (
+                      <div>
+                        <Label className="text-muted-foreground">Description</Label>
+                        <p>{selectedInvoice.description}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <Label className="text-muted-foreground mb-2 block">Line Items</Label>
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-muted">
+                            <tr>
+                              <th className="text-left py-2 px-3 text-sm">Description</th>
+                              <th className="text-right py-2 px-3 text-sm">Qty</th>
+                              <th className="text-right py-2 px-3 text-sm">Unit Price</th>
+                              <th className="text-right py-2 px-3 text-sm">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedInvoiceLineItems.map((item, index) => (
+                              <tr key={index} className="border-t">
+                                <td className="py-2 px-3">{item.description}</td>
+                                <td className="py-2 px-3 text-right">{item.quantity}</td>
+                                <td className="py-2 px-3 text-right">${Number(item.unit_price).toFixed(2)}</td>
+                                <td className="py-2 px-3 text-right">${Number(item.line_total).toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="bg-muted p-4 rounded-lg space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal:</span>
+                        <span>${Number(selectedInvoice.subtotal).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Tax ({selectedInvoice.tax_rate}%):</span>
+                        <span>${Number(selectedInvoice.tax_amount).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold border-t pt-2">
+                        <span>Total:</span>
+                        <span>${Number(selectedInvoice.total_amount).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-green-600">
+                        <span>Amount Paid:</span>
+                        <span>-${Number(selectedInvoice.amount_paid || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-orange-600 border-t pt-2">
+                        <span>Balance Due:</span>
+                        <span>${Number(selectedInvoice.balance_due || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                        Close
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setIsViewDialogOpen(false)
+                          handleSendInvoice(selectedInvoice)
+                        }}
+                      >
+                        <Send className="w-4 h-4 mr-2" />
+                        Send Invoice
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Send Invoice #{selectedInvoice?.invoice_number}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Recipient Email *</Label>
+                    <Input
+                      type="email"
+                      value={sendEmail}
+                      onChange={(e) => setSendEmail(e.target.value)}
+                      placeholder="customer@email.com"
+                    />
+                  </div>
+                  <div>
+                    <Label>Message</Label>
+                    <Textarea value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} rows={6} />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsSendDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={sendInvoiceEmail} disabled={isSending}>
+                      {isSending ? "Sending..." : "Send Invoice"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Change Invoice Status</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Status</Label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="sent">Sent</SelectItem>
+                        <SelectItem value="partial">Partial Payment</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="overdue">Overdue</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsStatusDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={updateInvoiceStatus}>Update Status</Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isManualPaymentDialogOpen} onOpenChange={setIsManualPaymentDialogOpen}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Record Payment</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Payment Amount ($)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={manualPaymentAmount}
+                      onChange={(e) => setManualPaymentAmount(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Payment Method</Label>
+                    <Select value={manualPaymentMethod} onValueChange={setManualPaymentMethod}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="check">Check</SelectItem>
+                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsManualPaymentDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={recordManualPayment}>Record Payment</Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Stripe Payment Dialog */}
             <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
               <DialogContent className="max-w-3xl">
                 <DialogHeader>
